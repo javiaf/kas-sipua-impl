@@ -1,0 +1,24 @@
+package com.tikal.sip.enums;
+
+import com.tikal.sip.event.SipEventType;
+
+public enum EventTypeEnum implements SipEventType{
+	
+	// CALL EVENTS
+	CALL_REQUEST,
+	CALL_REJECT,
+	CALL_FAIL,
+	DIALOG_COMPLETE,
+	DIALOG_TERMINATED,
+	
+	// SIP EVENTS
+	TRANSACTION_TIMEOUT,
+	TRANSACTION_UNKNOWN_CODE,
+	
+	REGISTER_USER_NOT_FOUND,
+	REGISTER_USER_SUCESSFUL,
+	REGISTER_USER_FAIL,
+	
+	SERVER_INTERNAL_ERROR
+
+}

@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="Tikal SIP library">
+	<publishDate position="right" />
+	<version position="right" />
+	<poweredBy>
+		<logo name="Maven" href="http://maven.apache.org/"
+			img="http://maven.apache.org/images/logos/maven-feather.png" />
+	</poweredBy>
+
+	<body>
+		<menu name="Tikal SIP library" href="siplib.html"/>
+		<menu ref="modules" />
+	</body>
+</project>
