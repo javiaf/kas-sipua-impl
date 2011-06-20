@@ -118,8 +118,13 @@ public class SipContext implements SipCall {
 	}
 	
 	@Override
-	public void setListener (SipCallListener listener) {
+	public void addListener (SipCallListener listener) {
 		callListener = listener;
+	}
+	
+	@Override
+	public void removeListener (SipCallListener listener) {
+		callListener = null;
 	}
 	
 	@Override
@@ -132,6 +137,21 @@ public class SipContext implements SipCall {
 	public Boolean isConnected() {
 		return false;
 	}
+	
+	@Override
+	public String getRemoteUri() {
+		if(remoteParty == null)
+			return null;
+		return remoteParty.getURI().toString();
+	}
+
+	@Override
+	public String getRemoteDisplayName() {
+		if(remoteParty == null)
+			return null;
+		return remoteParty.toString();
+	}
+	
 	
 	///////////////////////
 	//
@@ -158,6 +178,7 @@ public class SipContext implements SipCall {
 		// Store pending request
 		log.debug("Incoming call signalled with callId:" + pendingInvite.getServerTransaction().getDialog().getCallId());
 		this.incomingPendingRequest = pendingInvite;
+		this.remoteParty = this.incomingPendingRequest.getServerTransaction().getDialog().getRemoteParty();
 
 		// Notify the incoming call to EndPoint controllers
 		log.debug("Notify incoming call to EndPoint listener");

@@ -126,7 +126,7 @@ public class SipLibInviteTest {
 		// 4.3-  ACCEPT CALL at B
 		SipCall callAtB = eventB.getCallSource();
 		SipCallController callControllerB = new SipCallController();
-		callAtB.setListener(callControllerB);
+		callAtB.addListener(callControllerB);
 		log.debug("User B accepts call");
 		callAtB.accept();
 		log.debug("\n\nUser B accept OK\n");

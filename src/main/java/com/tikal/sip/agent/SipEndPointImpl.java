@@ -197,7 +197,7 @@ public class SipEndPointImpl implements SipEndPoint {
 		if (remoteParty != null) {
 			log.debug("Creating new SipContext");
 			SipContext sipContext = new SipContext(this);
-			sipContext.setListener(callController);
+			sipContext.addListener(callController);
 			Address remotePartyAddress;
 			try {
 				remotePartyAddress = UaFactory.getAddressFactory()
