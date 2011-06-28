@@ -114,6 +114,7 @@ public class SipContext implements SipCall {
 		}
 		if (networkConnection != null ) {
 			networkConnection.release();
+			networkConnection = null;
 		}
 	}
 	
@@ -195,8 +196,10 @@ public class SipContext implements SipCall {
 	
 	public void terminatedCall() {
 		notifySipCallEvent(SipCallEvent.CALL_TERMINATE);
-		if (networkConnection != null)
+		if (networkConnection != null) {
 			networkConnection.release();
+			networkConnection = null;
+		}
 	}
 	
 	public void completedIncomingCall() {
@@ -219,6 +222,7 @@ public class SipContext implements SipCall {
 			// Release previous connection
 			log.debug("Release old network connection");
 			networkConnection.release();
+			networkConnection = null;
 		}
 		
 		// Get active networkConnection
