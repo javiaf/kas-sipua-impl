@@ -8,7 +8,8 @@
 	<packaging>jar</packaging>
 
 	<name>Tikal PC Sip User Agent</name>
-	<url>http://maven.apache.org</url>
+	<description>TODO: Add description here</description>
+	<url>http://193.147.51.37/site/tk-android-sipua</url>
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -98,4 +99,11 @@
 			</plugin>
 		</plugins>
 	</build>
+
+	<distributionManagement>
+		<site>
+			<id>maven-site</id>
+			<url>scp://193.147.51.37/var/www/site/tk-android-sipua/</url>
+		</site>
+	</distributionManagement>
 </project>
