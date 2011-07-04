@@ -100,7 +100,7 @@
 	<distributionManagement>
 		<site>
 			<id>maven-site</id>
-			<url>scp://193.147.51.37/var/www/site/tk-android-sipua/</url>
+			<url>scp://193.147.51.37/var/www/site/tk-android-sipua/${project.version}</url>
 		</site>
 	</distributionManagement>
 </project>
