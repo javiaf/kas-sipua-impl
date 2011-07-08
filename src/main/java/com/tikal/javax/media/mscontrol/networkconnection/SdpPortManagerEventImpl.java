@@ -1,4 +1,4 @@
-package com.tikal.media;
+package com.tikal.javax.media.mscontrol.networkconnection;
 
 import java.util.EventObject;
 

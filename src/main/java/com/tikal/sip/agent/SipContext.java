@@ -215,8 +215,7 @@ public class SipContext implements SipCall {
 	}
 	
 	private void completedCall (Transaction transaction) {
-		// Notify listeners
-		notifySipCallEvent(SipCallEvent.CALL_SETUP);
+		boolean hangup = false;
 		
 		if (networkConnection != null) {
 			// Release previous connection
@@ -230,15 +229,20 @@ public class SipContext implements SipCall {
 		if (!(transaction != null && (networkConnection=transaction.getNetworkConnection()) != null)) {
 			// Really bad 
 			log.error("Unable to find a network connection for the call. Terminate call");
-			this.hangup();
+			hangup = true;
 		} else {
 			try {
 				networkConnection.confirm();
 			} catch (MsControlException e) {
 				log.error("Unable to set up media session. Terminate call",e);
-				this.hangup();
+				hangup = true;
 			}
-		}	
+		}
+		
+		// Notify listeners
+		notifySipCallEvent(SipCallEvent.CALL_SETUP);
+		if(hangup)
+			this.hangup();
 	}
 	
 	public void notifySipCallEvent (SipEventType eventType) {

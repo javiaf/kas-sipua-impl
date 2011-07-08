@@ -94,7 +94,7 @@ public abstract class Transaction implements MediaEventListener<SdpPortManagerEv
 	
 	private void createSdpPortManager() throws MsControlException, ServerInternalErrorException {
 		if (networkConnection == null) {
-			networkConnection = UaFactory.getNetworkConnectionFactory().getInstance();
+			networkConnection = UaFactory.getNetworkConnection();
 			sdpPortManager = networkConnection.getSdpPortManager();
 		}
 

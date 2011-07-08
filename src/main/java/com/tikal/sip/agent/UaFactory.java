@@ -3,6 +3,7 @@ package com.tikal.sip.agent;
 import java.text.ParseException;
 import java.util.ArrayList;
 
+import javax.media.mscontrol.networkconnection.NetworkConnection;
 import javaxt.sip.PeerUnavailableException;
 import javaxt.sip.SipFactory;
 import javaxt.sip.address.AddressFactory;
@@ -13,7 +14,6 @@ import javaxt.sip.message.MessageFactory;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import com.tikal.media.NetworkConnectionFactory;
 import com.tikal.sip.UA;
 import com.tikal.sip.util.SipConfig;
 
@@ -55,7 +55,7 @@ public class UaFactory {
 				log.error("Message Factory initialization error",e);
 			}
 	}
-	private static NetworkConnectionFactory networkConnectionFactory;
+	private static NetworkConnection networkConnection;
 
 	private static UserAgentHeader userAgent;
 	static {
@@ -95,11 +95,11 @@ public class UaFactory {
 		return addressFactory;
 	}
 
-	public static void setNetworkConnectionFactory (NetworkConnectionFactory networkConnectionFactory) {
-		UaFactory.networkConnectionFactory = networkConnectionFactory;
+	public static void setNetworkConnection (NetworkConnection networkConnection) {
+		UaFactory.networkConnection = networkConnection;
 	}
 	
-	public static NetworkConnectionFactory getNetworkConnectionFactory(){
-		return networkConnectionFactory;
+	public static NetworkConnection getNetworkConnection(){
+		return networkConnection;
 	}
 }

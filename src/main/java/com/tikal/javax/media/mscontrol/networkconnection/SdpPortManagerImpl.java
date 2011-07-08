@@ -1,4 +1,4 @@
-package com.tikal.media;
+package com.tikal.javax.media.mscontrol.networkconnection;
 
 import java.net.InetAddress;
 import java.util.List;
@@ -87,7 +87,7 @@ public class SdpPortManagerImpl implements SdpPortManager {
 		sessionSpec.setRemoteHandler(localAddress);
 		SdpPortManagerEventImpl event = null;
 		try {
-				event = new SdpPortManagerEventImpl(SdpPortManagerEvent.OFFER_GENERATED, this, sessionSpec.getSessionDescription(), SdpPortManagerEvent.NO_ERROR);	
+			event = new SdpPortManagerEventImpl(SdpPortManagerEvent.OFFER_GENERATED, this, sessionSpec.getSessionDescription(), SdpPortManagerEvent.NO_ERROR);	
 		} catch (SdpException e) {
 			event = new SdpPortManagerEventImpl(null, this, null, SdpPortManagerEvent.RESOURCE_UNAVAILABLE );
 			log.error( "Error creating Session Description from resource media list", e);
