@@ -53,6 +53,11 @@
 
 	<repositories>
 		<repository>
+			<id>Kurento public</id>
+			<name>Kurento Repository</name>
+			<url>http://repository.kurento.com:8081/nexus/content/repositories/public/</url>
+		</repository>
+		<repository>
 			<id>mavencentral</id>
 			<name>Maven Central</name>
 			<url>http://repo1.maven.org/maven2/</url>
