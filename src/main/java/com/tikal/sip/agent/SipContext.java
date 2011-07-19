@@ -5,9 +5,9 @@ import java.io.IOException;
 import javax.media.mscontrol.MsControlException;
 import javax.media.mscontrol.join.JoinableStream.StreamType;
 import javax.media.mscontrol.networkconnection.NetworkConnection;
-import javaxt.sip.Dialog;
-import javaxt.sip.address.Address;
-import javaxt.sip.message.Response;
+import javax.sip.Dialog;
+import javax.sip.address.Address;
+import javax.sip.message.Response;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;

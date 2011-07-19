@@ -4,12 +4,12 @@ import java.text.ParseException;
 import java.util.ArrayList;
 
 import javax.media.mscontrol.networkconnection.NetworkConnection;
-import javaxt.sip.PeerUnavailableException;
-import javaxt.sip.SipFactory;
-import javaxt.sip.address.AddressFactory;
-import javaxt.sip.header.HeaderFactory;
-import javaxt.sip.header.UserAgentHeader;
-import javaxt.sip.message.MessageFactory;
+import javax.sip.PeerUnavailableException;
+import javax.sip.SipFactory;
+import javax.sip.address.AddressFactory;
+import javax.sip.header.HeaderFactory;
+import javax.sip.header.UserAgentHeader;
+import javax.sip.message.MessageFactory;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -26,9 +26,6 @@ public class UaFactory {
 	
 	// UA initializations
 	private static SipFactory sipFactory = SipFactory.getInstance();
-	static {
-		sipFactory.setPathName("com.tikal");//("gov.nist");
-	}
 	
 	// Create Factory objects
 	private static AddressFactory addressFactory;

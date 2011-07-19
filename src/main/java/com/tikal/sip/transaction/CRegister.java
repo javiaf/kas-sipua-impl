@@ -2,15 +2,15 @@ package com.tikal.sip.transaction;
 
 import java.text.ParseException;
 
-import javaxt.sip.InvalidArgumentException;
-import javaxt.sip.ResponseEvent;
-import javaxt.sip.TimeoutEvent;
-import javaxt.sip.header.CSeqHeader;
-import javaxt.sip.header.CallIdHeader;
-import javaxt.sip.header.ProxyAuthenticateHeader;
-import javaxt.sip.header.WWWAuthenticateHeader;
-import javaxt.sip.message.Request;
-import javaxt.sip.message.Response;
+import javax.sip.InvalidArgumentException;
+import javax.sip.ResponseEvent;
+import javax.sip.TimeoutEvent;
+import javax.sip.header.CSeqHeader;
+import javax.sip.header.CallIdHeader;
+import javax.sip.header.ProxyAuthenticateHeader;
+import javax.sip.header.WWWAuthenticateHeader;
+import javax.sip.message.Request;
+import javax.sip.message.Response;
 
 import com.tikal.sip.agent.SipEndPointImpl;
 import com.tikal.sip.agent.UaFactory;
@@ -50,18 +50,18 @@ public class CRegister extends CTransaction {
 		int statusCode = response.getStatusCode();
 
 		if (statusCode == Response.OK) {
-			log.info("<<<<<<< 200 OK: Register sucessfull for user: " + localParty.getAddress().toString());
+			log.info("<<<<<<< 200 OK: Register sucessfull for user: " + localParty.getAddress());
 			localParty.notifyEvent(SipEndPointEvent.REGISTER_USER_SUCESSFUL);
 		} else if (statusCode == Response.UNAUTHORIZED || statusCode == Response.PROXY_AUTHENTICATION_REQUIRED) { // Peer Authentication
 			sendWithAuth (event);
 		} else if (statusCode == Response.REQUEST_TIMEOUT) { // 408: Request TimeOut
-			log.warn("<<<<<<< 408 REQUEST_TIMEOUT: Register Failure. Unable to contact registrar at " + localParty.getAddress().toString());
+			log.warn("<<<<<<< 408 REQUEST_TIMEOUT: Register Failure. Unable to contact registrar at " + localParty.getAddress());
 			localParty.notifyEvent(SipEndPointEvent.REGISTER_USER_FAIL);
 		} else if (statusCode == Response.NOT_FOUND ) { // 404: Not Found
-			log.warn("<<<<<<< 404 NOT_FOUND: Register Failure. User " + localParty.getAddress().toString() + " not found");
+			log.warn("<<<<<<< 404 NOT_FOUND: Register Failure. User " + localParty.getAddress() + " not found");
 			localParty.notifyEvent(SipEndPointEvent.REGISTER_USER_NOT_FOUND);
 		} else if (statusCode == Response.FORBIDDEN ) { // Forbidden
-			log.warn("<<<<<<< 403 FORBIDDEN: Register Failure. User " + localParty.getAddress().toString() + " forbiden");
+			log.warn("<<<<<<< 403 FORBIDDEN: Register Failure. User " + localParty.getAddress() + " forbiden");
 			localParty.notifyEvent(SipEndPointEvent.REGISTER_USER_FAIL);
 		} else if (statusCode == Response.SERVER_INTERNAL_ERROR ) { // server errors
 			log.warn("<<<<<<< 500 SERVER_INTERNAL_ERROR Register: Server Error: " + response.getStatusCode());
@@ -82,13 +82,13 @@ public class CRegister extends CTransaction {
 		createRequest();
 
 		if (statusCode == 401 || statusCode == 407) { // 401 Peer Authentication
-			log.info("Authentication Required in REGISTER transaction for user: " + localParty.getAddress().toString());
+			log.info("Authentication Required in REGISTER transaction for user: " + localParty.getAddress());
 			WWWAuthenticateHeader wwwAuthenticateHeader;
 			wwwAuthenticateHeader = (WWWAuthenticateHeader) response.getHeader(WWWAuthenticateHeader.NAME);
 			log.debug("WWWAuthenticateHeader is " + wwwAuthenticateHeader.toString());
 			request.setHeader(wwwAuthenticateHeader);
 		} else if (statusCode == 407) { // 407: Proxy Auth Required
-			log.info("Proxy Authentication Required in REGISTER transaction for user: " + localParty.getAddress().toString());
+			log.info("Proxy Authentication Required in REGISTER transaction for user: " + localParty.getAddress());
 			ProxyAuthenticateHeader proxyAuthenticateHeader;
 			proxyAuthenticateHeader = (ProxyAuthenticateHeader) response.getHeader(ProxyAuthenticateHeader.NAME);
 			log.debug("ProxyAuthenticateHeader is " + proxyAuthenticateHeader.toString());

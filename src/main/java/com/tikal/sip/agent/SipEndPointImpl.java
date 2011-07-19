@@ -8,8 +8,8 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 import javax.media.mscontrol.join.Joinable.Direction;
-import javaxt.sip.address.Address;
-import javaxt.sip.header.CallIdHeader;
+import javax.sip.address.Address;
+import javax.sip.header.CallIdHeader;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -149,7 +149,7 @@ public class SipEndPointImpl implements SipEndPoint {
 
 	private void register() throws ServerInternalErrorException {
 
-		log.info("Send REGISTER request: " + sipUriAddress.toString());
+		log.info("Send REGISTER request: " + sipUriAddress);
 		CRegister register;
 
 		// Register new contact

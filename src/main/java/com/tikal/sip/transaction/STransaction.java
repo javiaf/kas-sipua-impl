@@ -1,22 +1,22 @@
 package com.tikal.sip.transaction;
 
-import com.tikal.javax.sip.header.ContentLength;
+import gov.nist.javax.sip.header.ContentLength;
 
 import java.text.ParseException;
 
 import javax.media.mscontrol.EventType;
 import javax.media.mscontrol.MediaErr;
 import javax.media.mscontrol.networkconnection.SdpPortManagerEvent;
-import javaxt.sdp.SdpException;
-import javaxt.sdp.SessionDescription;
-import javaxt.sip.Dialog;
-import javaxt.sip.ServerTransaction;
-import javaxt.sip.header.ContactHeader;
-import javaxt.sip.header.ContentTypeHeader;
-import javaxt.sip.header.FromHeader;
-import javaxt.sip.header.ToHeader;
-import javaxt.sip.message.Request;
-import javaxt.sip.message.Response;
+import javax.sdp.SdpException;
+import javax.sdp.SessionDescription;
+import javax.sip.Dialog;
+import javax.sip.ServerTransaction;
+import javax.sip.header.ContactHeader;
+import javax.sip.header.ContentTypeHeader;
+import javax.sip.header.FromHeader;
+import javax.sip.header.ToHeader;
+import javax.sip.message.Request;
+import javax.sip.message.Response;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;

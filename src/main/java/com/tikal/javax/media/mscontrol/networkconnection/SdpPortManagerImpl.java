@@ -12,8 +12,8 @@ import javax.media.mscontrol.networkconnection.NetworkConnection;
 import javax.media.mscontrol.networkconnection.SdpPortManager;
 import javax.media.mscontrol.networkconnection.SdpPortManagerEvent;
 import javax.media.mscontrol.networkconnection.SdpPortManagerException;
-import javaxt.sdp.SdpException;
-import javaxt.sdp.SessionDescription;
+import javax.sdp.SdpException;
+import javax.sdp.SessionDescription;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;

@@ -2,13 +2,13 @@ package com.tikal.sip.transaction;
 
 import javax.media.mscontrol.EventType;
 import javax.media.mscontrol.networkconnection.SdpPortManagerEvent;
-import javaxt.sip.InvalidArgumentException;
-import javaxt.sip.ResponseEvent;
-import javaxt.sip.SipException;
-import javaxt.sip.TimeoutEvent;
-import javaxt.sip.header.CSeqHeader;
-import javaxt.sip.message.Request;
-import javaxt.sip.message.Response;
+import javax.sip.InvalidArgumentException;
+import javax.sip.ResponseEvent;
+import javax.sip.SipException;
+import javax.sip.TimeoutEvent;
+import javax.sip.header.CSeqHeader;
+import javax.sip.message.Request;
+import javax.sip.message.Response;
 
 import com.tikal.sip.agent.SipContext;
 import com.tikal.sip.exception.ServerInternalErrorException;

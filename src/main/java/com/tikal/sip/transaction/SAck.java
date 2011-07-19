@@ -2,8 +2,8 @@ package com.tikal.sip.transaction;
 
 import javax.media.mscontrol.EventType;
 import javax.media.mscontrol.networkconnection.SdpPortManagerEvent;
-import javaxt.sip.ServerTransaction;
-import javaxt.sip.message.Request;
+import javax.sip.ServerTransaction;
+import javax.sip.message.Request;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;

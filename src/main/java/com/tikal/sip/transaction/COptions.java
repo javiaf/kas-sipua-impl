@@ -5,9 +5,9 @@
  */
 package com.tikal.sip.transaction;
 
-import javaxt.sip.ResponseEvent;
-import javaxt.sip.address.Address;
-import javaxt.sip.message.Request;
+import javax.sip.ResponseEvent;
+import javax.sip.address.Address;
+import javax.sip.message.Request;
 
 import com.tikal.sip.agent.SipEndPointImpl;
 import com.tikal.sip.exception.ServerInternalErrorException;

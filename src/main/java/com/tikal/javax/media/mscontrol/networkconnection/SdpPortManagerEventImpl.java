@@ -8,7 +8,7 @@ import javax.media.mscontrol.Qualifier;
 import javax.media.mscontrol.networkconnection.SdpPortManager;
 import javax.media.mscontrol.networkconnection.SdpPortManagerEvent;
 import javax.media.mscontrol.resource.Trigger;
-import javaxt.sdp.SessionDescription;
+import javax.sdp.SessionDescription;
 
 public class SdpPortManagerEventImpl extends EventObject implements
 		SdpPortManagerEvent {

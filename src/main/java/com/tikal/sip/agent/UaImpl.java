@@ -4,26 +4,26 @@ import java.text.ParseException;
 import java.util.HashMap;
 import java.util.Properties;
 
-import javaxt.sip.ClientTransaction;
-import javaxt.sip.Dialog;
-import javaxt.sip.DialogTerminatedEvent;
-import javaxt.sip.IOExceptionEvent;
-import javaxt.sip.ListeningPoint;
-import javaxt.sip.ObjectInUseException;
-import javaxt.sip.RequestEvent;
-import javaxt.sip.ResponseEvent;
-import javaxt.sip.ServerTransaction;
-import javaxt.sip.SipListener;
-import javaxt.sip.SipProvider;
-import javaxt.sip.SipStack;
-import javaxt.sip.TimeoutEvent;
-import javaxt.sip.TransactionTerminatedEvent;
-import javaxt.sip.address.Address;
-import javaxt.sip.address.SipURI;
-import javaxt.sip.header.ToHeader;
-import javaxt.sip.header.UserAgentHeader;
-import javaxt.sip.message.Request;
-import javaxt.sip.message.Response;
+import javax.sip.ClientTransaction;
+import javax.sip.Dialog;
+import javax.sip.DialogTerminatedEvent;
+import javax.sip.IOExceptionEvent;
+import javax.sip.ListeningPoint;
+import javax.sip.ObjectInUseException;
+import javax.sip.RequestEvent;
+import javax.sip.ResponseEvent;
+import javax.sip.ServerTransaction;
+import javax.sip.SipListener;
+import javax.sip.SipProvider;
+import javax.sip.SipStack;
+import javax.sip.TimeoutEvent;
+import javax.sip.TransactionTerminatedEvent;
+import javax.sip.address.Address;
+import javax.sip.address.SipURI;
+import javax.sip.header.ToHeader;
+import javax.sip.header.UserAgentHeader;
+import javax.sip.message.Request;
+import javax.sip.message.Response;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -84,11 +84,11 @@ public class UaImpl implements SipListener, UA{
 		jainProps.setProperty("javax.sip.OUTBOUND_PROXY", outboundProxy);
 
 		jainProps.setProperty("javax.sip.STACK_NAME", "siplib_" + System.currentTimeMillis());
-		jainProps.setProperty("com.tikal.javax.sip.REENTRANT_LISTENER", "true");
+		jainProps.setProperty("gov.nist.javax.sip.REENTRANT_LISTENER", "true");
 
 		// Drop the client connection after we are done with the transaction.
-		jainProps.setProperty("com.tikal.javax.sip.CACHE_CLIENT_CONNECTIONS", "true");
-		jainProps.setProperty("com.tikal.javax.sip.THREAD_POOL_SIZE", "100");
+		jainProps.setProperty("gov.nist.javax.sip.CACHE_CLIENT_CONNECTIONS", "true");
+		jainProps.setProperty("gov.nist.javax.sip.THREAD_POOL_SIZE", "100");
 		// Set to 0 (or NONE) in your production code for max speed.
 		// You need 16 (or TRACE) for logging traces. 32 (or DEBUG) for debug +
 		// traces.

@@ -5,13 +5,10 @@ import javax.media.mscontrol.MsControlException;
 import javax.media.mscontrol.networkconnection.NetworkConnection;
 import javax.media.mscontrol.networkconnection.SdpPortManager;
 import javax.media.mscontrol.networkconnection.SdpPortManagerEvent;
-import javax.media.mscontrol.networkconnection.SdpPortManagerException;
-import javaxt.sdp.SdpFactory;
-import javaxt.sdp.SdpParseException;
-import javaxt.sdp.SessionDescription;
-import javaxt.sip.Dialog;
-import javaxt.sip.TimeoutEvent;
-import javaxt.sip.address.Address;
+import javax.sdp.SessionDescription;
+import javax.sip.Dialog;
+import javax.sip.TimeoutEvent;
+import javax.sip.address.Address;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;

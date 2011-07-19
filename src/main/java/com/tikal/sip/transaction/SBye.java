@@ -1,9 +1,9 @@
 package com.tikal.sip.transaction;
 
-import javaxt.sip.ServerTransaction;
-import javaxt.sip.TimeoutEvent;
-import javaxt.sip.message.Request;
-import javaxt.sip.message.Response;
+import javax.sip.ServerTransaction;
+import javax.sip.TimeoutEvent;
+import javax.sip.message.Request;
+import javax.sip.message.Response;
 
 import com.tikal.sip.agent.SipEndPointImpl;
 import com.tikal.sip.exception.ServerInternalErrorException;
