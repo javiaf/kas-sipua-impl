@@ -26,6 +26,13 @@ public class UaFactory {
 	
 	// UA initializations
 	private static SipFactory sipFactory = SipFactory.getInstance();
+	{
+		try {
+			sipFactory.setPathName("gov.nist");
+		} catch (Exception e) {
+			
+		}
+	}
 	
 	// Create Factory objects
 	private static AddressFactory addressFactory;
