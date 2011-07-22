@@ -151,6 +151,16 @@
 			<id>maven-site</id>
 			<url>scp://repository.kurento.com/var/www/site/tk-android-sipua/${project.version}</url>
 		</site>
+		<repository>
+			<id>releases</id>
+			<name>Kurento releases repository</name>
+			<url>scp://repository.kurento.com/opt/tomcat/current/data/repositories/internal</url>
+		</repository>
+		<snapshotRepository>
+			<id>snapshots</id>
+			<name>Kurento snapshots repository</name>
+			<url>scp://repository.kurento.com/opt/tomcat/current/data/repositories/snapshots</url>
+		</snapshotRepository>
 	</distributionManagement>
 
 	<scm>
