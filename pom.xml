@@ -53,9 +53,26 @@
 
 	<repositories>
 		<repository>
-			<id>Kurento public</id>
+			<id>kurento-snapshots</id>
+			<name>Kurento Snapshot Repository</name>
+			<url>https://repository.kurento.com/archiva/repository/snapshots/</url>
+			<releases>
+				<enabled>false</enabled>
+			</releases>
+			<snapshots>
+				<enabled>true</enabled>
+			</snapshots>
+		</repository>
+		<repository>
+			<id>kurento-releases</id>
 			<name>Kurento Repository</name>
-			<url>http://repository.kurento.com:8081/nexus/content/repositories/public/</url>
+			<url>https://repository.kurento.com/archiva/repository/internal/</url>
+			<releases>
+				<enabled>true</enabled>
+			</releases>
+			<snapshots>
+				<enabled>false</enabled>
+			</snapshots>
 		</repository>
 		<repository>
 			<id>mavencentral</id>
