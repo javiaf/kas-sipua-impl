@@ -9,7 +9,7 @@
 
 	<name>Tikal PC Sip User Agent</name>
 	<description>TODO: Add description here</description>
-	<url>http://193.147.51.37/site/tk-android-sipua</url>
+	<url>http://repository.kurento.com/site/tk-android-sipua</url>
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -149,7 +149,7 @@
 	<distributionManagement>
 		<site>
 			<id>maven-site</id>
-			<url>scp://193.147.51.37/var/www/site/tk-android-sipua/${project.version}</url>
+			<url>scp://repository.kurento.com/var/www/site/tk-android-sipua/${project.version}</url>
 		</site>
 	</distributionManagement>
 
