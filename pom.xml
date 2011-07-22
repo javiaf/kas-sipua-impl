@@ -125,4 +125,10 @@
 			<url>scp://193.147.51.37/var/www/site/tk-android-sipua/${project.version}</url>
 		</site>
 	</distributionManagement>
+
+	<scm>
+		<connection>scm:svn:http://www.kurento.com/svn/mms_gstreamer/src/tk-android-sipua/trunk</connection>
+		<developerConnection>scm:svn:https://www.kurento.com/svn/mms_gstreamer/src/tk-android-sipua/trunk</developerConnection>
+		<url>scm:svn:https://www.kurento.com/svn/mms_gstreamer/src</url>
+	</scm>
 </project>
