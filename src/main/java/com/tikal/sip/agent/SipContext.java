@@ -2,9 +2,6 @@ package com.tikal.sip.agent;
 
 import java.io.IOException;
 
-import javax.media.mscontrol.MsControlException;
-import javax.media.mscontrol.join.JoinableStream.StreamType;
-import javax.media.mscontrol.networkconnection.NetworkConnection;
 import javax.sip.Dialog;
 import javax.sip.address.Address;
 import javax.sip.message.Response;
@@ -12,6 +9,9 @@ import javax.sip.message.Response;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import com.tikal.mscontrol.MsControlException;
+import com.tikal.mscontrol.networkconnection.NetworkConnection;
+import com.tikal.mscontrol.join.JoinableStream.StreamType;
 import com.tikal.sip.SipCall;
 import com.tikal.sip.SipCallListener;
 import com.tikal.sip.event.SipCallEvent;

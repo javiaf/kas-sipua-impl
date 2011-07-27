@@ -4,12 +4,8 @@ import gov.nist.javax.sip.header.ContentLength;
 
 import java.text.ParseException;
 
-import javax.media.mscontrol.EventType;
-import javax.media.mscontrol.MediaErr;
-import javax.media.mscontrol.networkconnection.SdpPortManagerEvent;
 import javax.sdp.SdpException;
 import javax.sdp.SessionDescription;
-import javax.sip.Dialog;
 import javax.sip.ServerTransaction;
 import javax.sip.header.ContactHeader;
 import javax.sip.header.ContentTypeHeader;
@@ -22,6 +18,9 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import com.tikal.media.format.SessionSpec;
+import com.tikal.mscontrol.EventType;
+import com.tikal.mscontrol.MediaErr;
+import com.tikal.mscontrol.networkconnection.SdpPortManagerEvent;
 import com.tikal.sip.agent.SipContext;
 import com.tikal.sip.agent.SipEndPointImpl;
 import com.tikal.sip.agent.UaFactory;

@@ -1,7 +1,5 @@
 package com.tikal.sip.transaction;
 
-import javax.media.mscontrol.EventType;
-import javax.media.mscontrol.networkconnection.SdpPortManagerEvent;
 import javax.sdp.SdpException;
 import javax.sip.ServerTransaction;
 import javax.sip.TimeoutEvent;
@@ -12,6 +10,8 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import com.tikal.media.format.SessionSpec;
+import com.tikal.mscontrol.EventType;
+import com.tikal.mscontrol.networkconnection.SdpPortManagerEvent;
 import com.tikal.sip.agent.SipEndPointImpl;
 import com.tikal.sip.exception.ServerInternalErrorException;
 import com.tikal.sip.exception.SipTransactionException;

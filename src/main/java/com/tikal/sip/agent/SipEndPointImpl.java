@@ -7,13 +7,13 @@ import java.util.Random;
 import java.util.Timer;
 import java.util.TimerTask;
 
-import javax.media.mscontrol.join.Joinable.Direction;
 import javax.sip.address.Address;
 import javax.sip.header.CallIdHeader;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import com.tikal.mscontrol.join.Joinable.Direction;
 import com.tikal.sip.SipCall;
 import com.tikal.sip.SipCallListener;
 import com.tikal.sip.SipEndPoint;

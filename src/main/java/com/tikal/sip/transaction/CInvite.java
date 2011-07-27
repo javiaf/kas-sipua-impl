@@ -1,7 +1,5 @@
 package com.tikal.sip.transaction;
 
-import javax.media.mscontrol.EventType;
-import javax.media.mscontrol.networkconnection.SdpPortManagerEvent;
 import javax.sip.InvalidArgumentException;
 import javax.sip.ResponseEvent;
 import javax.sip.SipException;
@@ -10,6 +8,8 @@ import javax.sip.header.CSeqHeader;
 import javax.sip.message.Request;
 import javax.sip.message.Response;
 
+import com.tikal.mscontrol.EventType;
+import com.tikal.mscontrol.networkconnection.SdpPortManagerEvent;
 import com.tikal.sip.agent.SipContext;
 import com.tikal.sip.exception.ServerInternalErrorException;
 
@@ -24,9 +24,7 @@ public class CInvite extends CTransaction {
 		CTransaction.cSeqNumber++;
 
 		// Add special headers for INVITE
-		// In the android implementation the contact header is added 
-		// automatically and adding it again causes an error
-//		request.addHeader(buildContactHeader()); // Contact
+		request.addHeader(buildContactHeader()); // Contact
 		request.addHeader(buildAllowHeader()); // Allow
 		request.addHeader(buildSupportedHeader()); // SupportHeader
 
