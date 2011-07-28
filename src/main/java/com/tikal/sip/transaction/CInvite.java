@@ -24,7 +24,9 @@ public class CInvite extends CTransaction {
 		CTransaction.cSeqNumber++;
 
 		// Add special headers for INVITE
-		request.addHeader(buildContactHeader()); // Contact
+		// In the android implementation the contact header is added 
+		// automatically and adding it again causes an error
+//		request.addHeader(buildContactHeader()); // Contact
 		request.addHeader(buildAllowHeader()); // Allow
 		request.addHeader(buildSupportedHeader()); // SupportHeader
 
