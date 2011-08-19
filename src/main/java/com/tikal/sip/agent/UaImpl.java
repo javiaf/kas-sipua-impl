@@ -405,14 +405,14 @@ public class UaImpl implements SipListener, UA{
 	// User manager interface
 	//
 	/////////////
-	public SipEndPoint registerEndPoint(String user, String realm , int expires, SipEndPointListener handler) throws ParseException, ServerInternalErrorException {
+	public SipEndPoint registerEndPoint(String user, String realm , String password, int expires, SipEndPointListener handler) throws ParseException, ServerInternalErrorException {
 		SipEndPointImpl epImpl;
 		String epAddress = user+"@"+realm;
 		if ((epImpl = endPoints.get(epAddress)) != null) {
 			return epImpl;
 		}
 				
-		epImpl = new SipEndPointImpl(user,realm,expires, this, handler);
+		epImpl = new SipEndPointImpl(user,realm, password, expires, this, handler);
 		endPoints.put(epAddress,epImpl);
 		return epImpl;
 	}

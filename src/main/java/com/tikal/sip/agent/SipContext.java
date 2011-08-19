@@ -258,6 +258,11 @@ public class SipContext implements SipCall {
 //			pendingRequest.cancel();
 			incomingPendingRequest = null;	
 		}
+		if (networkConnection != null ) {
+			networkConnection.release();
+			networkConnection = null;
+		}
+		notifySipCallEvent(SipCallEvent.CALL_CANCEL);
 	}
 
 }

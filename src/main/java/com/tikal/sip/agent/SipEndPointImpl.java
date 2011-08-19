@@ -1,5 +1,8 @@
 package com.tikal.sip.agent;
 
+import java.nio.charset.Charset;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.List;
@@ -42,6 +45,7 @@ public class SipEndPointImpl implements SipEndPoint {
 	private CallIdHeader registrarCallId;
 	private static Random rnd = new Random(System.currentTimeMillis());
 	private long cSeqNumber = Math.abs(rnd.nextLong() % 100000000);
+	private String password;
 
 	// Timer
 	private static Timer timer = new Timer();
@@ -52,7 +56,7 @@ public class SipEndPointImpl implements SipEndPoint {
 	//
 	// ////////////
 
-	protected SipEndPointImpl(String userName, String realm, int expires,
+	protected SipEndPointImpl(String userName, String realm,String password, int expires,
 			UaImpl ua, SipEndPointListener handler) throws ParseException,
 			ServerInternalErrorException {
 
@@ -69,7 +73,8 @@ public class SipEndPointImpl implements SipEndPoint {
 		this.contactAddress = UaFactory.getAddressFactory().createAddress(
 				"sip:" + userName + "@" + ua.getLocalAddress() + ":"
 						+ ua.getLocalPort());
-
+		this.password = password;
+		
 		register();
 	}
 
@@ -146,6 +151,34 @@ public class SipEndPointImpl implements SipEndPoint {
 	public int getExpires() {
 		return expires;
 	}
+	
+	public String getPassword(String realm) {
+		MessageDigest md;
+		try {
+			md = MessageDigest.getInstance("MD5");
+			md.update((password+":").getBytes(Charset.forName("UTF8")));
+			md.update((realm+":").getBytes(Charset.forName("UTF8")));
+			md.update(userName.getBytes(Charset.forName("UTF8")));
+			byte[] cod = md.digest();
+			this.password = toHexString(cod);
+		} catch (NoSuchAlgorithmException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return password;
+	}
+	
+	public static String toHexString(byte b[]) {
+        int pos = 0;
+	         char[] c = new char[b.length*2];
+		for (int i=0; i< b.length; i++) {
+		c[pos++] = toHex[(b[i] >> 4) & 0x0F];
+		c[pos++] = toHex[b[i] & 0x0f];
+		}
+		return new String(c);
+	}
+ private static final char[] toHex = { '0', '1', '2', '3', '4', '5', '6',
+	'7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f' };
 
 	private void register() throws ServerInternalErrorException {
 
