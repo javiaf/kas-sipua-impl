@@ -36,6 +36,7 @@ import com.tikal.sip.exception.SipTransactionException;
 import com.tikal.sip.transaction.CTransaction;
 import com.tikal.sip.transaction.SAck;
 import com.tikal.sip.transaction.SBye;
+import com.tikal.sip.transaction.SCancel;
 import com.tikal.sip.transaction.SInvite;
 import com.tikal.sip.transaction.STransaction;
 import com.tikal.sip.util.SipConfig;
@@ -217,7 +218,10 @@ public class UaImpl implements SipListener, UA{
 				} else if (reqMethod.equals(Request.BYE)) {
 					log.info("Detected BYE request");
 					sTrns = new SBye(serverTransaction, localParty);
-				} else {
+				} else if (reqMethod.equals(Request.CANCEL)) {
+					log.info("Detected BYE request");
+					sTrns = new SCancel(serverTransaction, localParty);
+				}else {
 					log.error("Unsupported method on request: " + reqMethod);
 					sendStateless(Response.NOT_IMPLEMENTED, requestEvent.getRequest());
 				}

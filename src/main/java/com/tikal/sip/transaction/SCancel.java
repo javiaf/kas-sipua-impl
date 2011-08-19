@@ -2,9 +2,7 @@ package com.tikal.sip.transaction;
 
 import java.io.IOException;
 
-import javax.servlet.sip.SipServletResponse;
 import javax.sip.ServerTransaction;
-import javax.sip.TimeoutEvent;
 import javax.sip.message.Request;
 import javax.sip.message.Response;
 
@@ -22,7 +20,11 @@ public class SCancel extends STransaction {
 			sendResponse(Response.CALL_OR_TRANSACTION_DOES_NOT_EXIST, null);
 		else {
 			sendResponse(Response.OK, null);
-			sipContext.cancelCall();
+			try {
+				sipContext.cancelCall();
+			} catch (IOException e) {
+				//
+			}
 		}
 	}
 
