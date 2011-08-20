@@ -299,6 +299,22 @@ public abstract class CTransaction extends Transaction {
 					"Sip Exception sending INVITE request", e);
 		}
 	}
+	
+	
+	public void sendCancel() throws ServerInternalErrorException {
+		if (clientTransaction != null) {
+			try {
+				Request cancel = clientTransaction.createCancel();
+				ClientTransaction cancelTransaction = localParty.getUa().getSipProvider()
+				.getNewClientTransaction(cancel);
+				cancelTransaction.sendRequest();
+			} catch (SipException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			
+		}
+	}
 
 	public abstract void processResponse(ResponseEvent event)
 			throws ServerInternalErrorException;

@@ -152,19 +152,7 @@ public class SipEndPointImpl implements SipEndPoint {
 		return expires;
 	}
 	
-	public String getPassword(String realm) {
-		MessageDigest md;
-		try {
-			md = MessageDigest.getInstance("MD5");
-			md.update((password+":").getBytes(Charset.forName("UTF8")));
-			md.update((realm+":").getBytes(Charset.forName("UTF8")));
-			md.update(userName.getBytes(Charset.forName("UTF8")));
-			byte[] cod = md.digest();
-			this.password = toHexString(cod);
-		} catch (NoSuchAlgorithmException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+	public String getPassword() {
 		return password;
 	}
 	

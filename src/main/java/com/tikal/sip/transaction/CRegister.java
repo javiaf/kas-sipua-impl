@@ -1,12 +1,17 @@
 package com.tikal.sip.transaction;
 
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.text.ParseException;
 
 import javax.sip.InvalidArgumentException;
+import javax.sip.PeerUnavailableException;
 import javax.sip.ResponseEvent;
 import javax.sip.TimeoutEvent;
+import javax.sip.header.AuthorizationHeader;
 import javax.sip.header.CSeqHeader;
 import javax.sip.header.CallIdHeader;
+import javax.sip.header.HeaderFactory;
 import javax.sip.header.ProxyAuthenticateHeader;
 import javax.sip.header.WWWAuthenticateHeader;
 import javax.sip.message.Request;
@@ -83,10 +88,8 @@ public class CRegister extends CTransaction {
 
 		if (statusCode == 401 || statusCode == 407) { // 401 Peer Authentication
 			log.info("Authentication Required in REGISTER transaction for user: " + localParty.getAddress());
-			WWWAuthenticateHeader wwwAuthenticateHeader;
-			wwwAuthenticateHeader = (WWWAuthenticateHeader) response.getHeader(WWWAuthenticateHeader.NAME);
-			log.debug("WWWAuthenticateHeader is " + wwwAuthenticateHeader.toString());
-			request.setHeader(wwwAuthenticateHeader);
+			AuthorizationHeader authorization  = getAuthorizationHearder(response);
+			request.setHeader(authorization);
 		} else if (statusCode == 407) { // 407: Proxy Auth Required
 			log.info("Proxy Authentication Required in REGISTER transaction for user: " + localParty.getAddress());
 			ProxyAuthenticateHeader proxyAuthenticateHeader;
@@ -99,9 +102,95 @@ public class CRegister extends CTransaction {
 
 	}
 
+	private AuthorizationHeader getAuthorizationHearder(Response response) {
+		WWWAuthenticateHeader wwwAuthenticateHeader;
+		wwwAuthenticateHeader = (WWWAuthenticateHeader) response.getHeader(WWWAuthenticateHeader.NAME);
+		//name
+		String schema = wwwAuthenticateHeader.getScheme();
+		String realm = wwwAuthenticateHeader.getRealm();
+		String nonce = wwwAuthenticateHeader.getNonce();
+		String alg = wwwAuthenticateHeader.getAlgorithm();
+		String opaque = wwwAuthenticateHeader.getOpaque();
+		
+		log.debug("WWWAuthenticateHeader is " + wwwAuthenticateHeader.toString());
+		AuthorizationHeader authorization = null;
+		try {
+			HeaderFactory factory = UaFactory.getSipFactory().createHeaderFactory();
+			authorization = factory.createAuthorizationHeader(schema);
+			authorization.setUsername("quizh");
+			//authorization.setScheme(schema);
+			authorization.setRealm(realm);
+			authorization.setNonce(nonce);
+			authorization.setURI(localParty.getContact().getURI());
+			String user = localParty.getAddress().getDisplayName();
+			String respon = getAuthResponse(user, realm, localParty.getPassword(), Integer.toString(response.getStatusCode()), localParty.getContact().getURI().toString(), nonce);
+			authorization.setResponse(respon);
+			authorization.setAlgorithm(alg);
+			authorization.setOpaque(opaque);
+			
+		} catch (ParseException e1) {
+			log.error(e1);
+		} catch (PeerUnavailableException e) {
+			log.error(e);
+		}
+		return authorization;
+
+	}
+
 	@Override
 	public void processTimeOut(TimeoutEvent timeoutEvent) {
 		log.error("Register Failure due to request timeout");
 		localParty.notifyEvent(SipEndPointEvent.REGISTER_USER_FAIL);
 	}
+	
+	private String getAuthResponse(String userName, String realm , String password,String method, String uri, String nonce){
+		String cnonce = null;
+		MessageDigest messageDigest = null;
+		try {
+			messageDigest = MessageDigest.getInstance("MD5");
+		} catch (NoSuchAlgorithmException e) {
+			//FIXME
+			log.error(e);
+		}
+         // A1
+         String A1 = userName + ":" + realm+ ":" +   password ;
+         byte mdbytes[] = messageDigest.digest(A1.getBytes());
+         String HA1 = toHexString(mdbytes);
+         log.debug("DigestClientAuthenticationMethod, generateResponse(), HA1:"+HA1+"!");
+         //A2
+         String A2 = method.toUpperCase() + ":" + uri ;
+         mdbytes = messageDigest.digest(A2.getBytes());
+         String HA2 = toHexString(mdbytes);
+         log.debug("DigestClientAuthenticationMethod, generateResponse(), HA2:"+HA2+"!");
+         //KD
+         String KD = HA1 + ":" + nonce;
+//         if (cnonce != null) {
+//             if(cnonce.length()>0) KD += ":" + cnonce;
+//         }
+         KD += ":" + HA2;
+         mdbytes = messageDigest.digest(KD.getBytes());
+         String response = toHexString(mdbytes);
+        
+         log.debug("DigestClientAlgorithm, generateResponse():"+
+         " response generated: "+response);
+         
+         return response;
+	    
+	}
+	public static String toHexString(byte b[]) {
+        int pos = 0;
+	         char[] c = new char[b.length*2];
+		for (int i=0; i< b.length; i++) {
+		c[pos++] = toHex[(b[i] >> 4) & 0x0F];
+		c[pos++] = toHex[b[i] & 0x0f];
+		}
+		return new String(c);
+	}
+	 private static final char[] toHex = { '0', '1', '2', '3', '4', '5', '6',
+		'7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f' 
+	 };
+ 
+
+	
+
 }

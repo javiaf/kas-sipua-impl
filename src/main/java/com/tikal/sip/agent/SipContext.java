@@ -265,4 +265,18 @@ public class SipContext implements SipCall {
 		notifySipCallEvent(SipCallEvent.CALL_CANCEL);
 	}
 
+	@Override
+	public void cancel() throws ServerInternalErrorException {
+		log.debug("Request to terminate callId: " + dialog.getCallId());
+		try {
+			new CBye(this);
+		} catch (ServerInternalErrorException e) {
+			log.warn("Unable to send BYE request", e);
+		}
+		if (networkConnection != null ) {
+			networkConnection.release();
+			networkConnection = null;
+		}
+	}
+
 }
