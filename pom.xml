@@ -6,8 +6,8 @@
 	<version>1.0.0-SNAPSHOT</version>
 	<packaging>jar</packaging>
 
-	<name>Tikal PC Sip User Agent</name>
-	<description>TODO: Add description here</description>
+	<name>Android Sip User Agent</name>
+	<description>tk-sipua implementation for Android.</description>
 	<url>http://repository.kurento.com/site/tk-android-sipua</url>
 
 	<properties>
@@ -54,7 +54,7 @@
 		<repository>
 			<id>kurento-snapshots</id>
 			<name>Kurento Snapshot Repository</name>
-			<url>https://repository.kurento.com/archiva/repository/snapshots/</url>
+			<url>http://repository.kurento.com/archiva/repository/snapshots/</url>
 			<releases>
 				<enabled>false</enabled>
 			</releases>
@@ -65,7 +65,7 @@
 		<repository>
 			<id>kurento-releases</id>
 			<name>Kurento Repository</name>
-			<url>https://repository.kurento.com/archiva/repository/internal/</url>
+			<url>http://repository.kurento.com/archiva/repository/internal/</url>
 			<releases>
 				<enabled>true</enabled>
 			</releases>
@@ -163,8 +163,8 @@
 	</distributionManagement>
 
 	<scm>
-		<connection>scm:svn:http://www.kurento.com/svn/mms_gstreamer/src/tk-android-sipua/trunk</connection>
-		<developerConnection>scm:svn:https://www.kurento.com/svn/mms_gstreamer/src/tk-android-sipua/trunk</developerConnection>
-		<url>scm:svn:https://www.kurento.com/svn/mms_gstreamer/src</url>
+		<connection>scm:git:ssh://repository.kurento.com/git/tk-android-sipua</connection>
+		<developerConnection>scm:git:ssh://repository.kurento.com/git/tk-android-sipua</developerConnection>
+		<url>scm:git:ssh://repository.kurento.com/git/tk-android-sipua</url>
 	</scm>
 </project>
