@@ -148,7 +148,7 @@
 	<distributionManagement>
 		<site>
 			<id>maven-site</id>
-			<url>scp://repository.kurento.com/var/www/site/tk-android-sipua/${project.version}</url>
+			<url>scp://repository.kurento.com/var/www/kurento/site/tk-android-sipua/${project.version}</url>
 		</site>
 		<repository>
 			<id>releases</id>
