@@ -78,6 +78,13 @@ public abstract class CTransaction extends Transaction {
 		createRequest();
 	}
 
+	protected CTransaction(String method, Request request,
+			SipEndPointImpl localParty, Address remoteParty)
+			throws ServerInternalErrorException {
+		super(method, localParty, remoteParty);
+		this.request = request;
+	}
+
 	// //////////////
 	//
 	// GETTERS
@@ -296,23 +303,24 @@ public abstract class CTransaction extends Transaction {
 				clientTransaction.sendRequest();
 		} catch (SipException e) {
 			throw new ServerInternalErrorException(
-					"Sip Exception sending INVITE request", e);
+					"Sip Exception sending INVITE request", e); // BYE too...
 		}
 	}
-	
-	
+
 	public void sendCancel() throws ServerInternalErrorException {
-		if (clientTransaction != null) {
+		if (request != null) {
 			try {
-				Request cancel = clientTransaction.createCancel();
-				ClientTransaction cancelTransaction = localParty.getUa().getSipProvider()
-				.getNewClientTransaction(cancel);
+				ClientTransaction cancelTransaction = localParty.getUa()
+						.getSipProvider().getNewClientTransaction(request);
+				log.info("SIP send request\n"
+						+ ">>>>>>>>>> SIP send request >>>>>>>>>>\n"
+						+ cancelTransaction.getRequest().toString()
+						+ ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
 				cancelTransaction.sendRequest();
 			} catch (SipException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+				throw new ServerInternalErrorException(
+						"Sip Exception sending CANCEL request", e);
 			}
-			
 		}
 	}
 
@@ -338,7 +346,8 @@ public abstract class CTransaction extends Transaction {
 					// Generated after processSdpOffer : SDP = response to give
 					this.sendRequest(event.getMediaServerSdp());
 
-				} else if (SdpPortManagerEvent.ANSWER_PROCESSED.equals(eventType)) {
+				} else if (SdpPortManagerEvent.ANSWER_PROCESSED
+						.equals(eventType)) {
 					log.debug("SdpPortManager successfully processed SDP answer received from remote peer");
 					// sipContext.notifySipCallEvent(SipCallEvent.)
 				} else {

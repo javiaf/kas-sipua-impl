@@ -21,7 +21,6 @@ import javax.sip.TransactionTerminatedEvent;
 import javax.sip.address.Address;
 import javax.sip.address.SipURI;
 import javax.sip.header.ToHeader;
-import javax.sip.header.UserAgentHeader;
 import javax.sip.message.Request;
 import javax.sip.message.Response;
 
@@ -49,7 +48,7 @@ public class UaImpl implements SipListener, UA{
 	private SipProvider sipProvider;
 	private SipStack sipStack;
 	
-	private UserAgentHeader userAgent;
+//	private UserAgentHeader userAgent;
 	
 	// Configuration parameters
 	private String localAddress = "127.0.0.1";
@@ -219,7 +218,7 @@ public class UaImpl implements SipListener, UA{
 					log.info("Detected BYE request");
 					sTrns = new SBye(serverTransaction, localParty);
 				} else if (reqMethod.equals(Request.CANCEL)) {
-					log.info("Detected BYE request");
+					log.info("Detected Cancel request");
 					sTrns = new SCancel(serverTransaction, localParty);
 				}else {
 					log.error("Unsupported method on request: " + reqMethod);
