@@ -1,7 +1,5 @@
 package com.tikal.sip.transaction;
 
-import java.io.IOException;
-
 import javax.sip.ServerTransaction;
 import javax.sip.message.Request;
 import javax.sip.message.Response;
@@ -12,19 +10,16 @@ import com.tikal.sip.exception.SipTransactionException;
 
 public class SCancel extends STransaction {
 
-	public SCancel(ServerTransaction serverTransaction, SipEndPointImpl localParty)
-			throws ServerInternalErrorException, SipTransactionException {
+	public SCancel(ServerTransaction serverTransaction,
+			SipEndPointImpl localParty) throws ServerInternalErrorException,
+			SipTransactionException {
 		super(Request.CANCEL, serverTransaction, localParty);
 
 		if (sipContext == null)
 			sendResponse(Response.CALL_OR_TRANSACTION_DOES_NOT_EXIST, null);
 		else {
 			sendResponse(Response.OK, null);
-			try {
-				sipContext.cancelCall();
-			} catch (IOException e) {
-				//
-			}
+			sipContext.cancelCall();
 		}
 	}
 

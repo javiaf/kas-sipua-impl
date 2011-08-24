@@ -1,5 +1,6 @@
 package com.tikal.sip.transaction;
 
+import javax.sip.DialogState;
 import javax.sip.InvalidArgumentException;
 import javax.sip.ResponseEvent;
 import javax.sip.SipException;
@@ -16,7 +17,8 @@ import com.tikal.sip.exception.ServerInternalErrorException;
 public class CInvite extends CTransaction {
 
 	public CInvite(SipContext sipContext) throws ServerInternalErrorException {
-		super(Request.INVITE, sipContext.getEndPoint(), sipContext.getRemoteParty());
+		super(Request.INVITE, sipContext.getEndPoint(), sipContext
+				.getRemoteParty());
 
 		this.sipContext = sipContext;
 
@@ -24,9 +26,9 @@ public class CInvite extends CTransaction {
 		CTransaction.cSeqNumber++;
 
 		// Add special headers for INVITE
-		// In the android implementation the contact header is added 
+		// In the android implementation the contact header is added
 		// automatically and adding it again causes an error
-//		request.addHeader(buildContactHeader()); // Contact
+		// request.addHeader(buildContactHeader()); // Contact
 		request.addHeader(buildAllowHeader()); // Allow
 		request.addHeader(buildSupportedHeader()); // SupportHeader
 
@@ -40,7 +42,8 @@ public class CInvite extends CTransaction {
 			throws ServerInternalErrorException {
 		Response response = event.getResponse();
 		int statusCode = response.getStatusCode();
-		log.info("processResponse: " + statusCode + " dialog: " + this.dialog + ", state: " + dialog.getState());
+		log.info("processResponse: " + statusCode + " dialog: " + this.dialog
+				+ ", state: " + dialog.getState());
 		// Processing response
 		if (statusCode == Response.TRYING) {
 			log.info("<<<<<<< 100 TRYING: dialog: " + this.dialog + ", state: "
@@ -69,7 +72,8 @@ public class CInvite extends CTransaction {
 
 		} else if (statusCode == Response.OK) {
 			// 200 OK
-			log.info("<<<<<<< 200 OK: dialog: " + this.dialog + ", state: " + dialog.getState());
+			log.info("<<<<<<< 200 OK: dialog: " + this.dialog + ", state: "
+					+ dialog.getState());
 			byte[] rawContent = response.getRawContent();
 			int l = response.getContentLength().getContentLength();
 			if (l != 0 && rawContent != null) {
@@ -91,13 +95,15 @@ public class CInvite extends CTransaction {
 	}
 
 	private void sendAck(byte[] sdp) throws ServerInternalErrorException {
-		log.debug("sendAck");
+		log.info("dialog.getState(): " + dialog.getState());
+		if (!DialogState.CONFIRMED.equals(dialog.getState()))
+			return;
 		try {
 			// Send ACK
 			Request ackRequest = dialog.createAck(((CSeqHeader) request
 					.getHeader(CSeqHeader.NAME)).getSeqNumber());
 			dialog.sendAck(ackRequest);
-			log.debug("SIP send ACK\n" + ">>>>>>>>>> SIP send ACK >>>>>>>>>>\n"
+			log.info("SIP send ACK\n" + ">>>>>>>>>> SIP send ACK >>>>>>>>>>\n"
 					+ ackRequest.toString() + "\n"
 					+ ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
 		} catch (InvalidArgumentException e) {
@@ -124,10 +130,10 @@ public class CInvite extends CTransaction {
 	public void onEvent(SdpPortManagerEvent event) {
 		// Remove this transaction as a listener of the SDP Port Manager
 		event.getSource().removeListener(this);
-		
+
 		EventType eventType = event.getEventType();
 		try {
-			if ( SdpPortManagerEvent.OFFER_GENERATED.equals(eventType)) {
+			if (SdpPortManagerEvent.OFFER_GENERATED.equals(eventType)) {
 				// Request user confirmation before sending response
 				log.debug("SdpPortManager successfully generated a SDP to be send to remote peer");
 				sendRequest(event.getMediaServerSdp());
