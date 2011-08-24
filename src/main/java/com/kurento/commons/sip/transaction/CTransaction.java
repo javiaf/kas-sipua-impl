@@ -1,4 +1,4 @@
-package com.tikal.sip.transaction;
+package com.kurento.commons.sip.transaction;
 
 import java.text.ParseException;
 import java.util.ArrayList;
@@ -30,15 +30,15 @@ import javax.sip.message.Request;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import com.tikal.mscontrol.EventType;
-import com.tikal.mscontrol.MediaErr;
-import com.tikal.mscontrol.networkconnection.SdpPortManagerEvent;
-import com.tikal.sip.agent.SipContext;
-import com.tikal.sip.agent.SipEndPointImpl;
-import com.tikal.sip.agent.UaFactory;
-import com.tikal.sip.agent.UaImpl;
-import com.tikal.sip.exception.ServerInternalErrorException;
-import com.tikal.sip.util.SipHeaderHelper;
+import com.kurento.commons.mscontrol.EventType;
+import com.kurento.commons.mscontrol.MediaErr;
+import com.kurento.commons.mscontrol.networkconnection.SdpPortManagerEvent;
+import com.kurento.commons.sip.agent.SipContext;
+import com.kurento.commons.sip.agent.SipEndPointImpl;
+import com.kurento.commons.sip.agent.UaFactory;
+import com.kurento.commons.sip.agent.UaImpl;
+import com.kurento.commons.sip.exception.ServerInternalErrorException;
+import com.kurento.commons.sip.util.SipHeaderHelper;
 
 /**
  * 

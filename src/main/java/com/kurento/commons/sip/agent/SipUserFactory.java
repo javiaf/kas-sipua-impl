@@ -1,13 +1,14 @@
-//package com.tikal.sip.agent;
+package com.kurento.commons.sip.agent;
+//package com.kurento.commons.sip.agent;
 //
 //import java.util.List;
 //import java.util.concurrent.CopyOnWriteArrayList;
 //
 //import javaxt.sip.address.Address;
 //
-//import com.tikal.sip.SipUser;
-//import com.tikal.sip.SipUserListener;
-//import com.tikal.sip.exception.ServerInternalErrorException;
+//import com.kurento.commons.sip.SipUser;
+//import com.kurento.commons.sip.SipUserListener;
+//import com.kurento.commons.sip.exception.ServerInternalErrorException;
 //
 //public class SipUserFactory {
 //	

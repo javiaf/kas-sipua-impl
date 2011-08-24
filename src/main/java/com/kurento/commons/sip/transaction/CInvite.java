@@ -1,4 +1,4 @@
-package com.tikal.sip.transaction;
+package com.kurento.commons.sip.transaction;
 
 import javax.sip.DialogState;
 import javax.sip.InvalidArgumentException;
@@ -9,10 +9,10 @@ import javax.sip.header.CSeqHeader;
 import javax.sip.message.Request;
 import javax.sip.message.Response;
 
-import com.tikal.mscontrol.EventType;
-import com.tikal.mscontrol.networkconnection.SdpPortManagerEvent;
-import com.tikal.sip.agent.SipContext;
-import com.tikal.sip.exception.ServerInternalErrorException;
+import com.kurento.commons.mscontrol.EventType;
+import com.kurento.commons.mscontrol.networkconnection.SdpPortManagerEvent;
+import com.kurento.commons.sip.agent.SipContext;
+import com.kurento.commons.sip.exception.ServerInternalErrorException;
 
 public class CInvite extends CTransaction {
 

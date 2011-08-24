@@ -1,4 +1,4 @@
-package com.tikal.sip.agent;
+package com.kurento.commons.sip.agent;
 
 import javax.sip.Dialog;
 import javax.sip.SipException;
@@ -9,21 +9,21 @@ import javax.sip.message.Response;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import com.tikal.mscontrol.MsControlException;
-import com.tikal.mscontrol.join.JoinableStream.StreamType;
-import com.tikal.mscontrol.networkconnection.NetworkConnection;
-import com.tikal.sip.SipCall;
-import com.tikal.sip.SipCallListener;
-import com.tikal.sip.event.SipCallEvent;
-import com.tikal.sip.event.SipEventType;
-import com.tikal.sip.exception.ServerInternalErrorException;
-import com.tikal.sip.transaction.CBye;
-import com.tikal.sip.transaction.CCancel;
-import com.tikal.sip.transaction.CInvite;
-import com.tikal.sip.transaction.CTransaction;
-import com.tikal.sip.transaction.SInvite;
-import com.tikal.sip.transaction.STransaction;
-import com.tikal.sip.transaction.Transaction;
+import com.kurento.commons.mscontrol.MsControlException;
+import com.kurento.commons.mscontrol.networkconnection.NetworkConnection;
+import com.kurento.commons.mscontrol.join.JoinableStream.StreamType;
+import com.kurento.commons.sip.SipCall;
+import com.kurento.commons.sip.SipCallListener;
+import com.kurento.commons.sip.event.SipCallEvent;
+import com.kurento.commons.sip.event.SipEventType;
+import com.kurento.commons.sip.exception.ServerInternalErrorException;
+import com.kurento.commons.sip.transaction.CBye;
+import com.kurento.commons.sip.transaction.CCancel;
+import com.kurento.commons.sip.transaction.CInvite;
+import com.kurento.commons.sip.transaction.CTransaction;
+import com.kurento.commons.sip.transaction.SInvite;
+import com.kurento.commons.sip.transaction.STransaction;
+import com.kurento.commons.sip.transaction.Transaction;
 
 public class SipContext implements SipCall {
 
@@ -36,7 +36,7 @@ public class SipContext implements SipCall {
 	private Address remoteParty;
 
 	private STransaction incomingPendingRequest;
-//	private CTransaction outgoingPendingRequest;
+	// private CTransaction outgoingPendingRequest;
 
 	private NetworkConnection networkConnection;
 
@@ -196,7 +196,9 @@ public class SipContext implements SipCall {
 		try {
 			cancelRequest = invite.getClientTransaction().createCancel();
 		} catch (SipException e) {
-			log.error("Unable to generate CANCEL request to use it in the future", e);
+			log.error(
+					"Unable to generate CANCEL request to use it in the future",
+					e);
 		}
 	}
 
@@ -243,7 +245,7 @@ public class SipContext implements SipCall {
 
 	public void completedOutgoingCall(CTransaction outgoingPendingRequest) {
 		log.debug("Outgoing Call setup, callId: " + dialog.getCallId());
-//		this.outgoingPendingRequest = outgoingPendingRequest;
+		// this.outgoingPendingRequest = outgoingPendingRequest;
 		completedCall(outgoingPendingRequest);
 	}
 

@@ -1,4 +1,4 @@
-package com.tikal.sip.exception;
+package com.kurento.commons.sip.exception;
 
 public class SipTransactionException extends Exception {
 	private static final long serialVersionUID = 1L;

@@ -1,4 +1,4 @@
-package com.tikal.sip.util;
+package com.kurento.commons.sip.util;
 
 public class SipConfig {
 	private String localAddress = "127.0.0.1";

@@ -1,8 +1,5 @@
-package com.tikal.sip.agent;
+package com.kurento.commons.sip.agent;
 
-import java.nio.charset.Charset;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.List;
@@ -16,16 +13,16 @@ import javax.sip.header.CallIdHeader;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import com.tikal.mscontrol.join.Joinable.Direction;
-import com.tikal.sip.SipCall;
-import com.tikal.sip.SipCallListener;
-import com.tikal.sip.SipEndPoint;
-import com.tikal.sip.SipEndPointListener;
-import com.tikal.sip.event.SipEndPointEvent;
-import com.tikal.sip.event.SipEventType;
-import com.tikal.sip.exception.ServerInternalErrorException;
-import com.tikal.sip.transaction.COptions;
-import com.tikal.sip.transaction.CRegister;
+import com.kurento.commons.sip.SipCall;
+import com.kurento.commons.sip.SipCallListener;
+import com.kurento.commons.sip.SipEndPoint;
+import com.kurento.commons.sip.SipEndPointListener;
+import com.kurento.commons.sip.event.SipEndPointEvent;
+import com.kurento.commons.sip.event.SipEventType;
+import com.kurento.commons.sip.exception.ServerInternalErrorException;
+import com.kurento.commons.sip.transaction.COptions;
+import com.kurento.commons.sip.transaction.CRegister;
+import com.kurento.commons.mscontrol.join.Joinable.Direction;
 
 public class SipEndPointImpl implements SipEndPoint {
 

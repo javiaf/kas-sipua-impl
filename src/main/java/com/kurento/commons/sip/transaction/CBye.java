@@ -1,10 +1,10 @@
-package com.tikal.sip.transaction;
+package com.kurento.commons.sip.transaction;
 
 import javax.sip.ResponseEvent;
 import javax.sip.message.Request;
 
-import com.tikal.sip.agent.SipContext;
-import com.tikal.sip.exception.ServerInternalErrorException;
+import com.kurento.commons.sip.agent.SipContext;
+import com.kurento.commons.sip.exception.ServerInternalErrorException;
 
 public class CBye extends CTransaction {
 

@@ -1,14 +1,14 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
-	<groupId>com.tikal</groupId>
-	<artifactId>tk-android-sipua</artifactId>
+	<groupId>com.kurento.commons</groupId>
+	<artifactId>kc-sipua-impl</artifactId>
 	<version>1.0.0-SNAPSHOT</version>
 	<packaging>jar</packaging>
 
-	<name>Android Sip User Agent</name>
-	<description>tk-sipua implementation for Android.</description>
-	<url>http://repository.kurento.com/site/tk-android-sipua</url>
+	<name>Sip User Agent implementation</name>
+	<description>Sip User Agent implementation</description>
+	<url>http://repository.kurento.com/site/kc-sipua-impl</url>
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -34,13 +34,13 @@
 			<scope>test</scope>
 		</dependency>
 		<dependency>
-			<groupId>com.tikal</groupId>
-			<artifactId>tk-sipua</artifactId>
+			<groupId>com.kurento.commons</groupId>
+			<artifactId>kc-sipua</artifactId>
 			<version>1.0.0-SNAPSHOT</version>
 		</dependency>
 		<dependency>
-			<groupId>com.tikal.media</groupId>
-			<artifactId>tk-mediaspec</artifactId>
+			<groupId>com.kurento.commons</groupId>
+			<artifactId>kc-mediaspec</artifactId>
 			<version>1.0.0-SNAPSHOT</version>
 		</dependency>
 		<dependency>
@@ -148,7 +148,7 @@
 	<distributionManagement>
 		<site>
 			<id>maven-site</id>
-			<url>scp://repository.kurento.com/var/www/kurento/site/tk-android-sipua/${project.version}</url>
+			<url>scp://repository.kurento.com/var/www/kurento/site/kc-sipua-impl/${project.version}</url>
 		</site>
 		<repository>
 			<id>releases</id>
@@ -163,8 +163,8 @@
 	</distributionManagement>
 
 	<scm>
-		<connection>scm:git:ssh://repository.kurento.com/git/tk-android-sipua</connection>
-		<developerConnection>scm:git:ssh://repository.kurento.com/git/tk-android-sipua</developerConnection>
-		<url>scm:git:ssh://repository.kurento.com/git/tk-android-sipua</url>
+		<connection>scm:git:ssh://repository.kurento.com/git/kc-sipua-impl</connection>
+		<developerConnection>scm:git:ssh://repository.kurento.com/git/kc-sipua-impl</developerConnection>
+		<url>scm:git:ssh://repository.kurento.com/git/kc-sipua-impl</url>
 	</scm>
 </project>

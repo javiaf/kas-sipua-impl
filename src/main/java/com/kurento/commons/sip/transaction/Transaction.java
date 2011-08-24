@@ -1,4 +1,4 @@
-package com.tikal.sip.transaction;
+package com.kurento.commons.sip.transaction;
 
 import javax.sdp.SessionDescription;
 import javax.sip.Dialog;
@@ -8,15 +8,15 @@ import javax.sip.address.Address;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import com.tikal.mscontrol.MsControlException;
-import com.tikal.mscontrol.MediaEventListener;
-import com.tikal.mscontrol.networkconnection.NetworkConnection;
-import com.tikal.mscontrol.networkconnection.SdpPortManager;
-import com.tikal.mscontrol.networkconnection.SdpPortManagerEvent;
-import com.tikal.sip.agent.SipContext;
-import com.tikal.sip.agent.SipEndPointImpl;
-import com.tikal.sip.agent.UaFactory;
-import com.tikal.sip.exception.ServerInternalErrorException;
+import com.kurento.commons.mscontrol.MediaEventListener;
+import com.kurento.commons.mscontrol.MsControlException;
+import com.kurento.commons.mscontrol.networkconnection.NetworkConnection;
+import com.kurento.commons.mscontrol.networkconnection.SdpPortManager;
+import com.kurento.commons.mscontrol.networkconnection.SdpPortManagerEvent;
+import com.kurento.commons.sip.agent.SipContext;
+import com.kurento.commons.sip.agent.SipEndPointImpl;
+import com.kurento.commons.sip.agent.UaFactory;
+import com.kurento.commons.sip.exception.ServerInternalErrorException;
 
 public abstract class Transaction implements
 		MediaEventListener<SdpPortManagerEvent> {

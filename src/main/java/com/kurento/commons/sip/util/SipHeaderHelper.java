@@ -1,4 +1,4 @@
-package com.tikal.sip.util;
+package com.kurento.commons.sip.util;
 
 import java.util.Hashtable;
 import java.util.Random;

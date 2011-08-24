@@ -1,13 +1,13 @@
-package com.tikal.sip.transaction;
+package com.kurento.commons.sip.transaction;
 
 import javax.sip.ServerTransaction;
 import javax.sip.TimeoutEvent;
 import javax.sip.message.Request;
 import javax.sip.message.Response;
 
-import com.tikal.sip.agent.SipEndPointImpl;
-import com.tikal.sip.exception.ServerInternalErrorException;
-import com.tikal.sip.exception.SipTransactionException;
+import com.kurento.commons.sip.agent.SipEndPointImpl;
+import com.kurento.commons.sip.exception.ServerInternalErrorException;
+import com.kurento.commons.sip.exception.SipTransactionException;
 
 public class SBye extends STransaction {
 

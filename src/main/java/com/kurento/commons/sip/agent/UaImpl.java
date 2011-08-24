@@ -1,4 +1,4 @@
-package com.tikal.sip.agent;
+package com.kurento.commons.sip.agent;
 
 import java.text.ParseException;
 import java.util.HashMap;
@@ -27,18 +27,18 @@ import javax.sip.message.Response;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import com.tikal.sip.SipEndPoint;
-import com.tikal.sip.SipEndPointListener;
-import com.tikal.sip.UA;
-import com.tikal.sip.exception.ServerInternalErrorException;
-import com.tikal.sip.exception.SipTransactionException;
-import com.tikal.sip.transaction.CTransaction;
-import com.tikal.sip.transaction.SAck;
-import com.tikal.sip.transaction.SBye;
-import com.tikal.sip.transaction.SCancel;
-import com.tikal.sip.transaction.SInvite;
-import com.tikal.sip.transaction.STransaction;
-import com.tikal.sip.util.SipConfig;
+import com.kurento.commons.sip.SipEndPoint;
+import com.kurento.commons.sip.SipEndPointListener;
+import com.kurento.commons.sip.UA;
+import com.kurento.commons.sip.exception.ServerInternalErrorException;
+import com.kurento.commons.sip.exception.SipTransactionException;
+import com.kurento.commons.sip.transaction.CTransaction;
+import com.kurento.commons.sip.transaction.SAck;
+import com.kurento.commons.sip.transaction.SBye;
+import com.kurento.commons.sip.transaction.SCancel;
+import com.kurento.commons.sip.transaction.SInvite;
+import com.kurento.commons.sip.transaction.STransaction;
+import com.kurento.commons.sip.util.SipConfig;
 
 public class UaImpl implements SipListener, UA{
 		
