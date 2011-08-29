@@ -8,6 +8,7 @@ import javax.sip.InvalidArgumentException;
 import javax.sip.PeerUnavailableException;
 import javax.sip.ResponseEvent;
 import javax.sip.TimeoutEvent;
+import javax.sip.address.URI;
 import javax.sip.header.AuthorizationHeader;
 import javax.sip.header.CSeqHeader;
 import javax.sip.header.CallIdHeader;
@@ -125,36 +126,33 @@ public class CRegister extends CTransaction {
 
 	private AuthorizationHeader getAuthorizationHearder(Response response) {
 		WWWAuthenticateHeader wwwAuthenticateHeader;
-		wwwAuthenticateHeader = (WWWAuthenticateHeader) response
-				.getHeader(WWWAuthenticateHeader.NAME);
-		// name
+		wwwAuthenticateHeader = (WWWAuthenticateHeader) response.getHeader(WWWAuthenticateHeader.NAME);
+		
 		String schema = wwwAuthenticateHeader.getScheme();
 		String realm = wwwAuthenticateHeader.getRealm();
 		String nonce = wwwAuthenticateHeader.getNonce();
 		String alg = wwwAuthenticateHeader.getAlgorithm();
 		String opaque = wwwAuthenticateHeader.getOpaque();
 
-		log.debug("WWWAuthenticateHeader is "
-				+ wwwAuthenticateHeader.toString());
+		log.debug("WWWAuthenticateHeader is "+ wwwAuthenticateHeader.toString());
 		AuthorizationHeader authorization = null;
 		try {
+			URI localUri = localParty.getAddress().getURI();
+			String user = localParty.getUserName();
+			
 			HeaderFactory factory = UaFactory.getSipFactory()
 					.createHeaderFactory();
 			authorization = factory.createAuthorizationHeader(schema);
-			authorization.setUsername("quizh");
-			// authorization.setScheme(schema);
+			authorization.setUsername(user);
 			authorization.setRealm(realm);
 			authorization.setNonce(nonce);
-			authorization.setURI(localParty.getContact().getURI());
-			String user = localParty.getAddress().getDisplayName();
+			authorization.setURI(localUri);
 			String respon = getAuthResponse(user, realm,
 					localParty.getPassword(),
-					Integer.toString(response.getStatusCode()), localParty
-							.getContact().getURI().toString(), nonce);
+					this.method,localUri.toString(), nonce, alg);
 			authorization.setResponse(respon);
 			authorization.setAlgorithm(alg);
 			authorization.setOpaque(opaque);
-
 		} catch (ParseException e1) {
 			log.error(e1);
 		} catch (PeerUnavailableException e) {
@@ -171,13 +169,12 @@ public class CRegister extends CTransaction {
 	}
 
 	private String getAuthResponse(String userName, String realm,
-			String password, String method, String uri, String nonce) {
+			String password, String method, String uri, String nonce, String algorithm) {
 		String cnonce = null;
 		MessageDigest messageDigest = null;
 		try {
-			messageDigest = MessageDigest.getInstance("MD5");
+			messageDigest = MessageDigest.getInstance(algorithm);
 		} catch (NoSuchAlgorithmException e) {
-			// FIXME
 			log.error(e);
 		}
 		// A1
@@ -187,13 +184,14 @@ public class CRegister extends CTransaction {
 		log.debug("DigestClientAuthenticationMethod, generateResponse(), HA1:"
 				+ HA1 + "!");
 		// A2
-		String A2 = method.toUpperCase() + ":" + uri;
+		//String A2 = method.toUpperCase() + ":" + uri;
+		String A2 = method + ":" + uri;
 		mdbytes = messageDigest.digest(A2.getBytes());
 		String HA2 = toHexString(mdbytes);
 		log.debug("DigestClientAuthenticationMethod, generateResponse(), HA2:"
 				+ HA2 + "!");
 		// KD
-		String KD = HA1 + ":" + nonce;
+		String KD = HA1 +":" + nonce;
 		// if (cnonce != null) {
 		// if(cnonce.length()>0) KD += ":" + cnonce;
 		// }

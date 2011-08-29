@@ -153,17 +153,10 @@ public class SipEndPointImpl implements SipEndPoint {
 		return password;
 	}
 	
-	public static String toHexString(byte b[]) {
-        int pos = 0;
-	         char[] c = new char[b.length*2];
-		for (int i=0; i< b.length; i++) {
-		c[pos++] = toHex[(b[i] >> 4) & 0x0F];
-		c[pos++] = toHex[b[i] & 0x0f];
-		}
-		return new String(c);
+	public String getUserName() {
+		return userName;
 	}
- private static final char[] toHex = { '0', '1', '2', '3', '4', '5', '6',
-	'7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f' };
+	
 
 	private void register() throws ServerInternalErrorException {
 
