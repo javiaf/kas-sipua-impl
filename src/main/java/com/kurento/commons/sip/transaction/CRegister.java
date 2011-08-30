@@ -120,23 +120,26 @@ public class CRegister extends CTransaction {
 			request.setHeader(proxyAuthenticateHeader);
 		}
 
-		sendRequest(null); // 2nd request with autentication
+		sendRequest(null); // 2nd request with authentication
 
 	}
 
-	private AuthorizationHeader getAuthorizationHearder(Response response) {
+	//AuthenticationHearder RFC2617 construction for request digest without	qop parameter and MD5 hash algorithm.
+	private AuthorizationHeader getAuthorizationHearder(Response response) throws ServerInternalErrorException{
 		WWWAuthenticateHeader wwwAuthenticateHeader;
-		wwwAuthenticateHeader = (WWWAuthenticateHeader) response.getHeader(WWWAuthenticateHeader.NAME);
-		
-		String schema = wwwAuthenticateHeader.getScheme();
-		String realm = wwwAuthenticateHeader.getRealm();
-		String nonce = wwwAuthenticateHeader.getNonce();
-		String alg = wwwAuthenticateHeader.getAlgorithm();
-		String opaque = wwwAuthenticateHeader.getOpaque();
-
-		log.debug("WWWAuthenticateHeader is "+ wwwAuthenticateHeader.toString());
 		AuthorizationHeader authorization = null;
 		try {
+			wwwAuthenticateHeader = (WWWAuthenticateHeader) response.getHeader(WWWAuthenticateHeader.NAME);
+	
+			String schema = wwwAuthenticateHeader.getScheme();
+			String realm = wwwAuthenticateHeader.getRealm();
+			String nonce = wwwAuthenticateHeader.getNonce();
+			String alg = wwwAuthenticateHeader.getAlgorithm();
+			String opaque = wwwAuthenticateHeader.getOpaque();
+	
+			log.debug("WWWAuthenticateHeader is "+ wwwAuthenticateHeader.toString());
+			
+		
 			URI localUri = localParty.getAddress().getURI();
 			String user = localParty.getUserName();
 			
@@ -153,10 +156,13 @@ public class CRegister extends CTransaction {
 			authorization.setResponse(respon);
 			authorization.setAlgorithm(alg);
 			authorization.setOpaque(opaque);
+
 		} catch (ParseException e1) {
 			log.error(e1);
+			throw new ServerInternalErrorException("Error generating authentication hearder", e1);
 		} catch (PeerUnavailableException e) {
 			log.error(e);
+			throw new ServerInternalErrorException("Error generating authentication hearder", e);
 		}
 		return authorization;
 
@@ -181,14 +187,13 @@ public class CRegister extends CTransaction {
 		String A1 = userName + ":" + realm + ":" + password;
 		byte mdbytes[] = messageDigest.digest(A1.getBytes());
 		String HA1 = toHexString(mdbytes);
-		log.debug("DigestClientAuthenticationMethod, generateResponse(), HA1:"
+		log.debug("DigestClientAuthenticationMethod for HA1:"
 				+ HA1 + "!");
 		// A2
-		//String A2 = method.toUpperCase() + ":" + uri;
-		String A2 = method + ":" + uri;
+		String A2 = method.toUpperCase() + ":" + uri;
 		mdbytes = messageDigest.digest(A2.getBytes());
 		String HA2 = toHexString(mdbytes);
-		log.debug("DigestClientAuthenticationMethod, generateResponse(), HA2:"
+		log.debug("DigestClientAuthenticationMethod for HA2:"
 				+ HA2 + "!");
 		// KD
 		String KD = HA1 +":" + nonce;
@@ -199,8 +204,7 @@ public class CRegister extends CTransaction {
 		mdbytes = messageDigest.digest(KD.getBytes());
 		String response = toHexString(mdbytes);
 
-		log.debug("DigestClientAlgorithm, generateResponse():"
-				+ " response generated: " + response);
+		log.debug("DigestClientAlgorithm, response generated: " + response);
 
 		return response;
 
