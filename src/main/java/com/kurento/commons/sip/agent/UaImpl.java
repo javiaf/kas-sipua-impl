@@ -112,7 +112,14 @@ public class UaImpl implements SipListener, UA{
 
 	public void terminate() {
 		log.info("SIP stack terminating ...");
-
+		log.info("Stopping registered endpoits.");
+		for (SipEndPoint endpoint : endPoints.values()) {
+			try {
+				endpoint.terminate();
+			} catch (ServerInternalErrorException e) {
+				log.error("Error finishing endpoint " + endpoint);
+			}
+		}
 		while (true) {
 			try {
 				log.info("Delete Sip listening point");
