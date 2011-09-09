@@ -21,7 +21,7 @@ public class UaFactory {
 
 	private static final Log log = LogFactory.getLog(UaFactory.class);
 
-	private static final String USER_AGENT = "TikalUa/1.0.0";
+	private static final String USER_AGENT = "KurentoUa/1.0.0";
 
 	// UA initializations
 	private static SipFactory sipFactory = SipFactory.getInstance();
