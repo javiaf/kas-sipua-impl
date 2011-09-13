@@ -1,5 +1,7 @@
 package com.kurento.commons.sip.agent;
 
+import java.util.Map;
+
 import javax.sip.Dialog;
 import javax.sip.SipException;
 import javax.sip.address.Address;
@@ -10,8 +12,10 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import com.kurento.commons.mscontrol.MsControlException;
-import com.kurento.commons.mscontrol.networkconnection.NetworkConnection;
 import com.kurento.commons.mscontrol.join.JoinableStream.StreamType;
+import com.kurento.commons.mscontrol.networkconnection.NetworkConnection;
+import com.kurento.commons.sdp.enums.MediaType;
+import com.kurento.commons.sdp.enums.Mode;
 import com.kurento.commons.sip.SipCall;
 import com.kurento.commons.sip.SipCallListener;
 import com.kurento.commons.sip.event.SipCallEvent;
@@ -39,6 +43,7 @@ public class SipContext implements SipCall {
 	// private CTransaction outgoingPendingRequest;
 
 	private NetworkConnection networkConnection;
+	private Map<MediaType, Mode> mediaTypesModes;
 
 	private SipCallListener callListener;
 
@@ -155,7 +160,11 @@ public class SipContext implements SipCall {
 	@Override
 	public NetworkConnection getNetworkConnection(StreamType media) {
 		return networkConnection;
-
+	}
+	
+	@Override
+	public Map<MediaType, Mode> getMediaTypesModes() {
+		return mediaTypesModes;
 	}
 
 	@Override
@@ -208,14 +217,15 @@ public class SipContext implements SipCall {
 	//
 	// ////////////////////
 
-	public void incominCall(SInvite pendingInvite) {
+	public void incominCall(SInvite pendingInvite, Map<MediaType, Mode> mediaTypesModes) {
 		// Store pending request
 		log.info("Incoming call signalled with callId:"
 				+ pendingInvite.getServerTransaction().getDialog().getCallId());
 		this.incomingPendingRequest = pendingInvite;
 		this.remoteParty = this.incomingPendingRequest.getServerTransaction()
 				.getDialog().getRemoteParty();
-
+		this.mediaTypesModes = mediaTypesModes;
+		
 		// Notify the incoming call to EndPoint controllers
 		log.info("Notify incoming call to EndPoint listener");
 		localEndPoint.incomingCall(this);
