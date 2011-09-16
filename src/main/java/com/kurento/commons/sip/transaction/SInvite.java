@@ -93,21 +93,7 @@ public class SInvite extends STransaction {
 			log.debug("SdpPortManager successfully generated a SDP to be send to remote peer");
 			SessionSpec session;
 			try {
-				log.info("getMediaServerSdp\n" + new String(event.getMediaServerSdp()));
-				log.info("\n");
-				log.info("\n");
-				
-				try {
-					log.info("user agent sdp\n" + new String( event.getSource().getUserAgentSessionDescription()) );
-				} catch (SdpPortManagerException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
-				
 				session = new SessionSpec(new String(event.getMediaServerSdp()));
-				
-				
-
 				Map<MediaType, Mode> mediaTypesModes = SpecTools
 						.getModesOfFirstMediaTypes(session);
 				sipContext.incominCall(this, mediaTypesModes);
