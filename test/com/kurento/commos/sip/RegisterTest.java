@@ -19,8 +19,8 @@ public class RegisterTest extends TestCase {
 	private final static String HOST_37 = "193.147.51.37";
 	private final static String HOST2 = "193.147.51.17";
 	private final static String LINPHONE_HOST = "sip.linphone.org";
-	private final static String LINPHONE_USER = "quizh";
-	private final static String LINPHONE_PASS = "linphone123";
+	private final static String LINPHONE_USER = "user1";
+	private final static String LINPHONE_PASS = "pass1";
 	private final static int LINPHONE_PORT = 5060;
 	private final static String LOCAL_IP= "193.147.51.20";
 	
