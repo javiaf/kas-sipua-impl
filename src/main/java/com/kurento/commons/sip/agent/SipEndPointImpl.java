@@ -22,7 +22,6 @@ import com.kurento.commons.sip.event.SipEventType;
 import com.kurento.commons.sip.exception.ServerInternalErrorException;
 import com.kurento.commons.sip.transaction.COptions;
 import com.kurento.commons.sip.transaction.CRegister;
-import com.kurento.commons.mscontrol.join.Joinable.Direction;
 
 public class SipEndPointImpl implements SipEndPoint {
 
@@ -53,9 +52,9 @@ public class SipEndPointImpl implements SipEndPoint {
 	//
 	// ////////////
 
-	protected SipEndPointImpl(String userName, String realm,String password, int expires,
-			UaImpl ua, SipEndPointListener handler) throws ParseException,
-			ServerInternalErrorException {
+	protected SipEndPointImpl(String userName, String realm, String password,
+			int expires, UaImpl ua, SipEndPointListener handler)
+			throws ParseException, ServerInternalErrorException {
 
 		this.userName = userName;
 		this.realm = realm;
@@ -71,7 +70,7 @@ public class SipEndPointImpl implements SipEndPoint {
 				"sip:" + userName + "@" + ua.getLocalAddress() + ":"
 						+ ua.getLocalPort());
 		this.password = password;
-		
+
 		register();
 	}
 
@@ -148,15 +147,14 @@ public class SipEndPointImpl implements SipEndPoint {
 	public int getExpires() {
 		return expires;
 	}
-	
+
 	public String getPassword() {
 		return password;
 	}
-	
+
 	public String getUserName() {
 		return userName;
 	}
-	
 
 	private void register() throws ServerInternalErrorException {
 
@@ -202,8 +200,8 @@ public class SipEndPointImpl implements SipEndPoint {
 	}
 
 	@Override
-	public SipCall dial(String remoteParty, Direction direction,
-			SipCallListener callController) throws ServerInternalErrorException {
+	public SipCall dial(String remoteParty, SipCallListener callController)
+			throws ServerInternalErrorException {
 
 		if (remoteParty != null) {
 			log.debug("Creating new SipContext");
