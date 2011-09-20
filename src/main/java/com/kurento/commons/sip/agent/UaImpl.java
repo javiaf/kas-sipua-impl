@@ -93,7 +93,7 @@ public class UaImpl implements SipListener, UA{
 		// You need 16 (or TRACE) for logging traces. 32 (or DEBUG) for debug +
 		// traces.
 		// Your code will limp at 32 but it is best for debugging.
-//		jainProps.setProperty("com.tikal.javax.sip.TRACE_LEVEL", "16");
+//		jainProps.setProperty("gov.nist.javax.sip.TRACE_LEVEL", "16");
 
 		log.info("Stack properties: " + jainProps);
 

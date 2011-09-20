@@ -2,13 +2,13 @@
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>com.kurento.commons</groupId>
-	<artifactId>kc-sipua-impl</artifactId>
+	<artifactId>kas-sipua-impl</artifactId>
 	<version>1.0.0-SNAPSHOT</version>
 	<packaging>jar</packaging>
 
 	<name>Sip User Agent implementation</name>
 	<description>Sip User Agent implementation</description>
-	<url>http://repository.kurento.com/site/kc-sipua-impl</url>
+	<url>http://repository.kurento.com/site/kas-sipua-impl</url>
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -35,7 +35,7 @@
 		</dependency>
 		<dependency>
 			<groupId>com.kurento.commons</groupId>
-			<artifactId>kc-sipua</artifactId>
+			<artifactId>kas-sipua</artifactId>
 			<version>1.0.0-SNAPSHOT</version>
 		</dependency>
 		<dependency>
@@ -148,7 +148,7 @@
 	<distributionManagement>
 		<site>
 			<id>maven-site</id>
-			<url>scp://repository.kurento.com/var/www/kurento/site/kc-sipua-impl/${project.version}</url>
+			<url>scp://repository.kurento.com/var/www/kurento/site/kas-sipua-impl/${project.version}</url>
 		</site>
 		<repository>
 			<id>releases</id>
@@ -163,8 +163,8 @@
 	</distributionManagement>
 
 	<scm>
-		<connection>scm:git:ssh://repository.kurento.com/git/kc-sipua-impl</connection>
-		<developerConnection>scm:git:ssh://repository.kurento.com/git/kc-sipua-impl</developerConnection>
-		<url>scm:git:ssh://repository.kurento.com/git/kc-sipua-impl</url>
+		<connection>scm:git:ssh://repository.kurento.com/git/kas-sipua-impl</connection>
+		<developerConnection>scm:git:ssh://repository.kurento.com/git/kas-sipua-impl</developerConnection>
+		<url>scm:git:ssh://repository.kurento.com/git/kas-sipua-impl</url>
 	</scm>
 </project>
