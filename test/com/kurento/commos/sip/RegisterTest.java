@@ -5,6 +5,7 @@ import junit.framework.TestCase;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import com.kurento.commons.mscontrol.join.Joinable.Direction;
 import com.kurento.commons.sip.SipEndPoint;
 import com.kurento.commons.sip.SipEndPointListener;
 import com.kurento.commons.sip.UA;
@@ -74,6 +75,10 @@ public class RegisterTest extends TestCase {
 		SipEndPoint endpoint = userAgent.registerEndPoint(LINPHONE_USER, LINPHONE_HOST, LINPHONE_PASS, 3000, registerController);
 		SipEndPointEvent event = registerController.pollSipEndPointEvent(WAIT_TIME);
 		assertEquals(SipEndPointEvent.REGISTER_USER_SUCESSFUL, event.getEventType());
+		endpoint.terminate();
+		event = registerController.pollSipEndPointEvent(WAIT_TIME);
+		endpoint = userAgent.registerEndPoint(LINPHONE_USER, LINPHONE_HOST, LINPHONE_PASS, 3000, registerController);
+		assertEquals(SipEndPointEvent.REGISTER_USER_SUCESSFUL, event.getEventType());
 		log.info("Register user Succesful, OK");
 		log.info("-------------------------------Test finished-----------------------------------------");
 		
@@ -97,5 +102,6 @@ public class RegisterTest extends TestCase {
 		log.info("-------------------------------Test finished-----------------------------------------");
 		
 	}
+
 
 }

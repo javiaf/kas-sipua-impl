@@ -419,6 +419,9 @@ public class UaImpl implements SipListener, UA{
 		SipEndPointImpl epImpl;
 		String epAddress = user+"@"+realm;
 		if ((epImpl = endPoints.get(epAddress)) != null) {
+			if (epImpl.getExpires() == 0) {
+				epImpl.setExpires(expires);
+			}
 			return epImpl;
 		}
 				

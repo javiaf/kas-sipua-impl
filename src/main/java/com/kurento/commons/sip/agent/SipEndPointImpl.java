@@ -99,6 +99,7 @@ public class SipEndPointImpl implements SipEndPoint {
 	public void terminate() throws ServerInternalErrorException {
 		expires = 0;
 		register();
+		
 	}
 
 	// ///////////////////////////
@@ -143,6 +144,11 @@ public class SipEndPointImpl implements SipEndPoint {
 
 	public void setExpires(int expires) {
 		this.expires = expires;
+		try {
+			this.register();
+		} catch (ServerInternalErrorException e) {
+			log.error(e);
+		}
 	}
 
 	public int getExpires() {
