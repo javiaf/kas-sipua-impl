@@ -2,6 +2,7 @@ package com.kurento.commons.sip.agent;
 
 import java.util.Map;
 
+import javax.sdp.SdpException;
 import javax.sip.Dialog;
 import javax.sip.SipException;
 import javax.sip.address.Address;
@@ -11,6 +12,8 @@ import javax.sip.message.Response;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import com.kurento.commons.media.format.SessionSpec;
+import com.kurento.commons.media.format.SpecTools;
 import com.kurento.commons.mscontrol.MsControlException;
 import com.kurento.commons.mscontrol.join.JoinableStream.StreamType;
 import com.kurento.commons.mscontrol.networkconnection.NetworkConnection;
@@ -161,7 +164,7 @@ public class SipContext implements SipCall {
 	public NetworkConnection getNetworkConnection(StreamType media) {
 		return networkConnection;
 	}
-	
+
 	@Override
 	public Map<MediaType, Mode> getMediaTypesModes() {
 		return mediaTypesModes;
@@ -217,7 +220,8 @@ public class SipContext implements SipCall {
 	//
 	// ////////////////////
 
-	public void incominCall(SInvite pendingInvite, Map<MediaType, Mode> mediaTypesModes) {
+	public void incominCall(SInvite pendingInvite,
+			Map<MediaType, Mode> mediaTypesModes) {
 		// Store pending request
 		log.info("Incoming call signalled with callId:"
 				+ pendingInvite.getServerTransaction().getDialog().getCallId());
@@ -225,7 +229,7 @@ public class SipContext implements SipCall {
 		this.remoteParty = this.incomingPendingRequest.getServerTransaction()
 				.getDialog().getRemoteParty();
 		this.mediaTypesModes = mediaTypesModes;
-		
+
 		// Notify the incoming call to EndPoint controllers
 		log.info("Notify incoming call to EndPoint listener");
 		localEndPoint.incomingCall(this);
@@ -279,6 +283,19 @@ public class SipContext implements SipCall {
 		} else {
 			try {
 				networkConnection.confirm();
+				SessionSpec session;
+				try {
+					session = new SessionSpec(new String(networkConnection
+							.getSdpPortManager()
+							.getMediaServerSessionDescription()));
+
+					this.mediaTypesModes = SpecTools
+							.getModesOfFirstMediaTypes(session);
+				} catch (SdpException e) {
+					log.error("Unable to get local SDP. Terminate call", e);
+					hangup = true;
+				}
+
 			} catch (MsControlException e) {
 				log.error("Unable to set up media session. Terminate call", e);
 				hangup = true;
