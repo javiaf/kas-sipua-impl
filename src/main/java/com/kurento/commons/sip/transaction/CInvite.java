@@ -81,23 +81,22 @@ public class CInvite extends CTransaction {
 			// 200 OK
 			log.info("<<<<<<< 200 OK: dialog: " + this.dialog + ", state: "
 					+ dialog.getState());
-			ClientTransaction transcation = event.getClientTransaction();
-			TransactionState transactionState = transcation.getState();
-			if (TransactionState.COMPLETED.equals(transactionState)) {
+			if (!sipContext.hasPendingTransaction()) {
 				sendAck(null);
 				new CBye(sipContext);
+			} else  {
+				byte[] rawContent = response.getRawContent();
+				int l = response.getContentLength().getContentLength();
+				if (l != 0 && rawContent != null) {
+					// SDP offer sent by invite request
+					log.debug("Process SDP response from remote peer");
+					processSdpAnswer(rawContent);
+				} else {
+					log.error("Found response to CInvite with no SDP answer");
+					sipContext.failedCall();
+				}
+				sendAck(null);
 			}
-			byte[] rawContent = response.getRawContent();
-			int l = response.getContentLength().getContentLength();
-			if (l != 0 && rawContent != null) {
-				// SDP offer sent by invite request
-				log.debug("Process SDP response from remote peer");
-				processSdpAnswer(rawContent);
-			} else {
-				log.error("Found response to CInvite with no SDP answer");
-				sipContext.failedCall();
-			}
-			sendAck(null);
 		} else {
 			log.info("<<<<<<< " + statusCode + " FAIL: dialog: " + this.dialog
 					+ ", state: " + dialog.getState());

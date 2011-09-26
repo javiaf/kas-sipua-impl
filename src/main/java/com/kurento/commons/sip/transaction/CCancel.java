@@ -17,8 +17,6 @@ public class CCancel extends CTransaction {
 
 	@Override
 	public void processResponse(ResponseEvent event)
-			throws ServerInternalErrorException {
-
-	}
+			throws ServerInternalErrorException {}
 
 }

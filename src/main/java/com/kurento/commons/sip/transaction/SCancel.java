@@ -1,5 +1,6 @@
 package com.kurento.commons.sip.transaction;
 
+import javax.sip.DialogState;
 import javax.sip.ServerTransaction;
 import javax.sip.message.Request;
 import javax.sip.message.Response;
