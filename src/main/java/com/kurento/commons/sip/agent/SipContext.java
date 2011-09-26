@@ -3,6 +3,7 @@ package com.kurento.commons.sip.agent;
 import java.util.Map;
 
 import javax.sip.Dialog;
+import javax.sip.ServerTransaction;
 import javax.sip.SipException;
 import javax.sip.address.Address;
 import javax.sip.message.Request;
@@ -251,6 +252,7 @@ public class SipContext implements SipCall {
 		log.debug("Incoming Call setup, callId: " + dialog.getCallId());
 		// Set up connection
 		completedCall(incomingPendingRequest);
+		incomingPendingRequest = null;
 	}
 
 	public void completedOutgoingCall(CTransaction outgoingPendingRequest) {
@@ -299,10 +301,10 @@ public class SipContext implements SipCall {
 		}
 	}
 
-	public void cancelCall() {
+	public void cancelCall() throws ServerInternalErrorException {
 		log.info("Cancel Call");
-		notifySipCallEvent(SipCallEvent.CALL_CANCEL);
 		if (incomingPendingRequest != null) {
+			incomingPendingRequest.sendResponse(Response.REQUEST_TERMINATED, null);
 			// pendingRequest.cancel();
 			incomingPendingRequest = null;
 		}
@@ -310,6 +312,7 @@ public class SipContext implements SipCall {
 			networkConnection.release();
 			networkConnection = null;
 		}
+		notifySipCallEvent(SipCallEvent.CALL_CANCEL);
 	}
 
 }

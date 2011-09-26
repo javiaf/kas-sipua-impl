@@ -1,10 +1,12 @@
 package com.kurento.commons.sip.transaction;
 
+import javax.sip.ClientTransaction;
 import javax.sip.DialogState;
 import javax.sip.InvalidArgumentException;
 import javax.sip.ResponseEvent;
 import javax.sip.SipException;
 import javax.sip.TimeoutEvent;
+import javax.sip.TransactionState;
 import javax.sip.header.CSeqHeader;
 import javax.sip.message.Request;
 import javax.sip.message.Response;
@@ -57,8 +59,13 @@ public class CInvite extends CTransaction {
 			log.info("<<<<<<< 183 Session Progress: dialog: " + this.dialog
 					+ ", state: " + dialog.getState());
 
-		} else if (statusCode == Response.REQUEST_TERMINATED
-				|| statusCode == Response.TEMPORARILY_UNAVAILABLE
+		} else if (statusCode == Response.REQUEST_TERMINATED) {
+			log.info("<<<<<<< " + statusCode + " TERMINATED: dialog: "
+					+ this.dialog + ", state: " + dialog.getState());	
+			sendAck(null);
+			release();
+		}
+		else if ( statusCode == Response.TEMPORARILY_UNAVAILABLE
 				|| statusCode == Response.NOT_ACCEPTABLE_HERE
 				|| statusCode == Response.BUSY_HERE
 				|| statusCode == Response.BUSY_EVERYWHERE
@@ -74,6 +81,12 @@ public class CInvite extends CTransaction {
 			// 200 OK
 			log.info("<<<<<<< 200 OK: dialog: " + this.dialog + ", state: "
 					+ dialog.getState());
+			ClientTransaction transcation = event.getClientTransaction();
+			TransactionState transactionState = transcation.getState();
+			if (TransactionState.COMPLETED.equals(transactionState)) {
+				sendAck(null);
+				new CBye(sipContext);
+			}
 			byte[] rawContent = response.getRawContent();
 			int l = response.getContentLength().getContentLength();
 			if (l != 0 && rawContent != null) {
