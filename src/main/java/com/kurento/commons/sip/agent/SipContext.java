@@ -135,7 +135,7 @@ public class SipContext implements SipCall {
 	public void cancel() throws ServerInternalErrorException {
 		log.info("Request to cancel callId: " + dialog.getCallId());
 		if (cancelRequest == null)
-			return;
+			throw new ServerInternalErrorException("No request for cancel.");
 
 		try {
 			new CCancel(cancelRequest, this);
