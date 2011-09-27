@@ -49,7 +49,7 @@ public class SipContext implements SipCall {
 	private Map<MediaType, Mode> mediaTypesModes;
 
 	private SipCallListener callListener;
-
+	private boolean outgoingRequestCancelled;
 	// private boolean isComplete = false;
 
 	// ////////////////////
@@ -117,6 +117,7 @@ public class SipContext implements SipCall {
 
 		// Send DECLINE response
 		incomingPendingRequest.sendResponse(Response.DECLINE, null);
+		incomingPendingRequest = null;
 	}
 
 	@Override
@@ -137,10 +138,11 @@ public class SipContext implements SipCall {
 	public void cancel() throws ServerInternalErrorException {
 		log.info("Request to cancel callId: " + dialog.getCallId());
 		if (cancelRequest == null)
-			return;
+			throw new ServerInternalErrorException("No request for cancel.");
 
 		try {
 			new CCancel(cancelRequest, this);
+			outgoingRequestCancelled = true;
 		} catch (ServerInternalErrorException e) {
 			log.warn("Unable to send CANCEL request", e);
 		}
@@ -207,6 +209,7 @@ public class SipContext implements SipCall {
 
 		try {
 			cancelRequest = invite.getClientTransaction().createCancel();
+			outgoingRequestCancelled = false;
 		} catch (SipException e) {
 			log.error(
 					"Unable to generate CANCEL request to use it in the future",
@@ -255,6 +258,7 @@ public class SipContext implements SipCall {
 		log.debug("Incoming Call setup, callId: " + dialog.getCallId());
 		// Set up connection
 		completedCall(incomingPendingRequest);
+		incomingPendingRequest = null;
 	}
 
 	public void completedOutgoingCall(CTransaction outgoingPendingRequest) {
@@ -316,17 +320,22 @@ public class SipContext implements SipCall {
 		}
 	}
 
-	public void cancelCall() {
+	public void cancelCall() throws ServerInternalErrorException {
 		log.info("Cancel Call");
-		notifySipCallEvent(SipCallEvent.CALL_CANCEL);
 		if (incomingPendingRequest != null) {
+			incomingPendingRequest.sendResponse(Response.REQUEST_TERMINATED, null);
 			// pendingRequest.cancel();
 			incomingPendingRequest = null;
-		}
-		if (networkConnection != null) {
-			networkConnection.release();
-			networkConnection = null;
-		}
+			if (networkConnection != null) {
+				networkConnection.release();
+				networkConnection = null;
+			}
+			notifySipCallEvent(SipCallEvent.CALL_CANCEL);
+		} else  throw new ServerInternalErrorException("Cancel call error, there are not pending request");
+		
 	}
-
+	
+	public boolean hasPendingTransaction() {
+		return outgoingRequestCancelled;
+	}
 }

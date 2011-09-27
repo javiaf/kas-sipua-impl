@@ -57,8 +57,13 @@ public class CInvite extends CTransaction {
 			log.info("<<<<<<< 183 Session Progress: dialog: " + this.dialog
 					+ ", state: " + dialog.getState());
 
-		} else if (statusCode == Response.REQUEST_TERMINATED
-				|| statusCode == Response.TEMPORARILY_UNAVAILABLE
+		} else if (statusCode == Response.REQUEST_TERMINATED) {
+			log.info("<<<<<<< " + statusCode + " TERMINATED: dialog: "
+					+ this.dialog + ", state: " + dialog.getState());	
+			sendAck(null);
+			release();
+		}
+		else if ( statusCode == Response.TEMPORARILY_UNAVAILABLE
 				|| statusCode == Response.NOT_ACCEPTABLE_HERE
 				|| statusCode == Response.BUSY_HERE
 				|| statusCode == Response.BUSY_EVERYWHERE
@@ -74,17 +79,22 @@ public class CInvite extends CTransaction {
 			// 200 OK
 			log.info("<<<<<<< 200 OK: dialog: " + this.dialog + ", state: "
 					+ dialog.getState());
-			byte[] rawContent = response.getRawContent();
-			int l = response.getContentLength().getContentLength();
-			if (l != 0 && rawContent != null) {
-				// SDP offer sent by invite request
-				log.debug("Process SDP response from remote peer");
-				processSdpAnswer(rawContent);
-			} else {
-				log.error("Found response to CInvite with no SDP answer");
-				sipContext.failedCall();
+			if (sipContext.hasPendingTransaction()) {
+				sendAck(null);
+				new CBye(sipContext);
+			} else  {
+				byte[] rawContent = response.getRawContent();
+				int l = response.getContentLength().getContentLength();
+				if (l != 0 && rawContent != null) {
+					// SDP offer sent by invite request
+					log.debug("Process SDP response from remote peer");
+					processSdpAnswer(rawContent);
+				} else {
+					log.error("Found response to CInvite with no SDP answer");
+					sipContext.failedCall();
+				}
+				sendAck(null);
 			}
-			sendAck(null);
 		} else {
 			log.info("<<<<<<< " + statusCode + " FAIL: dialog: " + this.dialog
 					+ ", state: " + dialog.getState());

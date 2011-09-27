@@ -15,7 +15,6 @@ import com.kurento.commons.media.format.SessionSpec;
 import com.kurento.commons.media.format.SpecTools;
 import com.kurento.commons.mscontrol.EventType;
 import com.kurento.commons.mscontrol.networkconnection.SdpPortManagerEvent;
-import com.kurento.commons.mscontrol.networkconnection.SdpPortManagerException;
 import com.kurento.commons.sdp.enums.MediaType;
 import com.kurento.commons.sdp.enums.Mode;
 import com.kurento.commons.sip.agent.SipEndPointImpl;
