@@ -1,12 +1,10 @@
 package com.kurento.commons.sip.transaction;
 
-import javax.sip.ClientTransaction;
 import javax.sip.DialogState;
 import javax.sip.InvalidArgumentException;
 import javax.sip.ResponseEvent;
 import javax.sip.SipException;
 import javax.sip.TimeoutEvent;
-import javax.sip.TransactionState;
 import javax.sip.header.CSeqHeader;
 import javax.sip.message.Request;
 import javax.sip.message.Response;
@@ -81,7 +79,7 @@ public class CInvite extends CTransaction {
 			// 200 OK
 			log.info("<<<<<<< 200 OK: dialog: " + this.dialog + ", state: "
 					+ dialog.getState());
-			if (!sipContext.hasPendingTransaction()) {
+			if (sipContext.hasPendingTransaction()) {
 				sendAck(null);
 				new CBye(sipContext);
 			} else  {

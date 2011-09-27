@@ -46,7 +46,7 @@ public class SipContext implements SipCall {
 	private Map<MediaType, Mode> mediaTypesModes;
 
 	private SipCallListener callListener;
-
+	private boolean outgoingRequestCancelled;
 	// private boolean isComplete = false;
 
 	// ////////////////////
@@ -139,6 +139,7 @@ public class SipContext implements SipCall {
 
 		try {
 			new CCancel(cancelRequest, this);
+			outgoingRequestCancelled = true;
 		} catch (ServerInternalErrorException e) {
 			log.warn("Unable to send CANCEL request", e);
 		}
@@ -205,6 +206,7 @@ public class SipContext implements SipCall {
 
 		try {
 			cancelRequest = invite.getClientTransaction().createCancel();
+			outgoingRequestCancelled = false;
 		} catch (SipException e) {
 			log.error(
 					"Unable to generate CANCEL request to use it in the future",
@@ -312,11 +314,11 @@ public class SipContext implements SipCall {
 				networkConnection = null;
 			}
 			notifySipCallEvent(SipCallEvent.CALL_CANCEL);
-		}
+		} else  throw new ServerInternalErrorException("Cancel call error, there are not pending request");
 		
 	}
 	
 	public boolean hasPendingTransaction() {
-		return incomingPendingRequest != null;
+		return outgoingRequestCancelled;
 	}
 }
