@@ -73,41 +73,41 @@ public class CancelTest extends TestCase {
 	}
 	
 	
-//public void testCancel() throws Exception {
-//		
-//		log.info("-----------------------------Test for cancel---------------------------------");
-//		log.info("User agent initialize with config<< "+ config.toString()+">>");
-//		SipEndPointController registerAController =  new SipEndPointController("Resgister listener");
-//		
-//		String user40Name = "user40";
-//		SipEndPoint endpoint40 = userAgent1.registerEndPoint(LINPHONE_USER, PROXYL_IP, LINPHONE_PASS, 3600, registerAController);
-//		SipEndPointEvent event40 = registerAController.pollSipEndPointEvent(WAIT_TIME);
-//		assertEquals(SipEndPointEvent.REGISTER_USER_SUCESSFUL, event40.getEventType());
-//		
-//		SipEndPointController register30Controller =  new SipEndPointController("Resgister listener");
-//		String user30 = "sip:quizh@"+PROXYL_IP+":"+LINPHONE_PORT;
-//		SipEndPoint endpoint30 = userAgent2.registerEndPoint("quizh", PROXYL_IP, "linphone123", 3600, register30Controller);
-//		SipEndPointEvent event30 = register30Controller.pollSipEndPointEvent(WAIT_TIME);
-//		assertEquals(SipEndPointEvent.REGISTER_USER_SUCESSFUL, event30.getEventType());
-//		
-//		SipCallController callListener40 = new SipCallController();
-//		SipCall initialCall40 = endpoint40.dial(user30, callListener40);
-//		
-//		SipEndPointEvent incomingCall30Event = register30Controller.pollSipEndPointEvent(WAIT_TIME+20000);
-//		assertEquals(SipEndPointEvent.INCOMING_CALL, incomingCall30Event.getEventType());
-//		SipCall sipcall30 = incomingCall30Event.getCallSource();
-//		SipCallController call30Listener = new SipCallController();
-//		sipcall30.addListener(call30Listener);
-//		
-//		
-//		initialCall40.cancel();
-//
-//		SipCallEvent call30SetupEvent = call30Listener.pollSipEndPointEvent(WAIT_TIME);
-//		assertEquals(call30SetupEvent.getEventType(), SipCallEvent.CALL_CANCEL);
-//		
-//		log.info("-------------------------------Test finished-----------------------------------------");
-//
-//	}
+public void testCancel() throws Exception {
+		
+		log.info("-----------------------------Test for cancel---------------------------------");
+		log.info("User agent initialize with config<< "+ config.toString()+">>");
+		SipEndPointController registerAController =  new SipEndPointController("Resgister listener");
+		
+		String user40Name = "user40";
+		SipEndPoint endpoint40 = userAgent1.registerEndPoint(LINPHONE_USER, PROXYL_IP, LINPHONE_PASS, 3600, registerAController);
+		SipEndPointEvent event40 = registerAController.pollSipEndPointEvent(WAIT_TIME);
+		assertEquals(SipEndPointEvent.REGISTER_USER_SUCESSFUL, event40.getEventType());
+		
+		SipEndPointController register30Controller =  new SipEndPointController("Resgister listener");
+		String user30 = "sip:quizh@"+PROXYL_IP+":"+LINPHONE_PORT;
+		SipEndPoint endpoint30 = userAgent2.registerEndPoint("quizh", PROXYL_IP, "linphone123", 3600, register30Controller);
+		SipEndPointEvent event30 = register30Controller.pollSipEndPointEvent(WAIT_TIME);
+		assertEquals(SipEndPointEvent.REGISTER_USER_SUCESSFUL, event30.getEventType());
+		
+		SipCallController callListener40 = new SipCallController();
+		SipCall initialCall40 = endpoint40.dial(user30, callListener40);
+		
+		SipEndPointEvent incomingCall30Event = register30Controller.pollSipEndPointEvent(WAIT_TIME+20000);
+		assertEquals(SipEndPointEvent.INCOMING_CALL, incomingCall30Event.getEventType());
+		SipCall sipcall30 = incomingCall30Event.getCallSource();
+		SipCallController call30Listener = new SipCallController();
+		sipcall30.addListener(call30Listener);
+		
+		
+		initialCall40.cancel();
+
+		SipCallEvent call30SetupEvent = call30Listener.pollSipEndPointEvent(WAIT_TIME);
+		assertEquals(call30SetupEvent.getEventType(), SipCallEvent.CALL_CANCEL);
+		
+		log.info("-------------------------------Test finished-----------------------------------------");
+
+	}
 
 	public void testCancelAfterOk() throws Exception {
 		
@@ -147,7 +147,6 @@ public class CancelTest extends TestCase {
 		
 		call30SetupEvent = call30Listener.pollSipEndPointEvent(WAIT_TIME);
 		assertEquals(SipCallEvent.CALL_TERMINATE, call30SetupEvent.getEventType());
-		Thread.sleep(200000);
 		
 		log.info("-------------------------------Test finished-----------------------------------------");
 	
