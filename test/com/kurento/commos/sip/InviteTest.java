@@ -22,19 +22,21 @@ public class InviteTest extends TestCase {
 	private final static Log log = LogFactory.getLog(InviteTest.class);
 	
 	
-	private final static String LINPHONE_HOST = "sip.linphone.org";
+//	private final static String LINPHONE_HOST = "sip.linphone.org";
 	private final static String LINPHONE_USER = "user-test";
 	private final static String LINPHONE_PASS = "password";
 	private final static int LINPHONE_PORT = 5060;
 	private final static String LOCAL_IP= "193.147.51.20";
-	private final static String PROXYL_IP= "193.147.51.17";
-	private final static String DOMAIN= "tikal.com";
+	private final static String PROXYL_IP= "193.147.51.28";
+//	private final static String DOMAIN= "tikal.com";
+	private final static String DOMAIN= "sip.linphone.org";
 	
 	private final int  SERVLET_PORT = 5080; 
 	private final static int WAIT_TIME = 100;
 	private final static int localPort= 5040;
 	SipConfig config;
-	UA userAgent ;
+	UA userAgent1 ;
+	UA userAgent2 ;
 
 	public InviteTest(){
 		org.apache.log4j.BasicConfigurator.configure();
@@ -48,7 +50,14 @@ public class InviteTest extends TestCase {
 		config.setLocalAddress(LOCAL_IP);
 		config.setLocalPort(localPort);
 		UaFactory.setMediaSession(new MediaSessionDummy());
-		userAgent = UaFactory.getInstance(config);
+		userAgent1 = UaFactory.getInstance(config);
+		
+		SipConfig config2 = new SipConfig();
+		config2.setProxyAddress(PROXYL_IP);
+		config2.setProxyPort(LINPHONE_PORT);
+		config2.setLocalAddress(LOCAL_IP);
+		config2.setLocalPort(5030);
+		userAgent2 = UaFactory.getInstance(config2);
       
 
 //		UaFactory.setMediaSession(MediaSession)
@@ -56,56 +65,91 @@ public class InviteTest extends TestCase {
 	
 	@Override
 	protected void tearDown() throws Exception {
-		userAgent.terminate();
+		userAgent1.terminate();
+		userAgent2.terminate();
 	}
 	
 	
-	
-	public void testInvite() throws Exception {
+public void testSetupAndDropFromCalling() throws Exception {
 		
-		log.info("-----------------------------Test for invite to no found call---------------------------------");
+		log.info("-----------------------------Test for test setup and drop from calling party---------------------------------");
 		log.info("User agent initialize with config<< "+ config.toString()+">>");
 		SipEndPointController registerAController =  new SipEndPointController("Resgister listener");
-		SipEndPoint endpointA = userAgent.registerEndPoint(LINPHONE_USER, DOMAIN, LINPHONE_PASS, 3600, registerAController);
-		SipEndPointEvent eventA = registerAController.pollSipEndPointEvent(WAIT_TIME);
-		assertEquals(SipEndPointEvent.REGISTER_USER_SUCESSFUL, eventA.getEventType());
 		
-		SipEndPointController registerBController =  new SipEndPointController("Resgister listener");
-		String userB = "sip:userB@"+DOMAIN+":"+LINPHONE_PORT;
-		SipEndPoint endpointB = userAgent.registerEndPoint("userB", DOMAIN, LINPHONE_PASS, 3600, registerBController);
-		SipEndPointEvent eventB = registerBController.pollSipEndPointEvent(WAIT_TIME);
-		assertEquals(SipEndPointEvent.REGISTER_USER_SUCESSFUL, eventB.getEventType());
+		String user40Name = "user40";
+		SipEndPoint endpoint40 = userAgent1.registerEndPoint(LINPHONE_USER, PROXYL_IP, LINPHONE_PASS, 3600, registerAController);
+		SipEndPointEvent event40 = registerAController.pollSipEndPointEvent(WAIT_TIME);
+		assertEquals(SipEndPointEvent.REGISTER_USER_SUCESSFUL, event40.getEventType());
 		
-		SipCallController callListener = new SipCallController();
-		SipCall call = endpointA.dial(userB, callListener);
-		//SipCallEvent callToUserNotFoundEvent = callListener.pollSipEndPointEvent(WAIT_TIME);
-		//assertEquals(SipCallEvent.CALL_ERROR, callToUserNotFoundEvent.getEventType());
+		SipEndPointController register30Controller =  new SipEndPointController("Resgister listener");
+		String user30 = "sip:quizh@"+PROXYL_IP+":"+LINPHONE_PORT;
+		SipEndPoint endpoint30 = userAgent2.registerEndPoint("quizh", PROXYL_IP, "linphone123", 3600, register30Controller);
+		SipEndPointEvent event30 = register30Controller.pollSipEndPointEvent(WAIT_TIME);
+		assertEquals(SipEndPointEvent.REGISTER_USER_SUCESSFUL, event30.getEventType());
 		
-		SipEndPointEvent incomingCallEvent = registerBController.pollSipEndPointEvent(WAIT_TIME);
-		assertEquals(SipEndPointEvent.INCOMING_CALL, incomingCallEvent.getEventType());
-		SipCall sipcall = incomingCallEvent.getCallSource();
-		SipCallController callBListener = new SipCallController();
-		sipcall.addListener(callBListener);
-		sipcall.accept();
+		SipCallController callListener40 = new SipCallController();
+		SipCall initialCall40 = endpoint40.dial(user30, callListener40);
 		
+		SipEndPointEvent incomingCall30Event = register30Controller.pollSipEndPointEvent(WAIT_TIME+20000);
+		assertEquals(SipEndPointEvent.INCOMING_CALL, incomingCall30Event.getEventType());
+		SipCall sipcall30 = incomingCall30Event.getCallSource();
+		SipCallController call30Listener = new SipCallController();
+		sipcall30.addListener(call30Listener);
 		
 		
-		
-		SipCallEvent callSetup = callListener.pollSipEndPointEvent(WAIT_TIME);
-		assertEquals(SipCallEvent.CALL_SETUP, callSetup.getEventType());
-		SipCall sipcallA = callSetup.getSource();
+		initialCall40.cancel();
 
-		SipCallEvent callBSetupEvent = callBListener.pollSipEndPointEvent(WAIT_TIME);
-		assertEquals(callBSetupEvent.getEventType(), SipCallEvent.CALL_SETUP);
-		try {
-			sipcall.reject();
-			assertTrue(false);
-		} catch (ServerInternalErrorException e){
-			assertTrue(true);
-		}
-		log.info("-------------------------------Test finished-----------------------------------------");
+		SipCallEvent call30SetupEvent = call30Listener.pollSipEndPointEvent(WAIT_TIME);
+		assertEquals(call30SetupEvent.getEventType(), SipCallEvent.CALL_CANCEL);
 		
+		log.info("-------------------------------Test finished-----------------------------------------");
+
 	}
+
+public void testSetupAndDropFromCalled() throws Exception {
+	
+	log.info("-----------------------------Test for test setup and drop from calling party---------------------------------");
+	log.info("User agent initialize with config<< "+ config.toString()+">>");
+	SipEndPointController registerAController =  new SipEndPointController("Resgister listener");
+	
+	String user40Name = "user40";
+	SipEndPoint endpoint40 = userAgent1.registerEndPoint(LINPHONE_USER, PROXYL_IP, LINPHONE_PASS, 3600, registerAController);
+	SipEndPointEvent event40 = registerAController.pollSipEndPointEvent(WAIT_TIME);
+	assertEquals(SipEndPointEvent.REGISTER_USER_SUCESSFUL, event40.getEventType());
+	
+	SipEndPointController register30Controller =  new SipEndPointController("Resgister listener");
+	String user30 = "sip:quizh@"+PROXYL_IP+":"+LINPHONE_PORT;
+	SipEndPoint endpoint30 = userAgent2.registerEndPoint("quizh", PROXYL_IP, "linphone123", 3600, register30Controller);
+	SipEndPointEvent event30 = register30Controller.pollSipEndPointEvent(WAIT_TIME);
+	assertEquals(SipEndPointEvent.REGISTER_USER_SUCESSFUL, event30.getEventType());
+	
+	SipCallController callListener40 = new SipCallController();
+	SipCall initialCall40 = endpoint40.dial(user30, callListener40);
+	
+	SipEndPointEvent incomingCall30Event = register30Controller.pollSipEndPointEvent(WAIT_TIME+20000);
+	assertEquals(SipEndPointEvent.INCOMING_CALL, incomingCall30Event.getEventType());
+	SipCall sipcall30 = incomingCall30Event.getCallSource();
+	SipCallController call30Listener = new SipCallController();
+	sipcall30.addListener(call30Listener);
+
+	initialCall40.cancel();
+	sipcall30.accept();
+			
+	
+	SipCallEvent callSetup40 = callListener40.pollSipEndPointEvent(WAIT_TIME);
+	assertEquals(SipCallEvent.CALL_TERMINATE, callSetup40.getEventType());
+
+	SipCallEvent call30SetupEvent = call30Listener.pollSipEndPointEvent(WAIT_TIME);
+	assertEquals(SipCallEvent.CALL_CANCEL, call30SetupEvent.getEventType());
+	
+	call30SetupEvent = call30Listener.pollSipEndPointEvent(WAIT_TIME);
+	assertEquals(SipCallEvent.CALL_TERMINATE, call30SetupEvent.getEventType());
+	Thread.sleep(200000);
+	
+	log.info("-------------------------------Test finished-----------------------------------------");
+
+}
+
 
 
 
