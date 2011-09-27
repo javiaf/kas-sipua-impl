@@ -17,6 +17,23 @@ import com.kurento.commons.mscontrol.MediaSession;
 import com.kurento.commons.sip.UA;
 import com.kurento.commons.sip.util.SipConfig;
 
+/**
+ * The UaFactory is a singleton class able to create instances of a JAIN-SIP
+ * User Agent implementation. It also wraps several JAIN-SIP factories required
+ * to encode and decode SIP messages
+ * <p>
+ * Every time getInstance() method is called a new User Agent is created and
+ * binded to ports according to SipConfig specification. Special care have to be
+ * taken when multiple agents are instantiated as each one instantiate its own
+ * SipStack and binds to its own socket, that can no be shared
+ * <p>
+ * Media configuration has to be set before User agent instantiation, as
+ * MediaSession parameter can not be changed after instantiation. A change in
+ * media capabilities requires a User Agent initialization.
+ * 
+ * @author Kurento
+ * 
+ */
 public class UaFactory {
 
 	private static final Log log = LogFactory.getLog(UaFactory.class);
@@ -70,35 +87,87 @@ public class UaFactory {
 
 	// ///////
 
+	/**
+	 * Creates a new UA with the provided SIP configuration and based in the
+	 * media information stored into the MediaSession object, that must be set
+	 * before this method is called
+	 */
 	public static UA getInstance(SipConfig config) throws Exception {
 		UaImpl ua = new UaImpl(config);
 		return ua;
 	}
 
+	/**
+	 * Returns the User Agent header as defined by JAIN-SIP
+	 * 
+	 * @return User Agent Header
+	 */
 	public static UserAgentHeader getUserAgentHeader() {
 		return userAgent;
 	}
 
+	/**
+	 * Returns the JAIN-SIP SipFactory object that holds the SIP stack this User
+	 * Agent utilizes for message interchange
+	 * 
+	 * @return SIP factory
+	 */
 	public static SipFactory getSipFactory() {
 		return sipFactory;
 	}
 
+	/**
+	 * Returns the JAIN-SIP MessageFactory object used by this User Agent to
+	 * build SIP messages
+	 * 
+	 * @return SIP message factory
+	 */
 	public static MessageFactory getMessageFactory() {
 		return messageFactory;
 	}
 
+	/**
+	 * Returns the JAIN-SIP HeaderFactory object used by this User Agent to
+	 * build SIP headers
+	 * 
+	 * @return SIP header factory
+	 */
 	public static HeaderFactory getHeaderFactory() {
 		return headerFactory;
 	}
 
+	/**
+	 * Returns the JAIN-SIP AddressFactory object used by this User Agent to
+	 * build SIP Addresses
+	 * 
+	 * @return SIP header factory
+	 */
 	public static AddressFactory getAddressFactory() {
 		return addressFactory;
 	}
 
+	/**
+	 * Provides the User Agent a reference to a MediaSession object that
+	 * contains all media information and a factory for NetworkConnection, that
+	 * actually handles media negotiation during call.
+	 * <p>
+	 * MediaSession reference must be set before User Agent creation as this
+	 * reference can no be changed. A new MediaSession object has to be created
+	 * if media capabilities change: bandwidth, resolution. available codecs,
+	 * etc. This requires to set the new MediaSession object into UaFactory and
+	 * the User Agent re-initialization
+	 * 
+	 * @param mediaSession
+	 */
 	public static void setMediaSession(MediaSession mediaSession) {
 		UaFactory.mediaSession = mediaSession;
 	}
 
+	/**
+	 * Returns MediaSession previously set or null if any has been set
+	 * 
+	 * @return
+	 */
 	public static MediaSession getMediaSession() {
 		return mediaSession;
 	}
