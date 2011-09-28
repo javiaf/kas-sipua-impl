@@ -40,7 +40,7 @@ public class SdpPortManagerDummy implements SdpPortManager {
 	public byte[] getMediaServerSessionDescription()
 			throws SdpPortManagerException {
 		// TODO Auto-generated method stub
-		return null;
+		return getSdp();
 	}
 
 	@Override
