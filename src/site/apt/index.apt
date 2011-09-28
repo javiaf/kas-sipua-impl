@@ -1,0 +1,42 @@
+
+Kurento Android SIP User Agent
+
+* Introduction
+
+	Kas-Sipua interface implementation oriented to endebed applications.See more in {{{../kas-sipua/}KAS-SIPUA}} 
+	
+* Quick start
+	
+	
+	* UaFactory is used for create User Agent. It has a static method witch return an instance of UserAgent with
+	specified parameter.
+	
+	* UaFactory must be initialized with a MediaSession.
+	
++---------------------
+	UaFactory.setMediaSession(new MediaSessionIntance);
++--------------------- 
+
+	* A SipConfig is passed to UserFactory for create an instance of  SipUserAgent with following parameter:
+		
+		*	LocalAddress
+		
+		*	LocalPort
+		
+		*   ProxyAddress 
+		
+		*	ProxyPort
+		
+	
+	Example
+	
++---------------------
+		SipConfig config = new SipConfig();
+		config.setProxyAddress("127.0.0.1");
+		config.setProxyPort("5070");
+		config.setLocalAddress("127.0.0.1");
+		config.setLocalPort("5060");
+		
+		UaFactory.getInstance(config);
++--------------------- 
+		Note: Opensips must be configure for pass test see {{{./testhelp.html}test-help}}.

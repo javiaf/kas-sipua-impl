@@ -1,14 +1,19 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project name="Tikal SIP library">
+<project name="Kurento SIP library">
 	<publishDate position="right" />
 	<version position="right" />
-	<poweredBy>
-		<logo name="Maven" href="http://maven.apache.org/"
-			img="http://maven.apache.org/images/logos/maven-feather.png" />
-	</poweredBy>
-
+	<bannerLeft>
+		<name>Kurento</name>
+		<src>http://www.kurento.com/kurento/sites/all/themes/bartikplus/logo.png
+		</src>
+		<href>http://www.kurento.com</href>
+	</bannerLeft>
 	<body>
-		<menu name="Tikal SIP library" href="siplib.html"/>
+		<menu name="Kurento SIP library" href="siplib.html">
+			<item name="Main" href="./siplib.html" />
+			<item name="Configuration" href="./testhelp.html" />
+		</menu>
 		<menu ref="modules" />
+		<menu ref="reports" />
 	</body>
 </project>
