@@ -1,7 +1,8 @@
 
-Kurento SIP library Test bed
+Kurento SIP library Test configuration
 
-
+	* For deploy maven project it is necessary install and configure opensips (or another sip server). 
+		
  	* OpenSips
 		In order to test siplib it is required an OpenSips instance that routes SIP traffic listening in localhost(127.0.0.1). 
 		Code below shows minimal configuration required in order to run test successfully

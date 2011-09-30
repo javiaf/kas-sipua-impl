@@ -3,18 +3,20 @@ Kurento Android SIP User Agent
 
 * Introduction
 
-	Kas-Sipua interface implementation oriented to endebed applications.See more in {{{../kas-sipua/}KAS-SIPUA}} 
+	Kas-Sipua interface implementation oriented to embedded applications.See more in KAS-SIPUA interface. 
 	
 * Quick start
-	
 	
 	* UaFactory is used for create User Agent. It has a static method witch return an instance of UserAgent with
 	specified parameter.
 	
 	* UaFactory must be initialized with a MediaSession.
 	
+		* MediaSession. This component from kc-mscontrol library manages media resources attending each application needed.
+		In Kurento, mscontrol library is available for android environment.
+	
 +---------------------
-	UaFactory.setMediaSession(new MediaSessionIntance);
+	UaFactory.setMediaSession(MediaSessionIntance);
 +--------------------- 
 
 	* A SipConfig is passed to UserFactory for create an instance of  SipUserAgent with following parameter:
@@ -38,5 +40,29 @@ Kurento Android SIP User Agent
 		config.setLocalPort("5060");
 		
 		UaFactory.getInstance(config);
-+--------------------- 
-		Note: Opensips must be configure for pass test see {{{./testhelp.html}test-help}}.
++---------------------
+
+* Structure for SipDialogs: Transactions
+
+	Kas-sipua-impl is structure on two kind of transaction for manage sip messages. They  are divided in two group CTransactions for
+	outgoing request and STransaction for incoming request.
+
+*-------------*--------------*	
+| <<CTransactions>>| <<STransactions>> 
+*-------------*--------------*
+|CRegister    |SRegister
+*-------------*--------------*
+|CInvite      | Sinvite
+*-------------*--------------*
+|CBye         | SBye
+*-------------*--------------*
+|CCancel      | SCancel
+*-------------*--------------*
+|COptions     |---
+*-------------*--------------*
+|---          |SAck
+*-------------*--------------*
+
+	Note: Opensips must be configure for pass test see {{{./testhelp.html}test-help}}.
+		
+		

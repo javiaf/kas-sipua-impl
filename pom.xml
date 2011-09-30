@@ -152,6 +152,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-javadoc-plugin</artifactId>
 				<version>2.8</version>
+				<configuration>
+					<excludePackageNames>com.kurento.commons.sip.exception:com.kurento.commons.sip.transaction</excludePackageNames>
+				</configuration>
 			</plugin>
 		</plugins>
 	</reporting>
