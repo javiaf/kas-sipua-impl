@@ -7,7 +7,7 @@
 
 	<name>Sip User Agent implementation</name>
 	<description>Sip User Agent implementation</description>
-	<url>http://repository.kurento.com/site/kas-sipua-impl</url>
+	<url>http://www.kurento.com/docs/kas-sipua-impl</url>
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
