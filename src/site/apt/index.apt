@@ -3,32 +3,33 @@ Kurento Android SIP User Agent
 
 * Introduction
 
-	Kas-Sipua interface implementation oriented to endebed applications.See more in {{{../kas-sipua/}KAS-SIPUA}} 
+	This project is an Android compatible implementation of interface {{{../kas-sipua/}KAS-SIPUA}}.
+	Provides an embeddable library enabling SIP call management for Android applications
 	
 * Quick start
 	
+	* UaFactory is used to create User Agents. It has a static method returning
+	<<<UA>>> for the given configuration parameters. Multiple UAs can be created as far as port
+	don't collide.
 	
-	* UaFactory is used for create User Agent. It has a static method witch return an instance of UserAgent with
-	specified parameter.
-	
-	* UaFactory must be initialized with a MediaSession.
+	* A <<<MediaSession>>> instance must be provided to UaFactory before any User Agent is created.
+	Media information is required by the SIP stack to carry out SDP negotiation according to
+	media capabilities. See more details about media initialization at {{{../kas-mscontrol}KAS-MSCONTROL}}
 	
 +---------------------
 	UaFactory.setMediaSession(new MediaSessionIntance);
 +--------------------- 
 
-	* A SipConfig is passed to UserFactory for create an instance of  SipUserAgent with following parameter:
+	* <<<SipConfig>>> is used to provide <<<UaFactory>>> with required configuration 
+	for <<<UA>>> instantiation. It contains following attributes:
 		
-		*	LocalAddress
+		*	<<<LocalAddress>>>: This is the local address where the SipStack will listen messages
 		
-		*	LocalPort
+		*	<<<LocalPort>>>: This is the local port where te SipStack will bind to
 		
-		*   ProxyAddress 
+		*   <<<ProxyAddress>>>: This is the remote SIP Proxy IP address
 		
-		*	ProxyPort
-		
-	
-	Example
+		*	<<<ProxyPort>>>: THis is the UDP port where the remote SIP Proxy listens messages
 	
 +---------------------
 		SipConfig config = new SipConfig();
@@ -39,4 +40,5 @@ Kurento Android SIP User Agent
 		
 		UaFactory.getInstance(config);
 +--------------------- 
-		Note: Opensips must be configure for pass test see {{{./testhelp.html}test-help}}.
+		Above example shows how is created <<<UA>>> for JUnit tests. An OpenSips server must be
+		configured as shown in {{{./testhelp.html}test-help}}.
