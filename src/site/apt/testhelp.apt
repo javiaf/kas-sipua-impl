@@ -1,21 +1,21 @@
 
 Kurento SIP library Test bed
 
-
- 	* OpenSips
-		In order to test siplib it is required an OpenSips instance that routes SIP traffic listening in localhost(127.0.0.1). 
-		Code below shows minimal configuration required in order to run test successfully
-
+	In order to test siplib it is required an {{{http://www.opensips.org}OpenSips}}}
+	instance (any SIP Proxy would do) that routes SIP traffic.
+	
+	JUnit tests included in the code will not pass unless a SIP Proxy is listening in 
+	localhost (127.0.0.1:5060)
+	
+	Next is shown the minimal configuration required to run tests. 
 	Configuration is tested with OpenSips version 1.6.4-2-notls
-
-	* Minimum KURENTO configuration
 
 +---------------------------	
 alias=kurento.com
 dns=no
 rev_dns=no
 +---------------------------
-	When opensips is compiled from source, configuration file is placed in
+	When OpenSips is compiled from source, configuration file is placed in
 
 +---------------------------
 	/usr/local/etc/opensips/opensips.cfg
@@ -26,3 +26,5 @@ rev_dns=no
 +---------------------------
 	/usr/local/sbin/opensips
 +---------------------------
+
+	Further details can be found at {{{http://www.opensips.org/Resources/Documentation}OpenSips documentation}} 
