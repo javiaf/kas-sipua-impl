@@ -4,14 +4,13 @@
 	<version position="right" />
 	<bannerLeft>
 		<name>Kurento</name>
-		<src>http://www.kurento.com/kurento/sites/all/themes/bartikplus/logo.png
+		<src>http://www.kurento.com/sites/all/themes/bartikplus/logo.png
 		</src>
 		<href>http://www.kurento.com</href>
 	</bannerLeft>
 	<body>
-		<menu name="Kurento SIP library" href="siplib.html">
-			<item name="Main" href="./siplib.html" />
-			<item name="Configuration" href="./testhelp.html" />
+		<menu name="Kurento SIP library">
+			<item name="Test configuration" href="./testhelp.html" />
 		</menu>
 		<menu ref="modules" />
 		<menu ref="reports" />
