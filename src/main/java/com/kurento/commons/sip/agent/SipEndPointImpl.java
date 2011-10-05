@@ -83,8 +83,8 @@ public class SipEndPointImpl implements SipEndPoint {
 		this.sipUriAddress = UaFactory.getAddressFactory().createAddress(
 				"sip:" + userName + "@" + realm);
 		this.contactAddress = UaFactory.getAddressFactory().createAddress(
-				"sip:" + userName + "@" + ua.getLocalAddress() + ":"
-						+ ua.getLocalPort());
+				"sip:" + userName + "@" + ua.getPublicAddress() + ":"
+						+ ua.getPublicPort());
 		this.password = password;
 
 		register();

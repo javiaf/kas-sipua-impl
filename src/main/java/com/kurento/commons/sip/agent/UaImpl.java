@@ -70,6 +70,8 @@ public class UaImpl implements SipListener, UA{
 	private String localAddress = "127.0.0.1";
 	private int localPort = 5060;
 	private String publicAddress = "127.0.0.1";
+
+
 	private int publicPort = 5060;
 	private String proxyAddress = "127.0.0.1";
 	private int proxyPort = 5060;
@@ -429,6 +431,22 @@ public class UaImpl implements SipListener, UA{
 	
 	public int getMaxForwards() {
 		return maxForwards;
+	}
+	
+	public String getPublicAddress() {
+		return publicAddress;
+	}
+
+	public void setPublicAddress(String publicAddress) {
+		this.publicAddress = publicAddress;
+	}
+
+	public int getPublicPort() {
+		return publicPort;
+	}
+
+	public void setPublicPort(int publicPort) {
+		this.publicPort = publicPort;
 	}
 
 	/////////////
