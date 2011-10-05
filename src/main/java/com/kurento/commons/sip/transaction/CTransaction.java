@@ -319,7 +319,7 @@ public abstract class CTransaction extends Transaction {
 				clientTransaction.sendRequest();
 		} catch (SipException e) {
 			throw new ServerInternalErrorException(
-					"Sip Exception sending INVITE request", e); // BYE too...
+					"Sip Exception sending  request", e); // BYE too...
 		}
 	}
 
