@@ -1,7 +1,7 @@
 
 Kurento SIP library Test bed
 
-	In order to test siplib it is required an {{{http://www.opensips.org}OpenSips}}}
+	In order to test siplib it is required an {{{http://www.opensips.org}OpenSips}}
 	instance (any SIP Proxy would do) that routes SIP traffic.
 	
 	JUnit tests included in the code will not pass unless a SIP Proxy is listening in 
