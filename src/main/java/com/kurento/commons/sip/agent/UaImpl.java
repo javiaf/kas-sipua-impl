@@ -55,7 +55,6 @@ import com.kurento.commons.sip.transaction.SCancel;
 import com.kurento.commons.sip.transaction.SInvite;
 import com.kurento.commons.sip.transaction.STransaction;
 import com.kurento.commons.sip.util.SipConfig;
-import com.kurento.commons.sip.util.StunDummy;
 
 public class UaImpl implements SipListener, UA{
 		
