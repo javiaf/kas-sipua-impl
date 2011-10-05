@@ -34,6 +34,9 @@ package com.kurento.commons.sip.util;
 public class SipConfig {
 	private String localAddress = "127.0.0.1";
 	private int localPort = 5070;
+	
+	private String publicAddress = "127.0.0.1";
+	private int publicPort = 5070;
 	private String proxyAddress = "127.0.0.1";
 	private int proxyPort = 5060;
 	private String transport = "UDP";
@@ -147,5 +150,22 @@ public class SipConfig {
 				+ "Transport    : " + transport + "\n" + "Max Forwards : "
 				+ maxForards + "\n";
 	}
+	
+	public String getPublicAddress() {
+		return publicAddress;
+	}
+
+	public void setPublicAddress(String publicAddress) {
+		this.publicAddress = publicAddress;
+	}
+
+	public int getPublicPort() {
+		return publicPort;
+	}
+
+	public void setPublicPort(int publicPort) {
+		this.publicPort = publicPort;
+	}
+
 
 }

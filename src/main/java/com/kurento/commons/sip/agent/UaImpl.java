@@ -55,6 +55,7 @@ import com.kurento.commons.sip.transaction.SCancel;
 import com.kurento.commons.sip.transaction.SInvite;
 import com.kurento.commons.sip.transaction.STransaction;
 import com.kurento.commons.sip.util.SipConfig;
+import com.kurento.commons.sip.util.StunDummy;
 
 public class UaImpl implements SipListener, UA{
 		
@@ -69,10 +70,13 @@ public class UaImpl implements SipListener, UA{
 	// Configuration parameters
 	private String localAddress = "127.0.0.1";
 	private int localPort = 5060;
+	private String publicAddress = "127.0.0.1";
+	private int publicPort = 5060;
 	private String proxyAddress = "127.0.0.1";
 	private int proxyPort = 5060;
 	private String transport = "UDP";
 	private int maxForwards = 70;
+	
 		
 	// User List
 	private HashMap<String,SipEndPointImpl> endPoints = new HashMap<String,SipEndPointImpl>();
@@ -91,6 +95,8 @@ public class UaImpl implements SipListener, UA{
 		this.proxyPort = config.getProxyPort();
 		this.transport = config.getTransport();
 		this.maxForwards = config.getMaxForards();
+		this.publicAddress = config.getPublicAddress();
+		this.publicPort = config.getPublicPort();
 
 		log.info("starting JAIN-SIP stack initializacion ...");
 
@@ -110,17 +116,17 @@ public class UaImpl implements SipListener, UA{
 		// traces.
 		// Your code will limp at 32 but it is best for debugging.
 //		jainProps.setProperty("gov.nist.javax.sip.TRACE_LEVEL", "16");
-
+		
+		
 		log.info("Stack properties: " + jainProps);
 
 		// Create SIP factory objects
 		sipStack = UaFactory.getSipFactory().createSipStack(jainProps);
-
-
+		
+		
 		ListeningPoint listeningPoint = sipStack.createListeningPoint(localAddress,localPort, transport);
+		listeningPoint.setSentBy(publicAddress + ":" + publicPort);
 		sipProvider = sipStack.createSipProvider(listeningPoint);
-		
-		
 		sipProvider.addSipListener(this);
 		log.info("SIP stack initializacion complete. Listening on " + localAddress + ":" + localPort +"/" + transport);
 				
