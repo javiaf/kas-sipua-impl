@@ -54,6 +54,7 @@ import com.kurento.commons.sip.transaction.SBye;
 import com.kurento.commons.sip.transaction.SCancel;
 import com.kurento.commons.sip.transaction.SInvite;
 import com.kurento.commons.sip.transaction.STransaction;
+import com.kurento.commons.sip.util.NatKeepAlive;
 import com.kurento.commons.sip.util.SipConfig;
 
 public class UaImpl implements SipListener, UA{
@@ -77,7 +78,7 @@ public class UaImpl implements SipListener, UA{
 	private int proxyPort = 5060;
 	private String transport = "UDP";
 	private int maxForwards = 70;
-	
+	private NatKeepAlive   keepAlive;
 		
 	// User List
 	private HashMap<String,SipEndPointImpl> endPoints = new HashMap<String,SipEndPointImpl>();
@@ -112,6 +113,8 @@ public class UaImpl implements SipListener, UA{
 		// Drop the client connection after we are done with the transaction.
 		jainProps.setProperty("gov.nist.javax.sip.CACHE_CLIENT_CONNECTIONS", "true");
 		jainProps.setProperty("gov.nist.javax.sip.THREAD_POOL_SIZE", "100");
+		jainProps.setProperty("gov.nist.javax.sip.THREAD_POOL_SIZE", "100");
+
 		// Set to 0 (or NONE) in your production code for max speed.
 		// You need 16 (or TRACE) for logging traces. 32 (or DEBUG) for debug +
 		// traces.
@@ -129,13 +132,24 @@ public class UaImpl implements SipListener, UA{
 		listeningPoint.setSentBy(publicAddress + ":" + publicPort);
 		sipProvider = sipStack.createSipProvider(listeningPoint);
 		sipProvider.addSipListener(this);
+
+		if (!publicAddress.equals(localAddress)) {
+			log.debug("Creating keepalive for hole punching");
+			keepAlive = new NatKeepAlive(config, listeningPoint);
+			keepAlive.start();
+		}
 		log.info("SIP stack initializacion complete. Listening on " + localAddress + ":" + localPort +"/" + transport);
 				
 	}
 
+
 	public void terminate() {
 		log.info("SIP stack terminating ...");
 		log.info("Stopping registered endpoits.");
+		if (keepAlive!= null) {
+			log.info("Stopping hole punching");
+			keepAlive.stop();
+		}
 		for (SipEndPoint endpoint : endPoints.values()) {
 			try {
 				endpoint.terminate();
