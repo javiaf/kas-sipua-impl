@@ -227,4 +227,13 @@
 		<developerConnection>scm:git:ssh://repository.kurento.com/git/kas-sipua-impl</developerConnection>
 		<url>https://repository.kurento.com/git/kurento-android-sdk/?p=kas-sipua-impl</url>
 	</scm>
+	
+	<licenses>
+		<license>
+			<name>Kurento Android SDK License</name>
+			<url>http://www.kurento.com/docs/kurento-android-docs/license.html</url>
+			<distribution>repo</distribution>
+			<comments>Commercial license for Kurento Android SDK</comments>
+		</license>
+	</licenses>
 </project>
