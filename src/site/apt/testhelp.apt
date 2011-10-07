@@ -1,14 +1,20 @@
-
+	------
+	Kurento Android SIP User Agent
+	------
+	------
+	Date
+	------
+	
 Kurento SIP library Test bed
 
-	In order to test siplib it is required an {{{http://www.opensips.org}OpenSips}}
+	In order to test Kurento SIP User Agent Á is required an {{{http://www.opensips.org}OpenSips}}
 	instance (any SIP Proxy would do) that routes SIP traffic.
 	
 	JUnit tests included in the code will not pass unless a SIP Proxy is listening in 
-	localhost (127.0.0.1:5060)
+	localhost (127.0.0.1:5060).
 	
-	Next is shown the minimal configuration required to run tests. 
-	Configuration is tested with OpenSips version 1.6.4-2-notls
+	Next code snippet shows the minimal configuration required to run tests. 
+	Configuration is tested with OpenSips version 1.6.4-2-notls.
 
 +---------------------------	
 alias=kurento.com
@@ -21,7 +27,7 @@ rev_dns=no
 	/usr/local/etc/opensips/opensips.cfg
 +---------------------------
 
-	Before test are run OpenSips must be started with command
+	OpenSips can be started with command.
 
 +---------------------------
 	/usr/local/sbin/opensips

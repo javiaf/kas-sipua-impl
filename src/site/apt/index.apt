@@ -3,34 +3,33 @@ Kurento Android SIP User Agent
 
 * Introduction
 
-	This project is an Android compatible implementation of interface {{{../kas-sipua/}KAS-SIPUA}}
-	based in {{{http://java.net/projects/jain-sip/}jain-sip}} stack.
-	Provides an embeddable library enabling SIP call management for Android applications
+	This project is an Android implementation of interface {{{../kas-sipua/}KAS-SIPUA}}.
+	Provides an embeddable library enabling SIP call management for Android applications.
 	
 * Quick start
 	
-	* UaFactory is used to create User Agents. It has a static method returning
-	<<<UA>>> for the given configuration parameters. Multiple UAs can be created as far as port
+	* UaFactory is used to create User Agents. It has a static method <<getInstance(SipConfig)>>>
+	that creates an	<<<UA>>> object for the given configuration. Multiple UAs can be created as far as ports
 	don't collide.
 	
 	* A <<<MediaSession>>> instance must be provided to UaFactory before any User Agent is created.
 	Media information is required by the SIP stack to carry out SDP negotiation according to
-	media capabilities. See more details about media initialization at {{{../kas-mscontrol}KAS-MSCONTROL}}
+	media capabilities.
 	
 +---------------------
 	UaFactory.setMediaSession(new MediaSessionIntance);
 +--------------------- 
 
-	* <<<SipConfig>>> is used to provide <<<UaFactory>>> with required configuration 
-	for <<<UA>>> instantiation. It contains following attributes:
+	* <<<SipConfig>>> is used to provide <<<UaFactory>>> required configuration details to create
+	 <<<UA>>> objects. It contains following attributes:
 		
-		*	<<<LocalAddress>>>: This is the local address where the SipStack will listen messages
+		*	<<<LocalAddress>>>: This is the local address where the SipStack will listen messages.
 		
-		*	<<<LocalPort>>>: This is the local port where te SipStack will bind to
+		*	<<<LocalPort>>>: This is the local port where the SipStack will bind to.
 		
-		*   <<<ProxyAddress>>>: This is the remote SIP Proxy IP address
+		*   <<<ProxyAddress>>>: This is the remote SIP Proxy and Registrar address.
 		
-		*	<<<ProxyPort>>>: THis is the UDP port where the remote SIP Proxy listens messages
+		*	<<<ProxyPort>>>: This is the UDP port where the remote SIP Proxy listens messages
 	
 +---------------------
 		SipConfig config = new SipConfig();
@@ -41,5 +40,3 @@ Kurento Android SIP User Agent
 		
 		UaFactory.getInstance(config);
 +--------------------- 
-		Above example shows how is created <<<UA>>> for JUnit tests. An OpenSips server must be
-		configured as shown in {{{./testhelp.html}test-help}}.
