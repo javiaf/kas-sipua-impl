@@ -18,10 +18,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>com.kurento.commons</groupId>
 	<artifactId>kas-sipua-impl</artifactId>
-	<version>1.1.0-SNAPSHOT</version>
 	<packaging>jar</packaging>
 
 	<name>Sip User Agent implementation</name>
+	<version>1.1.0-SNAPSHO</version>
 	<description>Sip User Agent implementation</description>
 	<url>http://repository.kurento.com/site/kas-sipua-impl</url>
 
@@ -89,7 +89,14 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>
 		<dependency>
 			<groupId>javax.sip</groupId>
 			<artifactId>jain-sip-ri</artifactId>
-			<version>1.2</version>
+			<version>1.2.165</version>
+		</dependency>
+		<dependency>
+			<groupId>com.kurento.commons</groupId>
+			<artifactId>kas-stun</artifactId>
+			<version>1.0.0-SNAPSHOT</version>
+			<type>jar</type>
+			<scope>test</scope>
 		</dependency>
 	</dependencies>
 
