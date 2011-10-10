@@ -143,16 +143,9 @@ public void testCancel() throws Exception {
 	
 		initialCall40.cancel();
 		sipcall30.accept();
-				
-		
-		//SipCallEvent callSetup40 = callListener40.pollSipEndPointEvent(WAIT_TIME);
-		//assertEquals(SipCallEvent.CALL_TERMINATE, callSetup40.getEventType());
 	
 		SipCallEvent call30SetupEvent = call30Listener.pollSipEndPointEvent(Configuration.WAIT_TIME);
 		assertEquals(SipCallEvent.CALL_CANCEL, call30SetupEvent.getEventType());
-		
-		call30SetupEvent = call30Listener.pollSipEndPointEvent(Configuration.WAIT_TIME);
-		assertEquals(SipCallEvent.CALL_TERMINATE, call30SetupEvent.getEventType());
 		
 		log.info("-------------------------------Test finished-----------------------------------------");
 	
