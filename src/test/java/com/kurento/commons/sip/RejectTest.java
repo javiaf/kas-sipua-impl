@@ -21,13 +21,9 @@ import junit.framework.TestCase;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import com.kurento.commons.sip.SipCall;
-import com.kurento.commons.sip.SipEndPoint;
-import com.kurento.commons.sip.UA;
 import com.kurento.commons.sip.agent.UaFactory;
 import com.kurento.commons.sip.event.SipCallEvent;
 import com.kurento.commons.sip.event.SipEndPointEvent;
-import com.kurento.commons.sip.exception.ServerInternalErrorException;
 import com.kurento.commons.sip.util.SipConfig;
 import com.kurento.commons.util.Configuration;
 import com.kurento.commons.util.MediaSessionDummy;

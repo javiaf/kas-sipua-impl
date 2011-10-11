@@ -21,9 +21,6 @@ import junit.framework.TestCase;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import com.kurento.commons.sip.SipCall;
-import com.kurento.commons.sip.SipEndPoint;
-import com.kurento.commons.sip.UA;
 import com.kurento.commons.sip.agent.UaFactory;
 import com.kurento.commons.sip.event.SipCallEvent;
 import com.kurento.commons.sip.event.SipEndPointEvent;
