@@ -14,32 +14,32 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>
 */
-package com.kurento.commos.utils;
+package com.kurento.commons.util;
 
-import com.kurento.commons.sip.SipEndPointListener;
-import com.kurento.commons.sip.event.SipEndPointEvent;
+import com.kurento.commons.sip.SipCallListener;
+import com.kurento.commons.sip.event.SipCallEvent;
 import com.kurento.commons.sip.event.SipEventType;
 
-public class SipEndPointController implements SipEndPointListener {
-		
-	private SipListener sipEndPointListener = new SipListener();
+public class SipCallController implements SipCallListener{
+
+	private SipListener sipCallListener = new SipListener();
 	private String name;
-	public SipEndPointController(){};
-	public SipEndPointController(String name) {
+	public SipCallController(){}
+	public SipCallController(String name) {
 		this.name = name;
 	}
-	
+
 	@Override
-	public void onEvent(SipEndPointEvent event) {
-		sipEndPointListener.onEvent(event);
+	public void onEvent(SipCallEvent event) {
+		sipCallListener.onEvent(event);
 	}
 	
-	public SipEndPointEvent pollSipEndPointEvent (int timeoutSec) throws InterruptedException {
-		return sipEndPointListener.poll(timeoutSec);
+	public SipCallEvent pollSipEndPointEvent (int timeoutSec) throws InterruptedException {
+		return sipCallListener.poll(timeoutSec);
 	}
-	
+
 	public SipEventType pollSipEndPointEventType (int timeoutSec) throws InterruptedException {
-		SipEndPointEvent event = sipEndPointListener.poll(timeoutSec);
+		SipCallEvent event = sipCallListener.poll(timeoutSec);
 		if (event != null) {
 			return event.getEventType();
 		} else {

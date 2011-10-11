@@ -1,4 +1,4 @@
-package com.kurento.commos.utils;
+package com.kurento.commons.util;
 
 public class Configuration {
 	
@@ -11,8 +11,10 @@ public class Configuration {
 	public final static String PASS = "password";
 	public final static int  PROXY_PORT = 5060;
 	public final static String LOCAL_IP= "127.0.0.1";
+//	public final static String LOCAL_IP= "193.147.51.20";
 	public final static String PROXY_IP= "127.0.0.1";
-	public final static int LOCAL_PORT= 5070;
+//	public final static String PROXY_IP= "193.147.51.28";
+	public final static int LOCAL_PORT= 5090;
 	public final static int WAIT_TIME = 100;
 	private static int counter;
 		

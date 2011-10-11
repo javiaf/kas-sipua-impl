@@ -14,7 +14,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>
 */
-package com.kurento.commos.sip;
+package com.kurento.commons.sip;
 
 import junit.framework.TestCase;
 
@@ -28,10 +28,10 @@ import com.kurento.commons.sip.agent.UaFactory;
 import com.kurento.commons.sip.event.SipCallEvent;
 import com.kurento.commons.sip.event.SipEndPointEvent;
 import com.kurento.commons.sip.util.SipConfig;
-import com.kurento.commos.utils.MediaSessionDummy;
-import com.kurento.commos.utils.SipCallController;
-import com.kurento.commos.utils.SipEndPointController;
-import com.kurento.commos.utils.Configuration;
+import com.kurento.commons.util.Configuration;
+import com.kurento.commons.util.MediaSessionDummy;
+import com.kurento.commons.util.SipCallController;
+import com.kurento.commons.util.SipEndPointController;
 
 public class InviteTest extends TestCase {
 	
@@ -53,8 +53,6 @@ public class InviteTest extends TestCase {
 		config.setLocalAddress(Configuration.LOCAL_IP);
 		int port =Configuration.LOCAL_PORT+testConfig.getCounter();
 		config.setLocalPort(port);
-		config.setPublicAddress(Configuration.LOCAL_IP);
-		config.setPublicPort(port);
 		userAgent1 = UaFactory.getInstance(config);
 		
 		
@@ -64,8 +62,6 @@ public class InviteTest extends TestCase {
 		config2.setLocalAddress(Configuration.LOCAL_IP);
 		int port2 =Configuration.LOCAL_PORT+testConfig.getCounter();
 		config2.setLocalPort(port2);
-		config2.setPublicAddress(Configuration.LOCAL_IP);
-		config2.setPublicPort(port2);
 		userAgent2 = UaFactory.getInstance(config2);
 
 	}

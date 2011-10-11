@@ -14,7 +14,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>
 */
-package com.kurento.commos.sip;
+package com.kurento.commons.sip;
 
 import junit.framework.TestCase;
 
@@ -26,8 +26,8 @@ import com.kurento.commons.sip.UA;
 import com.kurento.commons.sip.agent.UaFactory;
 import com.kurento.commons.sip.event.SipEndPointEvent;
 import com.kurento.commons.sip.util.SipConfig;
-import com.kurento.commos.utils.SipEndPointController;
-import com.kurento.commos.utils.Configuration;
+import com.kurento.commons.util.Configuration;
+import com.kurento.commons.util.SipEndPointController;
 
 public class RegisterTest extends TestCase {
 	
@@ -84,8 +84,6 @@ public class RegisterTest extends TestCase {
 		config.setLocalAddress(Configuration.LOCAL_IP);
 		int port =Configuration.LOCAL_PORT+testConfig.getCounter();
 		config.setLocalPort(port);
-		config.setPublicAddress(Configuration.LOCAL_IP);
-		config.setPublicPort(port);
 		userAgent = UaFactory.getInstance(config);
 		
 		
