@@ -13,7 +13,7 @@ GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>
-*/
+ */
 package com.kurento.commons.sip.transaction;
 
 import javax.sip.DialogState;
@@ -73,13 +73,15 @@ public class CInvite extends CTransaction {
 			log.info("<<<<<<< 183 Session Progress: dialog: " + this.dialog
 					+ ", state: " + dialog.getState());
 
+		} else if (statusCode < 200) {
+			log.info("<<<<<<< " + statusCode + " 1xx: dialog: " + this.dialog
+					+ ", state: " + dialog.getState());
 		} else if (statusCode == Response.REQUEST_TERMINATED) {
 			log.info("<<<<<<< " + statusCode + " TERMINATED: dialog: "
-					+ this.dialog + ", state: " + dialog.getState());	
+					+ this.dialog + ", state: " + dialog.getState());
 			sendAck(null);
 			release();
-		}
-		else if ( statusCode == Response.TEMPORARILY_UNAVAILABLE
+		} else if (statusCode == Response.TEMPORARILY_UNAVAILABLE
 				|| statusCode == Response.NOT_ACCEPTABLE_HERE
 				|| statusCode == Response.BUSY_HERE
 				|| statusCode == Response.BUSY_EVERYWHERE
@@ -98,7 +100,7 @@ public class CInvite extends CTransaction {
 			if (sipContext.hasPendingTransaction()) {
 				sendAck(null);
 				new CBye(sipContext);
-			} else  {
+			} else {
 				byte[] rawContent = response.getRawContent();
 				int l = response.getContentLength().getContentLength();
 				if (l != 0 && rawContent != null) {
