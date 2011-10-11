@@ -231,7 +231,7 @@
 	<licenses>
 		<license>
 			<name>Kurento Android SDK License</name>
-			<url>http://www.kurento.com/docs/kurento-android-docs/license.html</url>
+			<url>http://www.kurento.com/license/kurento-android-license.html</url>
 			<distribution>repo</distribution>
 			<comments>Commercial license for Kurento Android SDK</comments>
 		</license>
