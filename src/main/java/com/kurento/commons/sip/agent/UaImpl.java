@@ -16,6 +16,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>
 */
 package com.kurento.commons.sip.agent;
 
+import java.io.IOException;
+import java.net.InetAddress;
+import java.net.SocketException;
+import java.net.UnknownHostException;
 import java.text.ParseException;
 import java.util.HashMap;
 import java.util.Properties;
@@ -56,6 +60,14 @@ import com.kurento.commons.sip.transaction.SInvite;
 import com.kurento.commons.sip.transaction.STransaction;
 import com.kurento.commons.sip.util.NatKeepAlive;
 import com.kurento.commons.sip.util.SipConfig;
+import com.kurento.commons.util.Configuration;
+
+import de.javawi.jstun.attribute.MessageAttributeException;
+import de.javawi.jstun.attribute.MessageAttributeParsingException;
+import de.javawi.jstun.header.MessageHeaderParsingException;
+import de.javawi.jstun.test.DiscoveryInfo;
+import de.javawi.jstun.test.DiscoveryTest;
+import de.javawi.jstun.util.UtilityException;
 
 public class UaImpl implements SipListener, UA{
 		
@@ -97,11 +109,23 @@ public class UaImpl implements SipListener, UA{
 		this.proxyPort = config.getProxyPort();
 		this.transport = config.getTransport();
 		this.maxForwards = config.getMaxForards();
-		this.publicAddress = config.getPublicAddress();
-		this.publicPort = config.getPublicPort();
+		String stunProxy = config.getStunAddress();
 
+//		this.publicAddress = config.getPublicAddress();
+//		this.publicPort = config.getPublicPort();
+
+		DiscoveryInfo stunInfo = null;
+		if (stunProxy != null || "".equals(stunProxy)) {
+			stunInfo = runStunTest(config);	
+			InetAddress publicInet = stunInfo.getPublicIP();
+			publicAddress = publicInet.getHostAddress();
+			publicPort = stunInfo.getPublicPort();
+		} else {
+			publicAddress = config.getLocalAddress();
+			publicPort = config.getLocalPort();
+		}
+	
 		log.info("starting JAIN-SIP stack initializacion ...");
-
 		Properties jainProps = new Properties();
 
 		String outboundProxy = proxyAddress + ":" + proxyPort + "/" + transport;
@@ -489,6 +513,18 @@ public class UaImpl implements SipListener, UA{
 		} catch (Exception e) {
 			log.error("UA: Unable to send stateless response code:" + code + ". GIVE UP!!!", e);
 		}
+	}
+	
+	private DiscoveryInfo runStunTest(SipConfig config) throws Exception {
+		DiscoveryInfo info = null;
+
+		InetAddress addr = InetAddress.getByName(config.getLocalAddress());
+		DiscoveryTest test = new DiscoveryTest(addr, config.getLocalPort(),
+						config.getStunAddress(), config.getStunPort());
+
+		info = test.test();
+		log.debug("Stun test passed: Public Ip : "+info.getPublicIP().getHostAddress()+ " Public port : " + info.getPublicPort());
+		return info;
 	}
 
 }

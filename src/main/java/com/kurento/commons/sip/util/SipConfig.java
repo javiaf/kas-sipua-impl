@@ -35,9 +35,10 @@ public class SipConfig {
 	private String localAddress = "127.0.0.1";
 	private int localPort = 5070;
 	
-	private String publicAddress = "127.0.0.1";
-	private int publicPort = 5070;
-	private String proxyAddress = "127.0.0.1";
+	private String stunAddress;
+	private int stunPort;
+//	private String proxyAddress = "127.0.0.1";
+	private String proxyAddress = "193.147.51.28";
 	private int proxyPort = 5060;
 	private String transport = "UDP";
 	private int maxForards = 70;
@@ -151,20 +152,20 @@ public class SipConfig {
 				+ maxForards + "\n";
 	}
 	
-	public String getPublicAddress() {
-		return publicAddress;
+	public String getStunAddress() {
+		return stunAddress;
 	}
 
-	public void setPublicAddress(String publicAddress) {
-		this.publicAddress = publicAddress;
+	public void setStunAddress(String stunAddress) {
+		this.stunAddress = stunAddress;
 	}
 
-	public int getPublicPort() {
-		return publicPort;
+	public int getStunPort() {
+		return stunPort;
 	}
 
-	public void setPublicPort(int publicPort) {
-		this.publicPort = publicPort;
+	public void setStunPort(int stunPort) {
+		this.stunPort = stunPort;
 	}
 
 
