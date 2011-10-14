@@ -107,7 +107,7 @@ public class UaImpl implements SipListener, UA{
 //		this.publicPort = config.getPublicPort();
 
 		DiscoveryInfo stunInfo = null;
-		if (stunProxy != null || "".equals(stunProxy)) {
+		if (stunProxy != null && !"".equals(stunProxy)) {
 			stunInfo = runStunTest(config);	
 			InetAddress publicInet = stunInfo.getPublicIP();
 			publicAddress = publicInet.getHostAddress();
