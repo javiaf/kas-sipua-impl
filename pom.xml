@@ -224,7 +224,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>
 
 	<scm>
 		<connection>scm:http://kurento.googlecode.com</connection>
-		<developerConnection>scm:git:ssh://repository.kurento.com/git/kas-sipua-impl</developerConnection>
-		<url>https://repository.kurento.com/git/kurento-android-sdk/?p=kas-sipua-impl</url>
+                <developerConnection>scm:git:ssh://git@repository.kurento.com/kas/kas-sipua-impl.git</developerConnection>
+                <url>https://repository.kurento.com/git/kurento-android-sdk/?p=kas-sipua-impl.git</url>
 	</scm>
 </project>
