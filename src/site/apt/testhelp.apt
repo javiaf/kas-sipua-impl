@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 
 Kurento SIP library Test configuration
 
@@ -10,20 +11,41 @@ Kurento SIP library Test configuration
 	Configuration is tested with OpenSips version 1.6.4-2-notls
 
 	* Minimum KURENTO configuration
+=======
+	------
+	Kurento Android SIP User Agent
+	------
+	------
+	Date
+	------
+	
+Kurento SIP library Test bed
+
+	In order to test Kurento SIP User Agent Á is required an {{{http://www.opensips.org}OpenSips}}
+	instance (any SIP Proxy would do) that routes SIP traffic.
+	
+	JUnit tests included in the code will not pass unless a SIP Proxy is listening in 
+	localhost (127.0.0.1:5060).
+	
+	Next code snippet shows the minimal configuration required to run tests. 
+	Configuration is tested with OpenSips version 1.6.4-2-notls.
+>>>>>>> release-1.0
 
 +---------------------------	
 alias=kurento.com
 dns=no
 rev_dns=no
 +---------------------------
-	When opensips is compiled from source, configuration file is placed in
+	When OpenSips is compiled from source, configuration file is placed in
 
 +---------------------------
 	/usr/local/etc/opensips/opensips.cfg
 +---------------------------
 
-	Before test are run OpenSips must be started with command
+	OpenSips can be started with command.
 
 +---------------------------
 	/usr/local/sbin/opensips
 +---------------------------
+
+	Further details can be found at {{{http://www.opensips.org/Resources/Documentation}OpenSips documentation}} 

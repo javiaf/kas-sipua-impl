@@ -3,14 +3,24 @@
 	<publishDate position="right" />
 	<version position="right" />
 	<bannerLeft>
+<<<<<<< HEAD
 		<name>Kurento Sip User Agent</name>  
 		<src>./images/logos/kurento.jpg</src>
+=======
+		<name>Kurento</name>
+		<src>http://www.kurento.com/sites/all/themes/bartikplus/logo.png
+		</src>
+>>>>>>> release-1.0
 		<href>http://www.kurento.com</href>
 	</bannerLeft>
 	<body>
 		<menu name="Kurento SIP library">
+<<<<<<< HEAD
 			<item name="Main" href="./index.html" />
 			<item name="Deploy configuration" href="./testhelp.html" />
+=======
+			<item name="Test configuration" href="./testhelp.html" />
+>>>>>>> release-1.0
 		</menu>
 		<menu ref="modules" />
 		<menu ref="reports" />
