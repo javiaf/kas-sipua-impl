@@ -84,6 +84,7 @@
 		</dependency>
 		<dependency>
 			<groupId>com.kurento.commons</groupId>
+			<artifactId>kc-stun</artifactId>
 			<artifactId>kas-stun</artifactId>
 			<version>1.0.0-SNAPSHOT</version>
 			<type>jar</type>
