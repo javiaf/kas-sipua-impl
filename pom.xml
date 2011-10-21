@@ -40,6 +40,7 @@
 			<name>Miguel París Díaz</name>
 		</contributor>
 	</contributors>
+
 	<mailingLists>
 		<mailingList>
 			<name>Kurento</name>
@@ -50,6 +51,23 @@
 	</mailingLists>
 
 	<dependencies>
+		<dependency>
+			<groupId>com.kurento.commons</groupId>
+			<artifactId>kas-sipua</artifactId>
+			<version>${kasSipUaVersion}</version>
+		</dependency>
+		<dependency>
+			<groupId>com.kurento.commons</groupId>
+			<artifactId>kc-mediaspec</artifactId>
+			<version>${kcMediaSpecVersion}</version>
+		</dependency>
+		<dependency>
+			<groupId>com.kurento.commons</groupId>
+			<artifactId>kc-stun</artifactId>
+			<version>${kcStunVersion}</version>
+			<type>jar</type>
+		</dependency>
+
 		<dependency>
 			<groupId>junit</groupId>
 			<artifactId>junit</artifactId>
@@ -69,16 +87,6 @@
 			<scope>test</scope>
 		</dependency>
 		<dependency>
-			<groupId>com.kurento.commons</groupId>
-			<artifactId>kas-sipua</artifactId>
-			<version>${kasSipUaVersion}</version>
-		</dependency>
-		<dependency>
-			<groupId>com.kurento.commons</groupId>
-			<artifactId>kc-mediaspec</artifactId>
-			<version>${kcMediaSpecVersion}</version>
-		</dependency>
-		<dependency>
 			<groupId>javax.sip</groupId>
 			<artifactId>jain-sip-api</artifactId>
 			<version>1.2</version>
@@ -87,12 +95,6 @@
 			<groupId>javax.sip</groupId>
 			<artifactId>jain-sip-ri</artifactId>
 			<version>1.2.76</version>
-		</dependency>
-		<dependency>
-			<groupId>com.kurento.commons</groupId>
-			<artifactId>kc-stun</artifactId>
-			<version>${kcStunVersion}</version>
-			<type>jar</type>
 		</dependency>
 	</dependencies>
 
