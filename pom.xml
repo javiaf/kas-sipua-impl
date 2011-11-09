@@ -15,7 +15,7 @@
 
 		<!-- Dependency versions -->
 		<kasSipUaVersion>1.1.0-RC-1</kasSipUaVersion>
-		<kcMediaSpecVersion>1.1.0-RC-1</kcMediaSpecVersion>
+		<kcMediaSpecVersion>1.1.0-RC-2</kcMediaSpecVersion>
 		<kcStunVersion>1.0.0-RC-1</kcStunVersion>
 	</properties>
 

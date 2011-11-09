@@ -112,6 +112,7 @@ public class UaImpl implements SipListener, UA{
 			InetAddress publicInet = stunInfo.getPublicIP();
 			publicAddress = publicInet.getHostAddress();
 			publicPort = stunInfo.getPublicPort();
+			this.localPort = stunInfo.getLocalPort();
 		} else {
 			publicAddress = config.getLocalAddress();
 			publicPort = config.getLocalPort();
