@@ -248,6 +248,7 @@ public class SipContext implements SipCall {
 		this.remoteParty = this.incomingPendingRequest.getServerTransaction()
 				.getDialog().getRemoteParty();
 		this.mediaTypesModes = mediaTypesModes;
+		this.networkConnection=incomingPendingRequest.getNetworkConnection();
 
 		// Notify the incoming call to EndPoint controllers
 		log.info("Notify incoming call to EndPoint listener");
@@ -286,12 +287,12 @@ public class SipContext implements SipCall {
 	private void completedCall(Transaction transaction) {
 		boolean hangup = false;
 
-		if (networkConnection != null) {
-			// Release previous connection
-			log.debug("Release old network connection");
-			networkConnection.release();
-			networkConnection = null;
-		}
+//		if (networkConnection != null) {
+//			// Release previous connection
+//			log.debug("Release old network connection");
+//			networkConnection.release();
+//			networkConnection = null;
+//		}
 
 		// Get active networkConnection
 		log.debug("Get network connection");

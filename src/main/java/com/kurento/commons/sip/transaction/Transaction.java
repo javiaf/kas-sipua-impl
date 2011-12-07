@@ -113,6 +113,9 @@ public abstract class Transaction implements
 
 	private void createSdpPortManager() throws MsControlException,
 			ServerInternalErrorException {
+		if (sipContext != null ) {
+			networkConnection = sipContext.getNetworkConnection(null);
+		}
 		if (networkConnection == null) {
 			networkConnection = UaFactory.getMediaSession().createNetworkConnection();
 			sdpPortManager = networkConnection.getSdpPortManager();
