@@ -167,10 +167,52 @@ public void testSetupAndDropFromCalling() throws Exception {
 	
 	}
 
+public void testEmptyInvite() throws Exception {
+		
+		log.info("-----------------------------Test for test setup and drop from calling party---------------------------------");
+		log.info("User agent initialize with config<< "+ config.toString()+">>");
+		SipEndPointController registerAController =  new SipEndPointController("Resgister listener");
+		
+		String user40Name = Configuration.USER;
+		SipEndPoint endpoint40 = userAgent1.registerEndPoint(user40Name,Configuration.DOMAIN , Configuration.PASS, 3600, registerAController);
+		SipEndPointEvent event40 = registerAController.pollSipEndPointEvent(Configuration.WAIT_TIME);
+		assertEquals(SipEndPointEvent.REGISTER_USER_SUCESSFUL, event40.getEventType());
+		
+//		SipEndPointController register30Controller =  new SipEndPointController("Resgister listener");
+//		String user30 = Configuration.USER+testConfig.getCounter();
+//		String user30toCall = "sip:"+user30+"@"+Configuration.DOMAIN;
+//		SipEndPoint endpoint30 = userAgent2.registerEndPoint(user30, Configuration.DOMAIN, Configuration.PASS, 3600, register30Controller);
+//		SipEndPointEvent event30 = register30Controller.pollSipEndPointEvent(Configuration.WAIT_TIME);
+//		assertEquals(SipEndPointEvent.REGISTER_USER_SUCESSFUL, event30.getEventType());
+		
+//		SipCallController callListener40 = new SipCallController();
+//		SipCall initialCall40 = endpoint40.dial(user30toCall, callListener40);
+		
+		SipEndPointEvent incomingCall30Event = registerAController.pollSipEndPointEvent(Configuration.WAIT_TIME);
+		assertEquals(SipEndPointEvent.INCOMING_CALL, incomingCall30Event.getEventType());
+		SipCall sipcall30 = incomingCall30Event.getCallSource();
+		SipCallController call30Listener = new SipCallController();
+		sipcall30.addListener(call30Listener);
+		
+		sipcall30.accept();
+//		SipCallEvent call40SetupEvent = callListener40.pollSipEndPointEvent(Configuration.WAIT_TIME);
+//		assertEquals(SipCallEvent.CALL_SETUP, call40SetupEvent.getEventType());
+		
+//		initialCall40.hangup();
+		Thread.sleep(1000000);
+		
+		SipCallEvent call30TerminateEvent = call30Listener.pollSipEndPointEvent(Configuration.WAIT_TIME);
+		assertEquals(SipCallEvent.CALL_SETUP,call30TerminateEvent.getEventType());
+		
+//		
+//		 call40SetupEvent = callListener40.pollSipEndPointEvent(Configuration.WAIT_TIME);
+//		assertEquals(call40SetupEvent.getEventType(), SipCallEvent.CALL_TERMINATE);
+		
+		call30TerminateEvent = call30Listener.pollSipEndPointEvent(Configuration.WAIT_TIME);
+		assertEquals(SipCallEvent.CALL_TERMINATE,call30TerminateEvent.getEventType());
+		
+		log.info("-------------------------------Test finished-----------------------------------------");
 
-
-
-
-
+	}
 
 }
