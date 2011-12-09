@@ -169,6 +169,7 @@ public class CInvite extends CTransaction {
 			} else if (SdpPortManagerEvent.ANSWER_PROCESSED.equals(eventType)) {
 				// Notify call set up
 				log.debug("SdpPortManager successfully processed SDP answer received from remote peer");
+				sendAck(null);
 				sipContext.completedOutgoingCall(this);
 			} else {
 				super.onEvent(event);
