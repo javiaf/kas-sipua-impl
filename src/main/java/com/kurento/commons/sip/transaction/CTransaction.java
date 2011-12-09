@@ -175,10 +175,14 @@ public abstract class CTransaction extends Transaction {
 		}
 	}
 
-	protected CallIdHeader buildCallIdHeader() {
+	protected CallIdHeader buildCallIdHeader() throws ServerInternalErrorException {
 		CallIdHeader callIdHeader;
 		if (!(dialog != null && (callIdHeader = dialog.getCallId()) != null)) {
-			callIdHeader = localParty.getUa().getSipProvider().getNewCallId();
+			if(localParty.getUa().getSipProvider() != null) {
+				callIdHeader = localParty.getUa().getSipProvider().getNewCallId();
+			} else {
+				throw new ServerInternalErrorException("User Agent not initialized.");
+			}
 		}
 		return callIdHeader;
 	}
