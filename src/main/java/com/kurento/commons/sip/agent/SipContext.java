@@ -130,6 +130,11 @@ public class SipContext implements SipCall {
 			throw new ServerInternalErrorException(
 					"Bad reject. There isn't a pending request to be accepted");
 		}
+		
+		if (networkConnection != null) {
+			networkConnection.release();
+			networkConnection = null;
+		}
 
 		// Send DECLINE response
 		incomingPendingRequest.sendResponse(Response.DECLINE, null);
@@ -257,10 +262,12 @@ public class SipContext implements SipCall {
 
 	public void rejectedCall() {
 		notifySipCallEvent(SipCallEvent.CALL_REJECT);
+		terminatedCall();
 	}
 
 	public void failedCall() {
 		notifySipCallEvent(SipCallEvent.CALL_ERROR);
+		terminatedCall();
 	}
 
 	public void terminatedCall() {

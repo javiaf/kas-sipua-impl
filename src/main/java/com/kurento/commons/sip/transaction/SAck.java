@@ -23,6 +23,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import com.kurento.commons.mscontrol.EventType;
+import com.kurento.commons.mscontrol.MsControlException;
 import com.kurento.commons.mscontrol.networkconnection.SdpPortManagerEvent;
 import com.kurento.commons.sip.agent.SipEndPointImpl;
 import com.kurento.commons.sip.exception.ServerInternalErrorException;
@@ -49,7 +50,18 @@ public class SAck extends STransaction {
 			sipContext.completedIncomingCall();
 		} else {
 			log.debug("ACK contains SDP response.");
-			processSdpAnswer(request.getRawContent());
+			if (sipContext != null) {
+				networkConnection = sipContext.getNetworkConnection(null);
+				try {
+					sdpPortManager = networkConnection.getSdpPortManager();
+				} catch (MsControlException e) {
+					throw new ServerInternalErrorException("SDP negociation error while processing answer", e);
+				}
+				processSdpAnswer(request.getRawContent());
+			} else {
+				throw new ServerInternalErrorException("Unable to find SipContext associated to transaction.");
+			}
+			
 		}
 	}
 
