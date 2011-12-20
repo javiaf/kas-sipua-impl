@@ -178,7 +178,7 @@ public abstract class CTransaction extends Transaction {
 	protected CallIdHeader buildCallIdHeader() throws ServerInternalErrorException {
 		CallIdHeader callIdHeader;
 		if (!(dialog != null && (callIdHeader = dialog.getCallId()) != null)) {
-			if(localParty.getUa().getSipProvider() != null) {
+			if(localParty.getUa() == null || localParty.getUa().getSipProvider() != null) {
 				callIdHeader = localParty.getUa().getSipProvider().getNewCallId();
 			} else {
 				throw new ServerInternalErrorException("User Agent not initialized.");

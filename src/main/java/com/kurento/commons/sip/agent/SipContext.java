@@ -340,7 +340,11 @@ public class SipContext implements SipCall {
 		// Notify call events when dialog are not complete
 		if (callListener != null) {
 			SipCallEvent event = new SipCallEvent(eventType, this);
+			try  {
 			callListener.onEvent(event);
+			} catch (Exception e) {
+				log.error("Exception throwed on listener.", e);
+			}
 		}
 	}
 
