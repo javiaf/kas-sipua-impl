@@ -30,6 +30,10 @@ Kurento Android SIP User Agent
 		*   <<<ProxyAddress>>>: This is the remote SIP Proxy and Registrar address.
 		
 		*	<<<ProxyPort>>>: This is the UDP port where the remote SIP Proxy listens messages
+		
+		*	<<<StunAddress>>>: This is the stun address
+		
+		*	<<<StunPort>>>: This is the stun port
 	
 +---------------------
 		SipConfig config = new SipConfig();
@@ -37,9 +41,17 @@ Kurento Android SIP User Agent
 		config.setProxyPort("5070");
 		config.setLocalAddress("127.0.0.1");
 		config.setLocalPort("5060");
+		config.setStunAddress("stun.xten.com");
+		config.setStunPort(3478);
 		
 		UaFactory.getInstance(config);
 +---------------------
+
+	* <<Stun Server>> is used to know the type of NAT. Some NAT are not supported with stun server, 
+	only the NATs type cone are compatible. When there are problems with the stun, we have an exception 
+	with the message of the problem. If <<<StunAddress>>> is empty and <<<StunPort>>> is 0, the stun 
+	server is disactivated.  
+
 
 * Structure for SipDialogs: Transactions
 
