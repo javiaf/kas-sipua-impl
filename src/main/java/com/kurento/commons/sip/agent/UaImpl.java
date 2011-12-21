@@ -108,7 +108,10 @@ public class UaImpl implements SipListener, UA{
 
 		DiscoveryInfo stunInfo = null;
 		if (stunProxy != null && !"".equals(stunProxy)) {
-			stunInfo = runStunTest(config);	
+			stunInfo = runStunTest(config);
+			
+			checkNatSupported(stunInfo);
+			
 			InetAddress publicInet = stunInfo.getPublicIP();
 			publicAddress = publicInet.getHostAddress();
 			publicPort = stunInfo.getPublicPort();
@@ -157,6 +160,29 @@ public class UaImpl implements SipListener, UA{
 		}
 		log.info("SIP stack initializacion complete. Listening on " + localAddress + ":" + localPort +"/" + transport);
 				
+	}
+
+
+	private void checkNatSupported(DiscoveryInfo stunInfo) throws ServerInternalErrorException {
+		String message ="OK";
+		if (stunInfo.isBlockedUDP()) {
+			message = "BlockedUDP";
+		} else if (stunInfo.isError()){
+			message = "Stun Error";
+		} else if (stunInfo.isSymmetric()){
+			message = "Symetric";
+		} else if (stunInfo.isSymmetricUDPFirewall()){
+			message = "SymmetricUDPFirewall";
+		} else {
+			message = "Unknow";
+		}
+		if (stunInfo.isFullCone() || stunInfo.isOpenAccess() || stunInfo.isPortRestrictedCone() || stunInfo.isRestrictedCone()) {
+			//Stun supported
+			return;
+		}
+
+		throw new ServerInternalErrorException("Nat not supported. " + message);
+
 	}
 
 
