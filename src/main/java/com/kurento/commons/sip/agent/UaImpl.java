@@ -169,14 +169,12 @@ public class UaImpl implements SipListener, UA{
 			message = "BlockedUDP";
 		} else if (stunInfo.isError()){
 			message = "Stun Error";
-		} else if (stunInfo.isSymmetric()){
-			message = "Symetric";
 		} else if (stunInfo.isSymmetricUDPFirewall()){
 			message = "SymmetricUDPFirewall";
 		} else {
 			message = "Unknow";
 		}
-		if (stunInfo.isFullCone() || stunInfo.isOpenAccess() || stunInfo.isPortRestrictedCone() || stunInfo.isRestrictedCone()) {
+		if (stunInfo.isFullCone() || stunInfo.isOpenAccess() || stunInfo.isPortRestrictedCone() || stunInfo.isRestrictedCone() || stunInfo.isSymmetric()) {
 			//Stun supported
 			return;
 		}
