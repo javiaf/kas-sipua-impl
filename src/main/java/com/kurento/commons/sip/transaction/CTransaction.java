@@ -53,6 +53,7 @@ import com.kurento.commons.sip.agent.SipContext;
 import com.kurento.commons.sip.agent.SipEndPointImpl;
 import com.kurento.commons.sip.agent.UaFactory;
 import com.kurento.commons.sip.agent.UaImpl;
+import com.kurento.commons.sip.event.SipCallEvent;
 import com.kurento.commons.sip.exception.ServerInternalErrorException;
 import com.kurento.commons.sip.util.SipHeaderHelper;
 
@@ -392,11 +393,13 @@ public abstract class CTransaction extends Transaction {
 							+ error);
 					// sipContext.notifySipCallEvent(SipCallEvent.SERVER_INTERNAL_ERROR);
 				}
+				sipContext.failedCall();
 			}
 
 		} catch (ServerInternalErrorException e) {
 			log.error("Server error while managing SdpPortManagerEvent:"
 					+ eventType, e);
+			sipContext.failedCall();
 			// sipContext.notifySipCallEvent(SipCallEvent.SERVER_INTERNAL_ERROR);
 		} finally {
 			// Release media resources managed by this transaction
