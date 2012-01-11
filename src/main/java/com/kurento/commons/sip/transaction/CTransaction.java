@@ -53,7 +53,6 @@ import com.kurento.commons.sip.agent.SipContext;
 import com.kurento.commons.sip.agent.SipEndPointImpl;
 import com.kurento.commons.sip.agent.UaFactory;
 import com.kurento.commons.sip.agent.UaImpl;
-import com.kurento.commons.sip.event.SipCallEvent;
 import com.kurento.commons.sip.exception.ServerInternalErrorException;
 import com.kurento.commons.sip.util.SipHeaderHelper;
 
