@@ -336,7 +336,7 @@ public class SipContext implements SipCall {
 			this.hangup();
 	}
 
-	public void notifySipCallEvent(SipEventType eventType) {
+	private void notifySipCallEvent(SipEventType eventType) {
 		// Notify call events when dialog are not complete
 		if (callListener != null) {
 			SipCallEvent event = new SipCallEvent(eventType, this);
