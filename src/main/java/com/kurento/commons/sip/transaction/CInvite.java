@@ -110,8 +110,9 @@ public class CInvite extends CTransaction {
 				} else {
 					log.error("Found response to CInvite with no SDP answer");
 					sipContext.failedCall();
+					sendAck(null);
+					new CBye(sipContext);
 				}
-				sendAck(null);
 			}
 		} else {
 			log.info("<<<<<<< " + statusCode + " FAIL: dialog: " + this.dialog
