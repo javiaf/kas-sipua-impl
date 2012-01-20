@@ -176,6 +176,7 @@ public abstract class CTransaction extends Transaction {
 	}
 
 	protected CallIdHeader buildCallIdHeader() throws ServerInternalErrorException {
+		try {
 		CallIdHeader callIdHeader;
 		if (!(dialog != null && (callIdHeader = dialog.getCallId()) != null)) {
 			if(localParty.getUa() == null || localParty.getUa().getSipProvider() != null) {
@@ -185,6 +186,10 @@ public abstract class CTransaction extends Transaction {
 			}
 		}
 		return callIdHeader;
+		} catch ( Exception e) {
+			log.error("Error building call id hearder." +  e.getMessage(), e);
+			throw new ServerInternalErrorException("Error building hearder.", e);
+		}
 	}
 
 	protected FromHeader buildFromHeader() throws ParseException {

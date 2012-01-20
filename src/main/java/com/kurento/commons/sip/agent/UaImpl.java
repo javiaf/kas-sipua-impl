@@ -44,6 +44,8 @@ import javax.sip.message.Response;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import android.content.Context;
+
 import com.kurento.commons.sip.SipEndPoint;
 import com.kurento.commons.sip.SipEndPointListener;
 import com.kurento.commons.sip.UA;
@@ -87,13 +89,17 @@ public class UaImpl implements SipListener, UA{
 	// User List
 	private HashMap<String,SipEndPointImpl> endPoints = new HashMap<String,SipEndPointImpl>();
 
+	private Context context;
+
+	private String version = "1.6";
+
 	///////////////////////////
 	//
 	// CONSTRUCTOR
 	//
 	///////////////////////////
 	
-	protected UaImpl (SipConfig config) throws Exception {
+	protected UaImpl (SipConfig config, Context context) throws Exception {
 
 		this.localAddress = config.getLocalAddress();
 		this.localPort = config.getLocalPort();
@@ -122,6 +128,8 @@ public class UaImpl implements SipListener, UA{
 		}
 	
 		log.info("starting JAIN-SIP stack initializacion ...");
+		log.info("SipUa version "+ version );
+
 		Properties jainProps = new Properties();
 
 		String outboundProxy = proxyAddress + ":" + proxyPort + "/" + transport;
@@ -153,11 +161,13 @@ public class UaImpl implements SipListener, UA{
 		sipProvider = sipStack.createSipProvider(listeningPoint);
 		sipProvider.addSipListener(this);
 
-		if (!publicAddress.equals(localAddress)) {
+		if (!publicAddress.equals(localAddress) && config.isEnableKeepAlive()) {
 			log.debug("Creating keepalive for hole punching");
 			keepAlive = new NatKeepAlive(config, listeningPoint);
 			keepAlive.start();
 		}
+		
+		this.context = context;
 		log.info("SIP stack initializacion complete. Listening on " + localAddress + ":" + localPort +"/" + transport);
 				
 	}
@@ -519,7 +529,7 @@ public class UaImpl implements SipListener, UA{
 			return epImpl;
 		}
 				
-		epImpl = new SipEndPointImpl(user,realm, password, expires, this, handler);
+		epImpl = new SipEndPointImpl(user,realm, password, expires, this, handler, context);
 		endPoints.put(epAddress,epImpl);
 		return epImpl;
 	}
@@ -542,6 +552,12 @@ public class UaImpl implements SipListener, UA{
 		info = test.test();
 		log.debug("Stun test passed: Public Ip : "+info.getPublicIP().getHostAddress()+ " Public port : " + info.getPublicPort());
 		return info;
+	}
+
+
+	@Override
+	public void setContext(Context context) {
+		this.context = context;
 	}
 
 }

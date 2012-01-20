@@ -32,16 +32,20 @@ package com.kurento.commons.sip.util;
  * 
  */
 public class SipConfig {
-	private String localAddress = "127.0.0.1";
+	private String localAddress = "193.147.51.12";
 	private int localPort = 5070;
 	
 	private String stunAddress;
 	private int stunPort;
-//	private String proxyAddress = "127.0.0.1";
-	private String proxyAddress = "193.147.51.28";
+	private String proxyAddress = "127.0.0.1";
 	private int proxyPort = 5060;
 	private String transport = "UDP";
 	private int maxForards = 70;
+	
+	private boolean enableKeepAlive;
+
+
+	private long keepAlivePeriod = 5000;
 
 	public SipConfig() {
 
@@ -166,6 +170,22 @@ public class SipConfig {
 
 	public void setStunPort(int stunPort) {
 		this.stunPort = stunPort;
+	}
+	
+	public boolean isEnableKeepAlive() {
+		return enableKeepAlive;
+	}
+
+	public void setEnableKeepAlive(boolean enableKeepAlive) {
+		this.enableKeepAlive = enableKeepAlive;
+	}
+
+	public long getKeepAlivePeriod() {
+		return keepAlivePeriod;
+	}
+
+	public void setKeepAlivePeriod(long keepAlivePeriod) {
+		this.keepAlivePeriod = keepAlivePeriod;
 	}
 
 
