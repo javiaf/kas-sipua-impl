@@ -554,8 +554,6 @@ public class UaImpl implements SipListener, UA{
 		return info;
 	}
 
-
-	@Override
 	public void setContext(Context context) {
 		this.context = context;
 	}
