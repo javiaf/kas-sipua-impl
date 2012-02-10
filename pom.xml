@@ -15,7 +15,7 @@
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 
 		<!-- Dependency versions -->
-		<kasSipUaVersion>1.1.0-RC-2-SNAPSHOT</kasSipUaVersion>
+		<kasSipUaVersion>1.1.0-RC-1</kasSipUaVersion>
 		<kcMediaSpecVersion>1.1.0-RC-2</kcMediaSpecVersion>
 		<kcStunVersion>1.0.0-RC-1</kcStunVersion>
 	</properties>
