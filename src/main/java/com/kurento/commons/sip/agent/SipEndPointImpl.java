@@ -13,7 +13,7 @@ GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>
-*/
+ */
 package com.kurento.commons.sip.agent;
 
 import java.text.ParseException;
@@ -72,6 +72,7 @@ public class SipEndPointImpl implements SipEndPoint {
 	private Context androidContext;
 	private AlarmManager alarmManager;
 	PendingIntent pendingIntent;
+
 	// ////////////
 	//
 	// CONSTRUCTOR
@@ -79,9 +80,8 @@ public class SipEndPointImpl implements SipEndPoint {
 	// ////////////
 
 	protected SipEndPointImpl(String userName, String realm, String password,
-			int expires, UaImpl ua, SipEndPointListener handler, Context context )
+			int expires, UaImpl ua, SipEndPointListener handler, Context context)
 			throws ParseException, ServerInternalErrorException {
-
 		this.userName = userName;
 		this.realm = realm;
 
@@ -97,24 +97,26 @@ public class SipEndPointImpl implements SipEndPoint {
 						+ ua.getPublicPort());
 		this.password = password;
 		this.androidContext = context;
-		
+
 		createRegisterManger();
-		
-		//register();
+		register();
 	}
-	
-	
+
 	private void createRegisterManger() {
 		log.debug("Creating register manager");
 		SecondeService service = new SecondeService(this);
 		long period = (long) (expires * 1000);
-		log.debug("Register period set as "+ period);
-		alarmManager = (AlarmManager) androidContext.getSystemService(Context.ALARM_SERVICE);
-		Intent myIntent = new Intent(androidContext, RegisterService.class);		
-		log.info("Intend is " +myIntent.toString() );
-		pendingIntent = PendingIntent.getService(androidContext, 0, myIntent, 0);
-		log.info("pendingIntent is " +pendingIntent.toString()  + "period is : " + period);		
-		alarmManager.setRepeating(AlarmManager.ELAPSED_REALTIME, 0, period, pendingIntent);
+		log.debug("Register period set as " + period);
+		alarmManager = (AlarmManager) androidContext
+				.getSystemService(Context.ALARM_SERVICE);
+		Intent myIntent = new Intent(androidContext, RegisterService.class);
+		log.info("Intend is " + myIntent.toString());
+		pendingIntent = PendingIntent
+				.getService(androidContext, 0, myIntent, 0);
+		log.info("pendingIntent is " + pendingIntent.toString()
+				+ "period is : " + period);
+		alarmManager.setRepeating(AlarmManager.ELAPSED_REALTIME, 0, period,
+				pendingIntent);
 		log.info("SipEndpoint initialized.");
 	}
 
@@ -144,13 +146,13 @@ public class SipEndPointImpl implements SipEndPoint {
 		expires = 0;
 		alarmManager.cancel(pendingIntent);
 		CRegister register;
-		
-			register = new CRegister(this);
-			register.sendRequest(null);
-		
+
+		register = new CRegister(this);
+		register.sendRequest(null);
+
 	}
-//		register();
-	
+
+	// register();
 
 	// ///////////////////////////
 	//
@@ -214,7 +216,6 @@ public class SipEndPointImpl implements SipEndPoint {
 	}
 
 	private void register() throws ServerInternalErrorException {
-
 		log.info("Send REGISTER request: " + sipUriAddress);
 		log.debug("Time is :" + new Date());
 		CRegister register;
@@ -227,7 +228,7 @@ public class SipEndPointImpl implements SipEndPoint {
 		if (expires > 0) {
 			RegisterTask registerTask = this.new RegisterTask(this);
 			long period = (long) (expires * 1000 * 0.8);
-			log.debug("Register period is = "+period);
+			log.debug("Register period is = " + period);
 			timer.schedule(registerTask, period);
 			scheduledTasks.add(registerTask);
 		} else {
