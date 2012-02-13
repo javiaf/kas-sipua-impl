@@ -46,10 +46,6 @@ import org.apache.commons.logging.LogFactory;
 
 import android.content.Context;
 
-import com.kurento.commons.sip.SipEndPoint;
-import com.kurento.commons.sip.SipEndPointListener;
-import com.kurento.commons.sip.UA;
-import com.kurento.commons.sip.exception.ServerInternalErrorException;
 import com.kurento.commons.sip.exception.SipTransactionException;
 import com.kurento.commons.sip.transaction.CTransaction;
 import com.kurento.commons.sip.transaction.SAck;
@@ -59,6 +55,10 @@ import com.kurento.commons.sip.transaction.SInvite;
 import com.kurento.commons.sip.transaction.STransaction;
 import com.kurento.commons.sip.util.NatKeepAlive;
 import com.kurento.commons.sip.util.SipConfig;
+import com.kurento.commons.ua.EndPoint;
+import com.kurento.commons.ua.EndPointListener;
+import com.kurento.commons.ua.UA;
+import com.kurento.commons.ua.exception.ServerInternalErrorException;
 
 import de.javawi.jstun.test.DiscoveryInfo;
 import de.javawi.jstun.test.DiscoveryTest;
@@ -201,7 +201,7 @@ public class UaImpl implements SipListener, UA{
 			log.info("Stopping hole punching");
 			keepAlive.stop();
 		}
-		for (SipEndPoint endpoint : endPoints.values()) {
+		for (EndPoint endpoint : endPoints.values()) {
 			try {
 				endpoint.terminate();
 			} catch (ServerInternalErrorException e) {
@@ -519,7 +519,7 @@ public class UaImpl implements SipListener, UA{
 	// User manager interface
 	//
 	/////////////
-	public SipEndPoint registerEndPoint(String user, String realm , String password, int expires, SipEndPointListener handler) throws ParseException, ServerInternalErrorException {
+	public EndPoint registerEndPoint(String user, String realm , String password, int expires, EndPointListener handler) throws ParseException, ServerInternalErrorException {
 		SipEndPointImpl epImpl;
 		String epAddress = user+"@"+realm;
 		if ((epImpl = endPoints.get(epAddress)) != null) {

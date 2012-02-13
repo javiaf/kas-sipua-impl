@@ -35,11 +35,6 @@ import com.kurento.commons.mscontrol.join.JoinableStream.StreamType;
 import com.kurento.commons.mscontrol.networkconnection.NetworkConnection;
 import com.kurento.commons.sdp.enums.MediaType;
 import com.kurento.commons.sdp.enums.Mode;
-import com.kurento.commons.sip.SipCall;
-import com.kurento.commons.sip.SipCallListener;
-import com.kurento.commons.sip.event.SipCallEvent;
-import com.kurento.commons.sip.event.SipEventType;
-import com.kurento.commons.sip.exception.ServerInternalErrorException;
 import com.kurento.commons.sip.transaction.CBye;
 import com.kurento.commons.sip.transaction.CCancel;
 import com.kurento.commons.sip.transaction.CInvite;
@@ -47,8 +42,13 @@ import com.kurento.commons.sip.transaction.CTransaction;
 import com.kurento.commons.sip.transaction.SInvite;
 import com.kurento.commons.sip.transaction.STransaction;
 import com.kurento.commons.sip.transaction.Transaction;
+import com.kurento.commons.ua.Call;
+import com.kurento.commons.ua.CallListener;
+import com.kurento.commons.ua.event.CallEvent;
+import com.kurento.commons.ua.event.EventType;
+import com.kurento.commons.ua.exception.ServerInternalErrorException;
 
-public class SipContext implements SipCall {
+public class SipContext implements Call {
 
 	protected static Log log = LogFactory.getLog(SipContext.class);
 
@@ -64,7 +64,7 @@ public class SipContext implements SipCall {
 	private NetworkConnection networkConnection;
 	private Map<MediaType, Mode> mediaTypesModes;
 
-	private SipCallListener callListener;
+	private CallListener callListener;
 	private boolean outgoingRequestCancelled;
 	// private boolean isComplete = false;
 
@@ -174,12 +174,12 @@ public class SipContext implements SipCall {
 	}
 
 	@Override
-	public void addListener(SipCallListener listener) {
+	public void addListener(CallListener listener) {
 		callListener = listener;
 	}
 
 	@Override
-	public void removeListener(SipCallListener listener) {
+	public void removeListener(CallListener listener) {
 		callListener = null;
 	}
 
@@ -261,17 +261,17 @@ public class SipContext implements SipCall {
 	}
 
 	public void rejectedCall() {
-		notifySipCallEvent(SipCallEvent.CALL_REJECT);
+		notifySipCallEvent(CallEvent.CALL_REJECT);
 		terminatedCall();
 	}
 
 	public void failedCall() {
-		notifySipCallEvent(SipCallEvent.CALL_ERROR);
+		notifySipCallEvent(CallEvent.CALL_ERROR);
 		terminatedCall();
 	}
 
 	public void terminatedCall() {
-		notifySipCallEvent(SipCallEvent.CALL_TERMINATE);
+		notifySipCallEvent(CallEvent.CALL_TERMINATE);
 		if (networkConnection != null) {
 			networkConnection.release();
 			networkConnection = null;
@@ -331,15 +331,15 @@ public class SipContext implements SipCall {
 		}
 
 		// Notify listeners
-		notifySipCallEvent(SipCallEvent.CALL_SETUP);
+		notifySipCallEvent(CallEvent.CALL_SETUP);
 		if (hangup)
 			this.hangup();
 	}
 
-	private void notifySipCallEvent(SipEventType eventType) {
+	private void notifySipCallEvent(EventType eventType) {
 		// Notify call events when dialog are not complete
 		if (callListener != null) {
-			SipCallEvent event = new SipCallEvent(eventType, this);
+			CallEvent event = new CallEvent(eventType, this);
 			try  {
 			callListener.onEvent(event);
 			} catch (Exception e) {
@@ -358,7 +358,7 @@ public class SipContext implements SipCall {
 				networkConnection.release();
 				networkConnection = null;
 			}
-			notifySipCallEvent(SipCallEvent.CALL_CANCEL);
+			notifySipCallEvent(CallEvent.CALL_CANCEL);
 		} else  throw new ServerInternalErrorException("Cancel call error, there are not pending request");
 		
 	}

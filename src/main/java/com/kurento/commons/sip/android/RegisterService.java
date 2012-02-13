@@ -7,8 +7,8 @@ import android.os.IBinder;
 import android.util.Log;
 
 import com.kurento.commons.sip.agent.SipEndPointImpl;
-import com.kurento.commons.sip.exception.ServerInternalErrorException;
 import com.kurento.commons.sip.transaction.CRegister;
+import com.kurento.commons.ua.exception.ServerInternalErrorException;
 
 public class RegisterService extends Service {
 	private final static String LOG_TAG = "RegisterService";

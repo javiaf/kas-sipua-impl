@@ -22,8 +22,8 @@ import javax.sip.message.Request;
 import javax.sip.message.Response;
 
 import com.kurento.commons.sip.agent.SipEndPointImpl;
-import com.kurento.commons.sip.exception.ServerInternalErrorException;
 import com.kurento.commons.sip.exception.SipTransactionException;
+import com.kurento.commons.ua.exception.ServerInternalErrorException;
 
 public class SBye extends STransaction {
 

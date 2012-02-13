@@ -35,19 +35,19 @@ import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 
-import com.kurento.commons.sip.SipCall;
-import com.kurento.commons.sip.SipCallListener;
-import com.kurento.commons.sip.SipEndPoint;
-import com.kurento.commons.sip.SipEndPointListener;
 import com.kurento.commons.sip.android.RegisterService;
 import com.kurento.commons.sip.android.SecondeService;
-import com.kurento.commons.sip.event.SipEndPointEvent;
-import com.kurento.commons.sip.event.SipEventType;
-import com.kurento.commons.sip.exception.ServerInternalErrorException;
 import com.kurento.commons.sip.transaction.COptions;
 import com.kurento.commons.sip.transaction.CRegister;
+import com.kurento.commons.ua.Call;
+import com.kurento.commons.ua.CallListener;
+import com.kurento.commons.ua.EndPoint;
+import com.kurento.commons.ua.EndPointListener;
+import com.kurento.commons.ua.event.EndPointEvent;
+import com.kurento.commons.ua.event.EventType;
+import com.kurento.commons.ua.exception.ServerInternalErrorException;
 
-public class SipEndPointImpl implements SipEndPoint {
+public class SipEndPointImpl implements EndPoint {
 
 	private final static Log log = LogFactory.getLog(SipEndPointImpl.class);
 
@@ -59,7 +59,7 @@ public class SipEndPointImpl implements SipEndPoint {
 	private Address contactAddress;
 
 	private UaImpl ua;
-	private SipEndPointListener listener;
+	private EndPointListener listener;
 	private List<TimerTask> scheduledTasks = new ArrayList<TimerTask>();
 
 	private CallIdHeader registrarCallId;
@@ -80,7 +80,7 @@ public class SipEndPointImpl implements SipEndPoint {
 	// ////////////
 
 	protected SipEndPointImpl(String userName, String realm, String password,
-			int expires, UaImpl ua, SipEndPointListener handler, Context context)
+			int expires, UaImpl ua, EndPointListener handler, Context context)
 			throws ParseException, ServerInternalErrorException {
 		this.userName = userName;
 		this.realm = realm;
@@ -162,15 +162,15 @@ public class SipEndPointImpl implements SipEndPoint {
 
 	protected void incomingCall(SipContext incomingCall) {
 		// notifyEvent can not be used as the source must be of type SipCall
-		SipEndPointEvent event = new SipEndPointEvent(
-				SipEndPointEvent.INCOMING_CALL, incomingCall);
+		EndPointEvent event = new EndPointEvent(
+				EndPointEvent.INCOMING_CALL, incomingCall);
 		if (listener != null) {
 			listener.onEvent(event);
 		}
 	}
 
-	public void notifyEvent(SipEventType eventType) {
-		SipEndPointEvent event = new SipEndPointEvent(eventType, this);
+	public void notifyEvent(EventType eventType) {
+		EndPointEvent event = new EndPointEvent(eventType, this);
 		if (listener != null) {
 			listener.onEvent(event);
 		}
@@ -254,13 +254,13 @@ public class SipEndPointImpl implements SipEndPoint {
 			} catch (ServerInternalErrorException e) {
 				log.error("Unable to re-register user:" + user
 						+ ". Deleting from list of users");
-				user.notifyEvent(SipEndPointEvent.REGISTER_USER_FAIL);
+				user.notifyEvent(EndPointEvent.REGISTER_USER_FAIL);
 			}
 		}
 	}
 
 	@Override
-	public SipCall dial(String remoteParty, SipCallListener callController)
+	public Call dial(String remoteParty, CallListener callController)
 			throws ServerInternalErrorException {
 
 		if (remoteParty != null) {
@@ -284,7 +284,7 @@ public class SipEndPointImpl implements SipEndPoint {
 	}
 
 	@Override
-	public void options(String remoteParty, SipCallListener callController)
+	public void options(String remoteParty, CallListener callController)
 			throws ServerInternalErrorException {
 		Address remotePartyAddress;
 		try {
