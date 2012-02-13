@@ -7,14 +7,14 @@
 	<name>Sip User Agent implementation</name>
 	<version>1.1.0-RC-7-SNAPSHOT</version>
 	<description>Sip User Agent implementation</description>
-	<url>http://www.kurento.com/docs/kas-sipua-impl</url>
+	<url>http://www.kurento.com/docs/kas-sipua-impl/${project.version}</url>
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 
 		<!-- Dependency versions -->
-		<kasSipUaVersion>1.1.0-RC-1</kasSipUaVersion>
+		<kcUaVersion>1.2.0</kcUaVersion>
 		<kcMediaSpecVersion>1.1.0-RC-2</kcMediaSpecVersion>
 		<kcStunVersion>1.0.0-RC-2</kcStunVersion>
 	</properties>
@@ -52,8 +52,8 @@
 	<dependencies>
 		<dependency>
 			<groupId>com.kurento.commons</groupId>
-			<artifactId>kas-sipua</artifactId>
-			<version>${kasSipUaVersion}</version>
+			<artifactId>kc-ua</artifactId>
+			<version>${kcUaVersion}</version>
 		</dependency>
 		<dependency>
 			<groupId>com.kurento.commons</groupId>

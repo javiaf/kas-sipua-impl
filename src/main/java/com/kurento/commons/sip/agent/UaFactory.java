@@ -32,8 +32,8 @@ import org.apache.commons.logging.LogFactory;
 import android.content.Context;
 
 import com.kurento.commons.mscontrol.MediaSession;
-import com.kurento.commons.sip.UA;
 import com.kurento.commons.sip.util.SipConfig;
+import com.kurento.commons.ua.UA;
 
 /**
  * The UaFactory is a singleton class able to create instances of a JAIN-SIP

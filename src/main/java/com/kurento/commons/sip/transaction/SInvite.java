@@ -34,8 +34,8 @@ import com.kurento.commons.mscontrol.networkconnection.SdpPortManagerEvent;
 import com.kurento.commons.sdp.enums.MediaType;
 import com.kurento.commons.sdp.enums.Mode;
 import com.kurento.commons.sip.agent.SipEndPointImpl;
-import com.kurento.commons.sip.exception.ServerInternalErrorException;
 import com.kurento.commons.sip.exception.SipTransactionException;
+import com.kurento.commons.ua.exception.ServerInternalErrorException;
 
 public class SInvite extends STransaction {
 

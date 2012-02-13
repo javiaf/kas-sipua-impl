@@ -20,7 +20,7 @@ import javax.sip.ResponseEvent;
 import javax.sip.message.Request;
 
 import com.kurento.commons.sip.agent.SipContext;
-import com.kurento.commons.sip.exception.ServerInternalErrorException;
+import com.kurento.commons.ua.exception.ServerInternalErrorException;
 
 public class CBye extends CTransaction {
 

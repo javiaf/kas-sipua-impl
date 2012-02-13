@@ -28,7 +28,7 @@ import javax.sip.message.Response;
 import com.kurento.commons.mscontrol.EventType;
 import com.kurento.commons.mscontrol.networkconnection.SdpPortManagerEvent;
 import com.kurento.commons.sip.agent.SipContext;
-import com.kurento.commons.sip.exception.ServerInternalErrorException;
+import com.kurento.commons.ua.exception.ServerInternalErrorException;
 
 public class CInvite extends CTransaction {
 
