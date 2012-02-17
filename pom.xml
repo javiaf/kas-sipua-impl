@@ -15,7 +15,7 @@
 
 		<!-- Dependency versions -->
 		<kcUaVersion>1.2.3</kcUaVersion>
-		<kcMediaSpecVersion>1.1.0-RC-2</kcMediaSpecVersion>
+		<kcMediaSpecVersion>1.2.0</kcMediaSpecVersion>
 		<kcStunVersion>1.0.0-RC-2</kcStunVersion>
 	</properties>
 
