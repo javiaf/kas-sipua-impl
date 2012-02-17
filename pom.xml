@@ -5,18 +5,18 @@
 	<packaging>jar</packaging>
 
 	<name>Sip User Agent implementation</name>
-	<version>1.2.0-SNAPSHOT</version>
+	<version>1.1.0-SNAPSHOT</version>
 	<description>Sip User Agent implementation</description>
-	<url>http://www.kurento.com/docs/kas-sipua-impl</url>
+	<url>http://www.kurento.com/docs/kas-sipua-impl/${project.version}</url>
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 
 		<!-- Dependency versions -->
-		<kasSipUaVersion>1.1.0-RC-1</kasSipUaVersion>
-		<kcMediaSpecVersion>1.1.0-RC-2</kcMediaSpecVersion>
-		<kcStunVersion>1.0.0-RC-1</kcStunVersion>
+		<kcUaVersion>1.2.3</kcUaVersion>
+		<kcMediaSpecVersion>1.2.0</kcMediaSpecVersion>
+		<kcStunVersion>1.0.0</kcStunVersion>
 	</properties>
 
 	<organization>
@@ -52,8 +52,8 @@
 	<dependencies>
 		<dependency>
 			<groupId>com.kurento.commons</groupId>
-			<artifactId>kas-sipua</artifactId>
-			<version>${kasSipUaVersion}</version>
+			<artifactId>kc-ua</artifactId>
+			<version>${kcUaVersion}</version>
 		</dependency>
 		<dependency>
 			<groupId>com.kurento.commons</groupId>
@@ -68,33 +68,27 @@
 		</dependency>
 
 		<dependency>
-			<groupId>junit</groupId>
-			<artifactId>junit</artifactId>
-			<version>4.5</version>
-			<scope>test</scope>
-		</dependency>
-		<dependency>
 			<groupId>commons-logging</groupId>
 			<artifactId>commons-logging</artifactId>
 			<version>1.1.1</version>
 			<scope>provided</scope>
 		</dependency>
 		<dependency>
-			<groupId>log4j</groupId>
-			<artifactId>log4j</artifactId>
-			<version>[1.2.16,)</version>
-			<scope>test</scope>
-		</dependency>
-		<dependency>
 			<groupId>javax.sip</groupId>
 			<artifactId>jain-sip-api</artifactId>
 			<version>1.2</version>
-			<scope>provided</scope> 
+			<scope>provided</scope>
 		</dependency>
 		<dependency>
 			<groupId>javax.sip</groupId>
 			<artifactId>jain-sip-ri</artifactId>
 			<version>1.2.76</version>
+		</dependency>
+		<dependency>
+			<groupId>com.google.android</groupId>
+			<artifactId>android</artifactId>
+			<version>1.5_r4</version>
+			<scope>provided</scope>
 		</dependency>
 	</dependencies>
 

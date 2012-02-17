@@ -28,7 +28,7 @@ import javax.sip.message.Response;
 import com.kurento.commons.mscontrol.EventType;
 import com.kurento.commons.mscontrol.networkconnection.SdpPortManagerEvent;
 import com.kurento.commons.sip.agent.SipContext;
-import com.kurento.commons.sip.exception.ServerInternalErrorException;
+import com.kurento.commons.ua.exception.ServerInternalErrorException;
 
 public class CInvite extends CTransaction {
 
@@ -110,8 +110,9 @@ public class CInvite extends CTransaction {
 				} else {
 					log.error("Found response to CInvite with no SDP answer");
 					sipContext.failedCall();
+					sendAck(null);
+					new CBye(sipContext);
 				}
-				sendAck(null);
 			}
 		} else {
 			log.info("<<<<<<< " + statusCode + " FAIL: dialog: " + this.dialog
@@ -169,6 +170,7 @@ public class CInvite extends CTransaction {
 			} else if (SdpPortManagerEvent.ANSWER_PROCESSED.equals(eventType)) {
 				// Notify call set up
 				log.debug("SdpPortManager successfully processed SDP answer received from remote peer");
+				sendAck(null);
 				sipContext.completedOutgoingCall(this);
 			} else {
 				super.onEvent(event);

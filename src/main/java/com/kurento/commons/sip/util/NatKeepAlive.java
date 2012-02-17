@@ -20,12 +20,13 @@ public class NatKeepAlive  {
 	private int proxyPort;
 	ListeningPointExt listeningPointImpl;
 	Timer timer = new Timer();
-	private final long delay = 5000; 
+	private long delay = 5000; 
 
 	public NatKeepAlive(SipConfig config, ListeningPoint listeningPoint)  {
 		proxyAddr = config.getProxyAddress();
 		proxyPort = config.getProxyPort();
-
+		delay = config.getKeepAlivePeriod();
+		log.debug("Delay for  hole punching setted as " + delay);
 		listeningPointImpl =  (ListeningPointExt) listeningPoint;
 		
 		

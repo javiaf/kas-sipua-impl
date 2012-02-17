@@ -32,7 +32,7 @@ import com.kurento.commons.mscontrol.networkconnection.SdpPortManagerEvent;
 import com.kurento.commons.sip.agent.SipContext;
 import com.kurento.commons.sip.agent.SipEndPointImpl;
 import com.kurento.commons.sip.agent.UaFactory;
-import com.kurento.commons.sip.exception.ServerInternalErrorException;
+import com.kurento.commons.ua.exception.ServerInternalErrorException;
 
 public abstract class Transaction implements
 		MediaEventListener<SdpPortManagerEvent> {
@@ -99,7 +99,7 @@ public abstract class Transaction implements
 
 	protected void processSdpAnswer(byte[] rawSdp)
 			throws ServerInternalErrorException {
-		log.debug("Process received SDP answer");
+		log.info("Process received SDP answer");
 		remoteSdp = rawSdp;
 		try {
 			createSdpPortManager();
@@ -113,6 +113,7 @@ public abstract class Transaction implements
 
 	private void createSdpPortManager() throws MsControlException,
 			ServerInternalErrorException {
+		
 		if (networkConnection == null) {
 			networkConnection = UaFactory.getMediaSession().createNetworkConnection();
 			sdpPortManager = networkConnection.getSdpPortManager();

@@ -34,8 +34,8 @@ import com.kurento.commons.mscontrol.networkconnection.SdpPortManagerEvent;
 import com.kurento.commons.sdp.enums.MediaType;
 import com.kurento.commons.sdp.enums.Mode;
 import com.kurento.commons.sip.agent.SipEndPointImpl;
-import com.kurento.commons.sip.exception.ServerInternalErrorException;
 import com.kurento.commons.sip.exception.SipTransactionException;
+import com.kurento.commons.ua.exception.ServerInternalErrorException;
 
 public class SInvite extends STransaction {
 
@@ -91,15 +91,6 @@ public class SInvite extends STransaction {
 	public void onEvent(SdpPortManagerEvent event) {
 		// Remove this transaction as a listener of the SDP Port Manager
 		event.getSource().removeListener(this);
-		SessionSpec ss;
-		try {
-			ss = new SessionSpec(new String(event.getMediaServerSdp()));
-			localSdp = ss.getSessionDescription();
-		} catch (SdpException e1) {
-			// TODO Auto-generated catch block
-			e1.printStackTrace();
-		}
-
 		EventType eventType = event.getEventType();
 
 		if (SdpPortManagerEvent.ANSWER_GENERATED.equals(eventType)
@@ -109,6 +100,7 @@ public class SInvite extends STransaction {
 			SessionSpec session;
 			try {
 				session = new SessionSpec(new String(event.getMediaServerSdp()));
+				localSdp = session.getSessionDescription();
 				Map<MediaType, Mode> mediaTypesModes = SpecTools
 						.getModesOfFirstMediaTypes(session);
 				sipContext.incominCall(this, mediaTypesModes);

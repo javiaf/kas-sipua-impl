@@ -36,8 +36,8 @@ import javax.sip.message.Response;
 
 import com.kurento.commons.sip.agent.SipEndPointImpl;
 import com.kurento.commons.sip.agent.UaFactory;
-import com.kurento.commons.sip.event.SipEndPointEvent;
-import com.kurento.commons.sip.exception.ServerInternalErrorException;
+import com.kurento.commons.ua.event.EndPointEvent;
+import com.kurento.commons.ua.exception.ServerInternalErrorException;
 
 public class CRegister extends CTransaction {
 
@@ -78,7 +78,7 @@ public class CRegister extends CTransaction {
 		if (statusCode == Response.OK) {
 			log.info("<<<<<<< 200 OK: Register sucessfull for user: "
 					+ localParty.getAddress());
-			localParty.notifyEvent(SipEndPointEvent.REGISTER_USER_SUCESSFUL);
+			localParty.notifyEvent(EndPointEvent.REGISTER_USER_SUCESSFUL);
 		} else if (statusCode == Response.UNAUTHORIZED
 				|| statusCode == Response.PROXY_AUTHENTICATION_REQUIRED) { // Peer
 																			// Authentication
@@ -87,29 +87,29 @@ public class CRegister extends CTransaction {
 																// TimeOut
 			log.warn("<<<<<<< 408 REQUEST_TIMEOUT: Register Failure. Unable to contact registrar at "
 					+ localParty.getAddress());
-			localParty.notifyEvent(SipEndPointEvent.REGISTER_USER_FAIL);
+			localParty.notifyEvent(EndPointEvent.REGISTER_USER_FAIL);
 		} else if (statusCode == Response.NOT_FOUND) { // 404: Not Found
 			log.warn("<<<<<<< 404 NOT_FOUND: Register Failure. User "
 					+ localParty.getAddress() + " not found");
-			localParty.notifyEvent(SipEndPointEvent.REGISTER_USER_NOT_FOUND);
+			localParty.notifyEvent(EndPointEvent.REGISTER_USER_NOT_FOUND);
 		} else if (statusCode == Response.FORBIDDEN) { // Forbidden
 			log.warn("<<<<<<< 403 FORBIDDEN: Register Failure. User "
 					+ localParty.getAddress() + " forbiden");
-			localParty.notifyEvent(SipEndPointEvent.REGISTER_USER_FAIL);
+			localParty.notifyEvent(EndPointEvent.REGISTER_USER_FAIL);
 		} else if (statusCode == Response.SERVER_INTERNAL_ERROR) { // server
 																	// errors
 			log.warn("<<<<<<< 500 SERVER_INTERNAL_ERROR Register: Server Error: "
 					+ response.getStatusCode());
-			localParty.notifyEvent(SipEndPointEvent.SERVER_INTERNAL_ERROR);
+			localParty.notifyEvent(EndPointEvent.SERVER_INTERNAL_ERROR);
 		} else if (statusCode == Response.SERVICE_UNAVAILABLE) { // server
 																	// errors
 			log.warn("<<<<<<< 503 SERVICE_UNAVAILABLE Register: Service unavailable: "
 					+ response.getStatusCode());
-			localParty.notifyEvent(SipEndPointEvent.SERVER_INTERNAL_ERROR);
+			localParty.notifyEvent(EndPointEvent.SERVER_INTERNAL_ERROR);
 		} else { // Non supported response code Discard
 			log.warn("Register Failure. Status code: "
 					+ response.getStatusCode());
-			localParty.notifyEvent(SipEndPointEvent.SERVER_INTERNAL_ERROR);
+			localParty.notifyEvent(EndPointEvent.SERVER_INTERNAL_ERROR);
 		}
 	}
 
@@ -187,7 +187,7 @@ public class CRegister extends CTransaction {
 	@Override
 	public void processTimeOut(TimeoutEvent timeoutEvent) {
 		log.error("Register Failure due to request timeout");
-		localParty.notifyEvent(SipEndPointEvent.REGISTER_USER_FAIL);
+		localParty.notifyEvent(EndPointEvent.REGISTER_USER_FAIL);
 	}
 
 	private String getAuthResponse(String userName, String realm,

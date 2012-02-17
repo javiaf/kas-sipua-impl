@@ -29,9 +29,11 @@ import javax.sip.message.MessageFactory;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import android.content.Context;
+
 import com.kurento.commons.mscontrol.MediaSession;
-import com.kurento.commons.sip.UA;
 import com.kurento.commons.sip.util.SipConfig;
+import com.kurento.commons.ua.UA;
 
 /**
  * The UaFactory is a singleton class able to create instances of a JAIN-SIP
@@ -109,7 +111,11 @@ public class UaFactory {
 	 * before this method is called
 	 */
 	public static UA getInstance(SipConfig config) throws Exception {
-		UaImpl ua = new UaImpl(config);
+		//TODO FIX context setting.
+		if (UaFactory.context == null) {
+			throw new Exception("Android context not setted.");
+		}
+		UaImpl ua = new UaImpl(config,UaFactory.context);
 		return ua;
 	}
 
@@ -186,5 +192,14 @@ public class UaFactory {
 	 */
 	public static MediaSession getMediaSession() {
 		return mediaSession;
+	}
+	
+	private static Context context;
+	public static Context getAndroidContext() {
+		return UaFactory.context;
+	}
+	
+	public static void setAndroidContext(Context context){
+		UaFactory.context = context;
 	}
 }

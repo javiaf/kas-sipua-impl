@@ -44,10 +44,8 @@ import javax.sip.message.Response;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import com.kurento.commons.sip.SipEndPoint;
-import com.kurento.commons.sip.SipEndPointListener;
-import com.kurento.commons.sip.UA;
-import com.kurento.commons.sip.exception.ServerInternalErrorException;
+import android.content.Context;
+
 import com.kurento.commons.sip.exception.SipTransactionException;
 import com.kurento.commons.sip.transaction.CTransaction;
 import com.kurento.commons.sip.transaction.SAck;
@@ -57,6 +55,10 @@ import com.kurento.commons.sip.transaction.SInvite;
 import com.kurento.commons.sip.transaction.STransaction;
 import com.kurento.commons.sip.util.NatKeepAlive;
 import com.kurento.commons.sip.util.SipConfig;
+import com.kurento.commons.ua.EndPoint;
+import com.kurento.commons.ua.EndPointListener;
+import com.kurento.commons.ua.UA;
+import com.kurento.commons.ua.exception.ServerInternalErrorException;
 
 import de.javawi.jstun.test.DiscoveryInfo;
 import de.javawi.jstun.test.DiscoveryTest;
@@ -87,13 +89,17 @@ public class UaImpl implements SipListener, UA{
 	// User List
 	private HashMap<String,SipEndPointImpl> endPoints = new HashMap<String,SipEndPointImpl>();
 
+	private Context context;
+
+	private String version = "1.6";
+
 	///////////////////////////
 	//
 	// CONSTRUCTOR
 	//
 	///////////////////////////
 	
-	protected UaImpl (SipConfig config) throws Exception {
+	protected UaImpl (SipConfig config, Context context) throws Exception {
 
 		this.localAddress = config.getLocalAddress();
 		this.localPort = config.getLocalPort();
@@ -108,7 +114,10 @@ public class UaImpl implements SipListener, UA{
 
 		DiscoveryInfo stunInfo = null;
 		if (stunProxy != null && !"".equals(stunProxy)) {
-			stunInfo = runStunTest(config);	
+			stunInfo = runStunTest(config);
+			
+			checkNatSupported(stunInfo);
+			
 			InetAddress publicInet = stunInfo.getPublicIP();
 			publicAddress = publicInet.getHostAddress();
 			publicPort = stunInfo.getPublicPort();
@@ -119,6 +128,8 @@ public class UaImpl implements SipListener, UA{
 		}
 	
 		log.info("starting JAIN-SIP stack initializacion ...");
+		log.info("SipUa version "+ version );
+
 		Properties jainProps = new Properties();
 
 		String outboundProxy = proxyAddress + ":" + proxyPort + "/" + transport;
@@ -150,13 +161,36 @@ public class UaImpl implements SipListener, UA{
 		sipProvider = sipStack.createSipProvider(listeningPoint);
 		sipProvider.addSipListener(this);
 
-		if (!publicAddress.equals(localAddress)) {
+		if (!publicAddress.equals(localAddress) && config.isEnableKeepAlive()) {
 			log.debug("Creating keepalive for hole punching");
 			keepAlive = new NatKeepAlive(config, listeningPoint);
 			keepAlive.start();
 		}
+		
+		this.context = context;
 		log.info("SIP stack initializacion complete. Listening on " + localAddress + ":" + localPort +"/" + transport);
 				
+	}
+
+
+	private void checkNatSupported(DiscoveryInfo stunInfo) throws ServerInternalErrorException {
+		String message ="OK";
+		if (stunInfo.isBlockedUDP()) {
+			message = "BlockedUDP";
+		} else if (stunInfo.isError()){
+			message = "Stun Error";
+		} else if (stunInfo.isSymmetricUDPFirewall()){
+			message = "SymmetricUDPFirewall";
+		} else {
+			message = "Unknow";
+		}
+		if (stunInfo.isFullCone() || stunInfo.isOpenAccess() || stunInfo.isPortRestrictedCone() || stunInfo.isRestrictedCone() || stunInfo.isSymmetric()) {
+			//Stun supported
+			return;
+		}
+
+		throw new ServerInternalErrorException("Nat not supported. " + message);
+
 	}
 
 
@@ -167,7 +201,7 @@ public class UaImpl implements SipListener, UA{
 			log.info("Stopping hole punching");
 			keepAlive.stop();
 		}
-		for (SipEndPoint endpoint : endPoints.values()) {
+		for (EndPoint endpoint : endPoints.values()) {
 			try {
 				endpoint.terminate();
 			} catch (ServerInternalErrorException e) {
@@ -485,7 +519,7 @@ public class UaImpl implements SipListener, UA{
 	// User manager interface
 	//
 	/////////////
-	public SipEndPoint registerEndPoint(String user, String realm , String password, int expires, SipEndPointListener handler) throws ParseException, ServerInternalErrorException {
+	public EndPoint registerEndPoint(String user, String realm , String password, int expires, EndPointListener handler) throws ParseException, ServerInternalErrorException {
 		SipEndPointImpl epImpl;
 		String epAddress = user+"@"+realm;
 		if ((epImpl = endPoints.get(epAddress)) != null) {
@@ -495,7 +529,7 @@ public class UaImpl implements SipListener, UA{
 			return epImpl;
 		}
 				
-		epImpl = new SipEndPointImpl(user,realm, password, expires, this, handler);
+		epImpl = new SipEndPointImpl(user,realm, password, expires, this, handler, context);
 		endPoints.put(epAddress,epImpl);
 		return epImpl;
 	}
@@ -518,6 +552,10 @@ public class UaImpl implements SipListener, UA{
 		info = test.test();
 		log.debug("Stun test passed: Public Ip : "+info.getPublicIP().getHostAddress()+ " Public port : " + info.getPublicPort());
 		return info;
+	}
+
+	public void setContext(Context context) {
+		this.context = context;
 	}
 
 }

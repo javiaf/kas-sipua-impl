@@ -53,8 +53,8 @@ import com.kurento.commons.sip.agent.SipContext;
 import com.kurento.commons.sip.agent.SipEndPointImpl;
 import com.kurento.commons.sip.agent.UaFactory;
 import com.kurento.commons.sip.agent.UaImpl;
-import com.kurento.commons.sip.exception.ServerInternalErrorException;
 import com.kurento.commons.sip.util.SipHeaderHelper;
+import com.kurento.commons.ua.exception.ServerInternalErrorException;
 
 /**
  * 
@@ -175,12 +175,21 @@ public abstract class CTransaction extends Transaction {
 		}
 	}
 
-	protected CallIdHeader buildCallIdHeader() {
+	protected CallIdHeader buildCallIdHeader() throws ServerInternalErrorException {
+		try {
 		CallIdHeader callIdHeader;
 		if (!(dialog != null && (callIdHeader = dialog.getCallId()) != null)) {
-			callIdHeader = localParty.getUa().getSipProvider().getNewCallId();
+			if(localParty.getUa() == null || localParty.getUa().getSipProvider() != null) {
+				callIdHeader = localParty.getUa().getSipProvider().getNewCallId();
+			} else {
+				throw new ServerInternalErrorException("User Agent not initialized.");
+			}
 		}
 		return callIdHeader;
+		} catch ( Exception e) {
+			log.error("Error building call id hearder." +  e.getMessage(), e);
+			throw new ServerInternalErrorException("Error building hearder.", e);
+		}
 	}
 
 	protected FromHeader buildFromHeader() throws ParseException {
@@ -388,11 +397,13 @@ public abstract class CTransaction extends Transaction {
 							+ error);
 					// sipContext.notifySipCallEvent(SipCallEvent.SERVER_INTERNAL_ERROR);
 				}
+				sipContext.failedCall();
 			}
 
 		} catch (ServerInternalErrorException e) {
 			log.error("Server error while managing SdpPortManagerEvent:"
 					+ eventType, e);
+			sipContext.failedCall();
 			// sipContext.notifySipCallEvent(SipCallEvent.SERVER_INTERNAL_ERROR);
 		} finally {
 			// Release media resources managed by this transaction

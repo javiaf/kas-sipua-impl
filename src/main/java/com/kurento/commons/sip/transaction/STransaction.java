@@ -40,9 +40,9 @@ import com.kurento.commons.mscontrol.networkconnection.SdpPortManagerEvent;
 import com.kurento.commons.sip.agent.SipContext;
 import com.kurento.commons.sip.agent.SipEndPointImpl;
 import com.kurento.commons.sip.agent.UaFactory;
-import com.kurento.commons.sip.exception.ServerInternalErrorException;
 import com.kurento.commons.sip.exception.SipTransactionException;
 import com.kurento.commons.sip.util.SipHeaderHelper;
+import com.kurento.commons.ua.exception.ServerInternalErrorException;
 
 public abstract class STransaction extends Transaction {
 
@@ -171,24 +171,22 @@ public abstract class STransaction extends Transaction {
 		// Remove this transaction as a listener of the SDP Port Manager
 		event.getSource().removeListener(this);
 
-		SessionSpec ss;
-		try {
-			ss = new SessionSpec(new String(event.getMediaServerSdp()));
-			localSdp = ss.getSessionDescription();
-		} catch (SdpException e1) {
-			// TODO Auto-generated catch block
-			e1.printStackTrace();
-		}
-		
 		EventType eventType = event.getEventType();
 		// List of events with default behavior in server transactions
 		try {
 			if (eventType != null) { // ok
+				SessionSpec ss;
+				try {
+					ss = new SessionSpec(new String(event.getMediaServerSdp()));
+					localSdp = ss.getSessionDescription();
+				} catch (SdpException e1) {
+					// TODO Auto-generated catch block
+					e1.printStackTrace();
+				}
 				if (SdpPortManagerEvent.ANSWER_GENERATED.equals(eventType)) {
 					// Generated after processSdpOffer : SDP = response to give
 					log.info("SDP answer successfully generated");
 					this.sendResponse(Response.OK, localSdp);
-
 				} else if (SdpPortManagerEvent.OFFER_GENERATED.equals(eventType)) {
 					// Server INVITE with no SDP. Offer sent in 200ok response
 					log.info("SDP offer successfully generated");
