@@ -57,11 +57,6 @@
 		</dependency>
 		<dependency>
 			<groupId>com.kurento.commons</groupId>
-			<artifactId>kc-mediaspec</artifactId>
-			<version>${kcMediaSpecVersion}</version>
-		</dependency>
-		<dependency>
-			<groupId>com.kurento.commons</groupId>
 			<artifactId>kc-stun</artifactId>
 			<version>${kcStunVersion}</version>
 			<type>jar</type>
