@@ -14,7 +14,7 @@
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 
 		<!-- Dependency versions -->
-		<kcUaVersion>1.2.3</kcUaVersion>
+		<kcUaVersion>1.2.4-SNAPSHOT</kcUaVersion>
 		<kcMediaSpecVersion>1.2.0</kcMediaSpecVersion>
 		<kcStunVersion>1.0.1-SNAPSHOT</kcStunVersion>
 	</properties>
