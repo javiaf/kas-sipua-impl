@@ -13,7 +13,7 @@ GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>
-*/
+ */
 package com.kurento.commons.sip.agent;
 
 import java.net.InetAddress;
@@ -63,44 +63,43 @@ import com.kurento.commons.ua.exception.ServerInternalErrorException;
 import de.javawi.jstun.test.DiscoveryInfo;
 import de.javawi.jstun.test.DiscoveryTest;
 
-public class UaImpl implements SipListener, UA{
-		
+public class UaImpl implements SipListener, UA {
+
 	private static final Logger log = LoggerFactory.getLogger(UaImpl.class);
-		
+
 	// Sip Stack
 	private SipProvider sipProvider;
 	private SipStack sipStack;
-	
-//	private UserAgentHeader userAgent;
-	
+
+	// private UserAgentHeader userAgent;
+
 	// Configuration parameters
 	private String localAddress = "127.0.0.1";
 	private int localPort = 5060;
 	private String publicAddress = "127.0.0.1";
-
 
 	private int publicPort = 5060;
 	private String proxyAddress = "127.0.0.1";
 	private int proxyPort = 5060;
 	private String transport = "UDP";
 	private int maxForwards = 70;
-	private NatKeepAlive   keepAlive;
-		
+	private NatKeepAlive keepAlive;
 	private TypeStun typeStun;
+
 	// User List
-	private HashMap<String,SipEndPointImpl> endPoints = new HashMap<String,SipEndPointImpl>();
+	private HashMap<String, SipEndPointImpl> endPoints = new HashMap<String, SipEndPointImpl>();
 
 	private Context context;
 
 	private String version = "1.6";
 
-	///////////////////////////
+	// /////////////////////////
 	//
 	// CONSTRUCTOR
 	//
-	///////////////////////////
-	
-	protected UaImpl (SipConfig config, Context context) throws Exception {
+	// /////////////////////////
+
+	protected UaImpl(SipConfig config, Context context) throws Exception {
 
 		this.localAddress = config.getLocalAddress();
 		this.localPort = config.getLocalPort();
@@ -110,15 +109,15 @@ public class UaImpl implements SipListener, UA{
 		this.maxForwards = config.getMaxForards();
 		String stunProxy = config.getStunAddress();
 
-//		this.publicAddress = config.getPublicAddress();
-//		this.publicPort = config.getPublicPort();
+		// this.publicAddress = config.getPublicAddress();
+		// this.publicPort = config.getPublicPort();
 
 		DiscoveryInfo stunInfo = null;
 		if (stunProxy != null && !"".equals(stunProxy)) {
 			stunInfo = runStunTest(config);
-			
+
 			checkNatSupported(stunInfo);
-			
+
 			InetAddress publicInet = stunInfo.getPublicIP();
 			publicAddress = publicInet.getHostAddress();
 			publicPort = stunInfo.getPublicPort();
@@ -127,16 +126,17 @@ public class UaImpl implements SipListener, UA{
 			publicAddress = config.getLocalAddress();
 			publicPort = config.getLocalPort();
 		}
-	
+
 		log.info("starting JAIN-SIP stack initializacion ...");
-		log.info("SipUa version "+ version );
+		log.info("SipUa version " + version);
 
 		Properties jainProps = new Properties();
 
 		String outboundProxy = proxyAddress + ":" + proxyPort + "/" + transport;
 		jainProps.setProperty("javax.sip.OUTBOUND_PROXY", outboundProxy);
 
-		jainProps.setProperty("javax.sip.STACK_NAME", "siplib_" + System.currentTimeMillis());
+		jainProps.setProperty("javax.sip.STACK_NAME",
+				"siplib_" + System.currentTimeMillis());
 		jainProps.setProperty("gov.nist.javax.sip.REENTRANT_LISTENER", "true");
 
 		// Drop the client connection after we are done with the transaction.
@@ -148,16 +148,15 @@ public class UaImpl implements SipListener, UA{
 		// You need 16 (or TRACE) for logging traces. 32 (or DEBUG) for debug +
 		// traces.
 		// Your code will limp at 32 but it is best for debugging.
-//		jainProps.setProperty("gov.nist.javax.sip.TRACE_LEVEL", "16");
-		
-		
+		// jainProps.setProperty("gov.nist.javax.sip.TRACE_LEVEL", "16");
+
 		log.info("Stack properties: " + jainProps);
 
 		// Create SIP factory objects
 		sipStack = UaFactory.getSipFactory().createSipStack(jainProps);
-		
-		
-		ListeningPoint listeningPoint = sipStack.createListeningPoint(localAddress,localPort, transport);
+
+		ListeningPoint listeningPoint = sipStack.createListeningPoint(localAddress,
+				localPort, transport);
 		listeningPoint.setSentBy(publicAddress + ":" + publicPort);
 		sipProvider = sipStack.createSipProvider(listeningPoint);
 		sipProvider.addSipListener(this);
@@ -167,12 +166,12 @@ public class UaImpl implements SipListener, UA{
 			keepAlive = new NatKeepAlive(config, listeningPoint);
 			keepAlive.start();
 		}
-		
-		this.context = context;
-		log.info("SIP stack initializacion complete. Listening on " + localAddress + ":" + localPort +"/" + transport);
-				
-	}
 
+		this.context = context;
+		log.info("SIP stack initializacion complete. Listening on " + localAddress + ":"
+				+ localPort + "/" + transport);
+
+	}
 
 	private void checkNatSupported(DiscoveryInfo stunInfo)
 			throws ServerInternalErrorException {
@@ -205,11 +204,10 @@ public class UaImpl implements SipListener, UA{
 		throw new ServerInternalErrorException("Nat not supported. " + message);
 	}
 
-
 	public void terminate() {
 		log.info("SIP stack terminating ...");
 		log.info("Stopping registered endpoits.");
-		if (keepAlive!= null) {
+		if (keepAlive != null) {
 			log.info("Stopping hole punching");
 			keepAlive.stop();
 		}
@@ -252,12 +250,12 @@ public class UaImpl implements SipListener, UA{
 		log.info("SIP stack terminated");
 	}
 
-	///////////////////////////
+	// /////////////////////////
 	//
 	// SIP LISTENER
 	//
-	///////////////////////////	
-	
+	// /////////////////////////
+
 	@Override
 	public void processDialogTerminated(DialogTerminatedEvent arg0) {
 		// Nothing to do here
@@ -269,20 +267,18 @@ public class UaImpl implements SipListener, UA{
 		// Nothing to do here
 		log.info("IO Exception");
 	}
-	
+
 	@Override
 	public void processRequest(RequestEvent requestEvent) {
-		log.info("SIP request received\n"
-				 + "<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<\n"
-				 + requestEvent.getRequest().toString() +"\n"
-		         + "<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<");
+		log.info("SIP request received\n" + "<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<\n"
+				+ requestEvent.getRequest().toString() + "\n"
+				+ "<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<");
 
 		// Check the request is addressed to one of managed users
 		// Check if the message is addressed to one of the registered users
-		
-			
+
 		SipEndPointImpl localParty = null;
-		
+
 		ServerTransaction serverTransaction;
 		STransaction sTrns;
 		Dialog dialog;
@@ -294,40 +290,44 @@ public class UaImpl implements SipListener, UA{
 		try {
 			if ((serverTransaction = requestEvent.getServerTransaction()) == null) {
 				// Create transaction
-				serverTransaction = sipProvider.getNewServerTransaction(requestEvent.getRequest());
+				serverTransaction = sipProvider.getNewServerTransaction(requestEvent
+						.getRequest());
 			}
 			// Get local party or give up
 			localParty = getLocalEndPoint(serverTransaction);
-			
+
 			// Check if SipContext has to be created
-			if ( (dialog = serverTransaction.getDialog()) != null) {
-				log.debug("Created IN dialog transaction:" + serverTransaction.getBranchId());
-				if ( ( dialog.getApplicationData()) == null) {
-					log.debug("New SipContext created for transaction: " + serverTransaction.getBranchId());
-					dialog.setApplicationData( new SipContext(localParty,dialog));
+			if ((dialog = serverTransaction.getDialog()) != null) {
+				log.debug("Created IN dialog transaction:"
+						+ serverTransaction.getBranchId());
+				if ((dialog.getApplicationData()) == null) {
+					log.debug("New SipContext created for transaction: "
+							+ serverTransaction.getBranchId());
+					dialog.setApplicationData(new SipContext(localParty, dialog));
 				} else {
 					log.debug("Transaccion already has a SipContext associated");
 				}
 			} else {
-				log.debug("Created OUT dialog transaction: " + serverTransaction.getBranchId());
+				log.debug("Created OUT dialog transaction: "
+						+ serverTransaction.getBranchId());
 			}
-		
+
 			// Get Request method to create a proper transaction record
 			if ((sTrns = (STransaction) serverTransaction.getApplicationData()) == null) {
-					
+
 				if (reqMethod.equals(Request.ACK)) {
 					log.info("Detected ACK request");
-					sTrns = new SAck(serverTransaction,localParty);
+					sTrns = new SAck(serverTransaction, localParty);
 				} else if (reqMethod.equals(Request.INVITE)) {
 					log.info("Detected INVITE request");
-					sTrns = new SInvite(serverTransaction,localParty);
+					sTrns = new SInvite(serverTransaction, localParty);
 				} else if (reqMethod.equals(Request.BYE)) {
 					log.info("Detected BYE request");
 					sTrns = new SBye(serverTransaction, localParty);
 				} else if (reqMethod.equals(Request.CANCEL)) {
 					log.info("Detected Cancel request");
 					sTrns = new SCancel(serverTransaction, localParty);
-				}else {
+				} else {
 					log.error("Unsupported method on request: " + reqMethod);
 					sendStateless(Response.NOT_IMPLEMENTED, requestEvent.getRequest());
 				}
@@ -335,17 +335,16 @@ public class UaImpl implements SipListener, UA{
 				serverTransaction.setApplicationData(sTrns);
 			}
 		} catch (Exception e) {
-			log.error("Unable to process server transaction",e);
+			log.error("Unable to process server transaction", e);
 		}
 
 	}
 
 	@Override
 	public void processResponse(ResponseEvent responseEvent) {
-		log.info("\n"
-				 + "<<<<<<<< SIP response received <<<<<<\n"
-				 + responseEvent.getResponse().toString()
-		         + "<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<");
+		log.info("\n" + "<<<<<<<< SIP response received <<<<<<\n"
+				+ responseEvent.getResponse().toString()
+				+ "<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<");
 
 		// Get transaction record for this response and process response
 		// SipProvider searches a proper client transaction to each response.
@@ -367,7 +366,7 @@ public class UaImpl implements SipListener, UA{
 		try {
 			cTrns.processResponse(responseEvent);
 		} catch (ServerInternalErrorException e) {
-			log.error("Internal server error while procesing a response",e);
+			log.error("Internal server error while procesing a response", e);
 		}
 
 	}
@@ -376,15 +375,18 @@ public class UaImpl implements SipListener, UA{
 	public void processTimeout(TimeoutEvent timeoutEvent) {
 		if (timeoutEvent.isServerTransaction()) {
 			ServerTransaction serverTransaction = timeoutEvent.getServerTransaction();
-			log.error("Timeout event found for Server Transaction with ID: " + serverTransaction.getBranchId());
+			log.error("Timeout event found for Server Transaction with ID: "
+					+ serverTransaction.getBranchId());
 			STransaction sTransaction;
-			if ( (sTransaction = (STransaction) serverTransaction.getApplicationData()) != null ){
+			if ((sTransaction = (STransaction) serverTransaction.getApplicationData()) != null) {
 				sTransaction.processTimeOut(timeoutEvent);
 			}
 		} else {
 			ClientTransaction clientTransaction = timeoutEvent.getClientTransaction();
-			log.error("Timeout event found for Client Transaction with ID:\n" + clientTransaction.getBranchId());
-			CTransaction cTransaction = (CTransaction) clientTransaction.getApplicationData();
+			log.error("Timeout event found for Client Transaction with ID:\n"
+					+ clientTransaction.getBranchId());
+			CTransaction cTransaction = (CTransaction) clientTransaction
+					.getApplicationData();
 			cTransaction.processTimeOut(timeoutEvent);
 		}
 	}
@@ -393,34 +395,35 @@ public class UaImpl implements SipListener, UA{
 	public void processTransactionTerminated(TransactionTerminatedEvent trnsTerminatedEv) {
 		if (trnsTerminatedEv.isServerTransaction()) {
 			log.info("Server Transaction terminated with ID: "
-			        + trnsTerminatedEv.getServerTransaction().getBranchId());
+					+ trnsTerminatedEv.getServerTransaction().getBranchId());
 		} else {
 			log.info("Client Transaction terminated with ID: "
-			        + trnsTerminatedEv.getClientTransaction().getBranchId());
-		}		
-	}	
-	
-	private SipEndPointImpl getLocalEndPoint(ServerTransaction serverTransaction) throws SipTransactionException{
+					+ trnsTerminatedEv.getClientTransaction().getBranchId());
+		}
+	}
+
+	private SipEndPointImpl getLocalEndPoint(ServerTransaction serverTransaction)
+			throws SipTransactionException {
 		Request request = serverTransaction.getRequest();
-		
+
 		// In server transaction localparty is addressed in TO header
 		Address address;
-		if ( (address = ((ToHeader) request.getHeader(ToHeader.NAME)).getAddress()) == null) {
+		if ((address = ((ToHeader) request.getHeader(ToHeader.NAME)).getAddress()) == null) {
 			String msg = "Malformed SIP request. Unable to get To header address";
 			log.warn(msg);
 			throw new SipTransactionException(msg);
 		}
 		SipURI sipUri;
-		if ( ! address.getURI().isSipURI()) {
+		if (!address.getURI().isSipURI()) {
 			String msg = "Unsupported URI format:" + address.getURI().toString();
 			log.warn(msg);
 			throw new SipTransactionException(msg);
 		} else {
 			sipUri = (SipURI) address.getURI();
 		}
-		
+
 		SipEndPointImpl epImpl;
-		if ((epImpl= endPoints.get(sipUri.getUser() +"@"+sipUri.getHost()) ) != null ) {
+		if ((epImpl = endPoints.get(sipUri.getUser() + "@" + sipUri.getHost())) != null) {
 			return epImpl;
 		} else {
 			String msg = "End point not registered with this UA:" + sipUri.toString();
@@ -428,88 +431,79 @@ public class UaImpl implements SipListener, UA{
 			throw new SipTransactionException(msg);
 		}
 	}
-	
-	////////////////
+
+	// //////////////
 	//
 	// Factory INTERFACE
 	//
-	////////////////
-	
+	// //////////////
+
 	public SipProvider getSipProvider() {
 		return sipProvider;
 	}
-	
-	public SipStack getSipStack(){
+
+	public SipStack getSipStack() {
 		return sipStack;
 	}
-	
-	///////////////////////////
+
+	// /////////////////////////
 	//
 	// CONFIGURATION INTERFACE
 	//
-	///////////////////////////
-		
-//	public UserAgentHeader getUserAgentHeader() {
-//		return userAgent;
-//	}
-	
+	// /////////////////////////
+
+	// public UserAgentHeader getUserAgentHeader() {
+	// return userAgent;
+	// }
+
 	public String getLocalAddress() {
 		return localAddress;
 	}
-
 
 	public void setLocalAddress(String localAddress) {
 		this.localAddress = localAddress;
 	}
 
-
 	public int getLocalPort() {
 		return localPort;
 	}
-
 
 	public void setLocalPort(int localPort) {
 		this.localPort = localPort;
 	}
 
-
 	public String getProxyAddress() {
 		return proxyAddress;
 	}
-
 
 	public void setProxyAddress(String proxyAddress) {
 		this.proxyAddress = proxyAddress;
 	}
 
-
 	public int getProxyPort() {
 		return proxyPort;
 	}
-
 
 	public void setProxyPort(int proxyPort) {
 		this.proxyPort = proxyPort;
 	}
 
-
 	public String getTransport() {
 		return transport;
 	}
 
-
 	public void setTransport(String transport) {
 		this.transport = transport;
 	}
-	
-	public void setMaxForwards(int maxForwards){
+
+	public void setMaxForwards(int maxForwards) {
 		this.maxForwards = maxForwards;
 	}
-	
+
 	public int getMaxForwards() {
 		return maxForwards;
 	}
-	
+
 	public String getPublicAddress() {
 		return publicAddress;
 	}
@@ -526,48 +520,66 @@ public class UaImpl implements SipListener, UA{
 		this.publicPort = publicPort;
 	}
 
-	/////////////
+	// ///////////
 	//
 	// User manager interface
 	//
-	/////////////
-	public EndPoint registerEndPoint(String user, String realm , String password, int expires, EndPointListener handler) throws ParseException, ServerInternalErrorException {
+	// ///////////
+	public EndPoint registerEndPoint(String user, String realm, String password,
+			int expires, EndPointListener handler) throws ParseException,
+			ServerInternalErrorException {
 		SipEndPointImpl epImpl;
-		String epAddress = user+"@"+realm;
+		String epAddress = user + "@" + realm;
 		if ((epImpl = endPoints.get(epAddress)) != null) {
 			if (epImpl.getExpires() == 0) {
 				epImpl.setExpires(expires);
 			}
 			return epImpl;
 		}
-				
-		epImpl = new SipEndPointImpl(user,realm, password, expires, this, handler, context);
-		endPoints.put(epAddress,epImpl);
+
+		epImpl = new SipEndPointImpl(user, realm, password, expires, this, handler,
+				context);
+		endPoints.put(epAddress, epImpl);
 		return epImpl;
 	}
-	
+
 	private void sendStateless(int code, Request request) {
 		try {
-			sipProvider.sendResponse(UaFactory.getMessageFactory().createResponse(code, request));
+			sipProvider.sendResponse(UaFactory.getMessageFactory().createResponse(code,
+					request));
 		} catch (Exception e) {
-			log.error("UA: Unable to send stateless response code:" + code + ". GIVE UP!!!", e);
+			log.error("UA: Unable to send stateless response code:" + code
+					+ ". GIVE UP!!!", e);
 		}
 	}
-	
+
 	private DiscoveryInfo runStunTest(SipConfig config) throws Exception {
 		DiscoveryInfo info = null;
 
 		InetAddress addr = InetAddress.getByName(config.getLocalAddress());
 		DiscoveryTest test = new DiscoveryTest(addr, config.getLocalPort(),
-						config.getStunAddress(), config.getStunPort());
+				config.getStunAddress(), config.getStunPort());
 
 		info = test.test();
-		log.debug("Stun test passed: Public Ip : "+info.getPublicIP().getHostAddress()+ " Public port : " + info.getPublicPort());
+		log.debug("Stun test passed: Public Ip : " + info.getPublicIP().getHostAddress()
+				+ " Public port : " + info.getPublicPort());
 		return info;
 	}
 
 	public void setContext(Context context) {
 		this.context = context;
+	}
+
+	@Override
+	public void registerEndpoint(EndPoint endpoint) {
+		// TODO Auto-generated method stub
+
+	}
+
+	@Override
+	public void unregisterEndpoint(EndPoint endpoint) {
+		// TODO Auto-generated method stub
+
 	}
 
 }
