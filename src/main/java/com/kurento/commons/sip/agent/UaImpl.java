@@ -86,6 +86,7 @@ public class UaImpl implements SipListener, UA{
 	private int maxForwards = 70;
 	private NatKeepAlive   keepAlive;
 		
+	private TypeStun typeStun;
 	// User List
 	private HashMap<String,SipEndPointImpl> endPoints = new HashMap<String,SipEndPointImpl>();
 
@@ -173,24 +174,35 @@ public class UaImpl implements SipListener, UA{
 	}
 
 
-	private void checkNatSupported(DiscoveryInfo stunInfo) throws ServerInternalErrorException {
-		String message ="OK";
+	private void checkNatSupported(DiscoveryInfo stunInfo)
+			throws ServerInternalErrorException {
+		String message = "OK";
 		if (stunInfo.isBlockedUDP()) {
 			message = "BlockedUDP";
-		} else if (stunInfo.isError()){
+			typeStun = TypeStun.BLOCKED_UDP;
+		} else if (stunInfo.isError()) {
 			message = "Stun Error";
-		} else if (stunInfo.isSymmetricUDPFirewall()){
+			typeStun = TypeStun.ERROR_STUN;
+		} else if (stunInfo.isSymmetricUDPFirewall()) {
 			message = "SymmetricUDPFirewall";
+			typeStun = TypeStun.SYMMETRIC_UDP_FIREWALL;
 		} else {
-			message = "Unknow";
-		}
-		if (stunInfo.isFullCone() || stunInfo.isOpenAccess() || stunInfo.isPortRestrictedCone() || stunInfo.isRestrictedCone() || stunInfo.isSymmetric()) {
-			//Stun supported
+			// Stun supported
+			if (stunInfo.isFullCone())
+				typeStun = TypeStun.FULL_CONE;
+			else if (stunInfo.isOpenAccess())
+				typeStun = TypeStun.OPEN_ACCESS;
+			else if (stunInfo.isPortRestrictedCone())
+				typeStun = TypeStun.PORT_RESTRICTED_CONE;
+			else if (stunInfo.isRestrictedCone())
+				typeStun = TypeStun.RESTRICTED_CONE;
+			else if (stunInfo.isSymmetric())
+				typeStun = TypeStun.SYMMETRIC_CONE;
+
 			return;
 		}
 
 		throw new ServerInternalErrorException("Nat not supported. " + message);
-
 	}
 
 
