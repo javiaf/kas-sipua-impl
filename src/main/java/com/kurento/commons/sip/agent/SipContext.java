@@ -31,6 +31,7 @@ import org.slf4j.LoggerFactory;
 import com.kurento.commons.media.format.SessionSpec;
 import com.kurento.commons.media.format.SpecTools;
 import com.kurento.commons.mscontrol.MsControlException;
+import com.kurento.commons.mscontrol.join.Joinable;
 import com.kurento.commons.mscontrol.join.JoinableStream.StreamType;
 import com.kurento.commons.mscontrol.networkconnection.NetworkConnection;
 import com.kurento.commons.sdp.enums.MediaType;
@@ -45,7 +46,7 @@ import com.kurento.commons.sip.transaction.Transaction;
 import com.kurento.commons.ua.Call;
 import com.kurento.commons.ua.CallListener;
 import com.kurento.commons.ua.event.CallEvent;
-import com.kurento.commons.ua.event.EventType;
+import com.kurento.commons.ua.event.CallEventEnum;
 import com.kurento.commons.ua.exception.ServerInternalErrorException;
 
 public class SipContext implements Call {
@@ -183,10 +184,10 @@ public class SipContext implements Call {
 		callListener = null;
 	}
 
-	@Override
-	public NetworkConnection getNetworkConnection(StreamType media) {
-		return networkConnection;
-	}
+	// @Override
+	// public NetworkConnection getNetworkConnection(StreamType media) {
+	// return networkConnection;
+	// }
 
 	@Override
 	public Map<MediaType, Mode> getMediaTypesModes() {
@@ -336,7 +337,7 @@ public class SipContext implements Call {
 			this.hangup();
 	}
 
-	private void notifySipCallEvent(EventType eventType) {
+	private void notifySipCallEvent(CallEventEnum eventType) {
 		// Notify call events when dialog are not complete
 		if (callListener != null) {
 			CallEvent event = new CallEvent(eventType, this);
@@ -365,5 +366,20 @@ public class SipContext implements Call {
 	
 	public boolean hasPendingTransaction() {
 		return outgoingRequestCancelled;
+	}
+
+	@Override
+	public Joinable getJoinable(StreamType media) {
+		try {
+			return networkConnection.getJoinableStream(media);
+		} catch (MsControlException e) {
+			return null;
+		}
+	}
+
+	@Override
+	public String getId() {
+		// TODO Auto-generated method stub
+		return null;
 	}
 }
