@@ -21,8 +21,8 @@ import javax.sip.Dialog;
 import javax.sip.TimeoutEvent;
 import javax.sip.address.Address;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.kurento.commons.mscontrol.MediaEventListener;
 import com.kurento.commons.mscontrol.MsControlException;
@@ -37,7 +37,7 @@ import com.kurento.commons.ua.exception.ServerInternalErrorException;
 public abstract class Transaction implements
 		MediaEventListener<SdpPortManagerEvent> {
 
-	private Log log = LogFactory.getLog(Transaction.class);
+	private static Logger log = LoggerFactory.getLogger(Transaction.class);
 
 	protected String method;
 

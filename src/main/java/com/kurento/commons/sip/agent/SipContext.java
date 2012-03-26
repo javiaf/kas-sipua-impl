@@ -25,8 +25,8 @@ import javax.sip.address.Address;
 import javax.sip.message.Request;
 import javax.sip.message.Response;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.kurento.commons.media.format.SessionSpec;
 import com.kurento.commons.media.format.SpecTools;
@@ -50,7 +50,7 @@ import com.kurento.commons.ua.exception.ServerInternalErrorException;
 
 public class SipContext implements Call {
 
-	protected static Log log = LogFactory.getLog(SipContext.class);
+	protected static final Logger log = LoggerFactory.getLogger(SipContext.class);
 
 	private Dialog dialog;
 	private Request cancelRequest;

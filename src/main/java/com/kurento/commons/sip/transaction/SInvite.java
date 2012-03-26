@@ -24,8 +24,8 @@ import javax.sip.TimeoutEvent;
 import javax.sip.message.Request;
 import javax.sip.message.Response;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.kurento.commons.media.format.SessionSpec;
 import com.kurento.commons.media.format.SpecTools;
@@ -39,7 +39,7 @@ import com.kurento.commons.ua.exception.ServerInternalErrorException;
 
 public class SInvite extends STransaction {
 
-	private static Log log = LogFactory.getLog(SInvite.class);
+	private static Logger log = LoggerFactory.getLogger(SInvite.class);
 
 	public SInvite(ServerTransaction serverTransaction,
 			SipEndPointImpl localParty) throws ServerInternalErrorException,

@@ -43,8 +43,8 @@ import javax.sip.header.UserAgentHeader;
 import javax.sip.header.ViaHeader;
 import javax.sip.message.Request;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.kurento.commons.mscontrol.EventType;
 import com.kurento.commons.mscontrol.MediaErr;
@@ -66,7 +66,7 @@ public abstract class CTransaction extends Transaction {
 	protected Request request;
 
 	// General attributes
-	protected static Log log = LogFactory.getLog(CTransaction.class);
+	protected static Logger log = LoggerFactory.getLogger(CTransaction.class);
 
 	// ////////////
 	//

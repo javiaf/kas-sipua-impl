@@ -19,8 +19,8 @@ package com.kurento.commons.sip.transaction;
 import javax.sip.ServerTransaction;
 import javax.sip.message.Request;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.kurento.commons.mscontrol.EventType;
 import com.kurento.commons.mscontrol.MsControlException;
@@ -31,7 +31,7 @@ import com.kurento.commons.ua.exception.ServerInternalErrorException;
 
 public class SAck extends STransaction {
 
-	private static Log log = LogFactory.getLog(SAck.class);
+	private static Logger log = LoggerFactory.getLogger(SAck.class);
 
 	// Process ACK to a successful INVITE
 	public SAck(ServerTransaction serverTransaction, SipEndPointImpl localParty)

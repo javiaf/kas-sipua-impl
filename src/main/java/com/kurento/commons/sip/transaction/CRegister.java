@@ -174,10 +174,10 @@ public class CRegister extends CTransaction {
 			authorization.setOpaque(opaque);
 
 		} catch (ParseException e1) {
-			log.error(e1);
+			log.error(e1.toString());
 			throw new ServerInternalErrorException("Error generating authentication hearder", e1);
 		} catch (PeerUnavailableException e) {
-			log.error(e);
+			log.error(e.toString());
 			throw new ServerInternalErrorException("Error generating authentication hearder", e);
 		}
 		return authorization;
@@ -197,7 +197,7 @@ public class CRegister extends CTransaction {
 		try {
 			messageDigest = MessageDigest.getInstance(algorithm);
 		} catch (NoSuchAlgorithmException e) {
-			log.error(e);
+			log.error(e.toString());
 		}
 		// A1
 		String A1 = userName + ":" + realm + ":" + password;

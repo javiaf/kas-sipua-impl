@@ -41,8 +41,8 @@ import javax.sip.header.ToHeader;
 import javax.sip.message.Request;
 import javax.sip.message.Response;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import android.content.Context;
 
@@ -65,7 +65,7 @@ import de.javawi.jstun.test.DiscoveryTest;
 
 public class UaImpl implements SipListener, UA{
 		
-	private static final Log log = LogFactory.getLog(UaImpl.class);
+	private static final Logger log = LoggerFactory.getLogger(UaImpl.class);
 		
 	// Sip Stack
 	private SipProvider sipProvider;

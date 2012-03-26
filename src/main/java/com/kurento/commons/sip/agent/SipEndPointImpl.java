@@ -27,8 +27,8 @@ import java.util.TimerTask;
 import javax.sip.address.Address;
 import javax.sip.header.CallIdHeader;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import android.app.AlarmManager;
 import android.app.PendingIntent;
@@ -49,7 +49,7 @@ import com.kurento.commons.ua.exception.ServerInternalErrorException;
 
 public class SipEndPointImpl implements EndPoint {
 
-	private final static Log log = LogFactory.getLog(SipEndPointImpl.class);
+	private final static Logger log = LoggerFactory.getLogger(SipEndPointImpl.class);
 
 	private int expires = 3600;
 
@@ -199,7 +199,7 @@ public class SipEndPointImpl implements EndPoint {
 		try {
 			this.register();
 		} catch (ServerInternalErrorException e) {
-			log.error(e);
+			log.error(e.toString());
 		}
 	}
 
