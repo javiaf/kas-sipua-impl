@@ -51,7 +51,7 @@ public class SAck extends STransaction {
 		} else {
 			log.debug("ACK contains SDP response.");
 			if (sipContext != null) {
-				networkConnection = sipContext.getNetworkConnection(null);
+				networkConnection = sipContext.getNetworkConnection();
 				try {
 					sdpPortManager = networkConnection.getSdpPortManager();
 				} catch (MsControlException e) {
