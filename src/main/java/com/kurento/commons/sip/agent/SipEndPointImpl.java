@@ -37,14 +37,13 @@ import android.content.Intent;
 
 import com.kurento.commons.sip.android.RegisterService;
 import com.kurento.commons.sip.android.SecondeService;
-import com.kurento.commons.sip.transaction.COptions;
 import com.kurento.commons.sip.transaction.CRegister;
 import com.kurento.commons.ua.Call;
 import com.kurento.commons.ua.CallListener;
 import com.kurento.commons.ua.EndPoint;
 import com.kurento.commons.ua.EndPointListener;
 import com.kurento.commons.ua.event.EndPointEvent;
-import com.kurento.commons.ua.event.EventType;
+import com.kurento.commons.ua.event.EndpointEventEnum;
 import com.kurento.commons.ua.exception.ServerInternalErrorException;
 
 public class SipEndPointImpl implements EndPoint {
@@ -169,7 +168,7 @@ public class SipEndPointImpl implements EndPoint {
 		}
 	}
 
-	public void notifyEvent(EventType eventType) {
+	public void notifyEvent(EndpointEventEnum eventType) {
 		EndPointEvent event = new EndPointEvent(eventType, this);
 		if (listener != null) {
 			listener.onEvent(event);
@@ -283,18 +282,18 @@ public class SipEndPointImpl implements EndPoint {
 
 	}
 
-	@Override
-	public void options(String remoteParty, CallListener callController)
-			throws ServerInternalErrorException {
-		Address remotePartyAddress;
-		try {
-			remotePartyAddress = UaFactory.getAddressFactory().createAddress(
-					remoteParty);
-		} catch (ParseException e) {
-			throw new ServerInternalErrorException(e.toString());
-		}
-		new COptions(this, remotePartyAddress);
-
-	}
+	// @Override
+	// public void options(String remoteParty, CallListener callController)
+	// throws ServerInternalErrorException {
+	// Address remotePartyAddress;
+	// try {
+	// remotePartyAddress = UaFactory.getAddressFactory().createAddress(
+	// remoteParty);
+	// } catch (ParseException e) {
+	// throw new ServerInternalErrorException(e.toString());
+	// }
+	// new COptions(this, remotePartyAddress);
+	//
+	// }
 
 }
