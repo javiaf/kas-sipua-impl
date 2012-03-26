@@ -184,10 +184,9 @@ public class SipContext implements Call {
 		callListener = null;
 	}
 
-	// @Override
-	// public NetworkConnection getNetworkConnection(StreamType media) {
-	// return networkConnection;
-	// }
+	public NetworkConnection getNetworkConnection() {
+		return networkConnection;
+	}
 
 	@Override
 	public Map<MediaType, Mode> getMediaTypesModes() {
