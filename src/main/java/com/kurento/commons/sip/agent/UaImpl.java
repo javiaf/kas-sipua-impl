@@ -85,7 +85,8 @@ public class UaImpl implements SipListener, UaStun {
 	private int maxForwards = 70;
 	private NatKeepAlive keepAlive;
 	private TypeStun typeStun;
-	DiscoveryInfo info;
+
+	private DiscoveryInfo info;
 
 	// User List
 	private HashMap<String, SipEndPointImpl> endPoints = new HashMap<String, SipEndPointImpl>();
