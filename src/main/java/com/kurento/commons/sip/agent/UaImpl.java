@@ -57,13 +57,13 @@ import com.kurento.commons.sip.util.NatKeepAlive;
 import com.kurento.commons.sip.util.SipConfig;
 import com.kurento.commons.ua.EndPoint;
 import com.kurento.commons.ua.EndPointListener;
-import com.kurento.commons.ua.UA;
+import com.kurento.commons.ua.UaStun;
 import com.kurento.commons.ua.exception.ServerInternalErrorException;
 
 import de.javawi.jstun.test.DiscoveryInfo;
 import de.javawi.jstun.test.DiscoveryTest;
 
-public class UaImpl implements SipListener, UA {
+public class UaImpl implements SipListener, UaStun {
 
 	private static final Logger log = LoggerFactory.getLogger(UaImpl.class);
 
@@ -85,6 +85,7 @@ public class UaImpl implements SipListener, UA {
 	private int maxForwards = 70;
 	private NatKeepAlive keepAlive;
 	private TypeStun typeStun;
+	DiscoveryInfo info;
 
 	// User List
 	private HashMap<String, SipEndPointImpl> endPoints = new HashMap<String, SipEndPointImpl>();
@@ -554,7 +555,7 @@ public class UaImpl implements SipListener, UA {
 	}
 
 	private DiscoveryInfo runStunTest(SipConfig config) throws Exception {
-		DiscoveryInfo info = null;
+		info = null;
 
 		InetAddress addr = InetAddress.getByName(config.getLocalAddress());
 		DiscoveryTest test = new DiscoveryTest(addr, config.getLocalPort(),
@@ -580,6 +581,11 @@ public class UaImpl implements SipListener, UA {
 	public void unregisterEndpoint(EndPoint endpoint) {
 		// TODO Auto-generated method stub
 
+	}
+
+	@Override
+	public DiscoveryInfo getConnectionType() {
+		return info;
 	}
 
 }
