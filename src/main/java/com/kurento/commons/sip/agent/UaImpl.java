@@ -141,7 +141,8 @@ public class UaImpl implements SipListener, UaStun {
 		jainProps.setProperty("gov.nist.javax.sip.REENTRANT_LISTENER", "true");
 
 		// Drop the client connection after we are done with the transaction.
-		jainProps.setProperty("gov.nist.javax.sip.CACHE_CLIENT_CONNECTIONS", "true");
+		jainProps.setProperty("gov.nist.javax.sip.CACHE_CLIENT_CONNECTIONS",
+				"true");
 		jainProps.setProperty("gov.nist.javax.sip.THREAD_POOL_SIZE", "100");
 		jainProps.setProperty("gov.nist.javax.sip.THREAD_POOL_SIZE", "100");
 
@@ -156,8 +157,8 @@ public class UaImpl implements SipListener, UaStun {
 		// Create SIP factory objects
 		sipStack = UaFactory.getSipFactory().createSipStack(jainProps);
 
-		ListeningPoint listeningPoint = sipStack.createListeningPoint(localAddress,
-				localPort, transport);
+		ListeningPoint listeningPoint = sipStack.createListeningPoint(
+				localAddress, localPort, transport);
 		listeningPoint.setSentBy(publicAddress + ":" + publicPort);
 		sipProvider = sipStack.createSipProvider(listeningPoint);
 		sipProvider.addSipListener(this);
@@ -169,8 +170,8 @@ public class UaImpl implements SipListener, UaStun {
 		}
 
 		this.context = context;
-		log.info("SIP stack initializacion complete. Listening on " + localAddress + ":"
-				+ localPort + "/" + transport);
+		log.info("SIP stack initializacion complete. Listening on "
+				+ localAddress + ":" + localPort + "/" + transport);
 
 	}
 
@@ -222,7 +223,8 @@ public class UaImpl implements SipListener, UaStun {
 		while (true) {
 			try {
 				log.info("Delete Sip listening point");
-				sipStack.deleteListeningPoint(sipProvider.getListeningPoint(transport));
+				sipStack.deleteListeningPoint(sipProvider
+						.getListeningPoint(transport));
 				break;
 			} catch (ObjectInUseException e) {
 				try {
@@ -271,7 +273,8 @@ public class UaImpl implements SipListener, UaStun {
 
 	@Override
 	public void processRequest(RequestEvent requestEvent) {
-		log.info("SIP request received\n" + "<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<\n"
+		log.info("SIP request received\n"
+				+ "<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<\n"
 				+ requestEvent.getRequest().toString() + "\n"
 				+ "<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<");
 
@@ -291,8 +294,8 @@ public class UaImpl implements SipListener, UaStun {
 		try {
 			if ((serverTransaction = requestEvent.getServerTransaction()) == null) {
 				// Create transaction
-				serverTransaction = sipProvider.getNewServerTransaction(requestEvent
-						.getRequest());
+				serverTransaction = sipProvider
+						.getNewServerTransaction(requestEvent.getRequest());
 			}
 			// Get local party or give up
 			localParty = getLocalEndPoint(serverTransaction);
@@ -330,7 +333,8 @@ public class UaImpl implements SipListener, UaStun {
 					sTrns = new SCancel(serverTransaction, localParty);
 				} else {
 					log.error("Unsupported method on request: " + reqMethod);
-					sendStateless(Response.NOT_IMPLEMENTED, requestEvent.getRequest());
+					sendStateless(Response.NOT_IMPLEMENTED,
+							requestEvent.getRequest());
 				}
 				// Insert application data into server transaction
 				serverTransaction.setApplicationData(sTrns);
@@ -350,7 +354,8 @@ public class UaImpl implements SipListener, UaStun {
 		// Get transaction record for this response and process response
 		// SipProvider searches a proper client transaction to each response.
 		// if any is found it gives without any transaction
-		ClientTransaction clientTransaction = responseEvent.getClientTransaction();
+		ClientTransaction clientTransaction = responseEvent
+				.getClientTransaction();
 		if (clientTransaction == null) {
 			// SIP JAIN was unable to find a proper transaction for this
 			// response. The UAC will discard silently the request as stated by
@@ -360,7 +365,8 @@ public class UaImpl implements SipListener, UaStun {
 		}
 
 		// Get the transaction application record and process response.
-		CTransaction cTrns = (CTransaction) clientTransaction.getApplicationData();
+		CTransaction cTrns = (CTransaction) clientTransaction
+				.getApplicationData();
 		if (cTrns == null) {
 			log.error("Server Internal Error (500): Empty application data for response transaction");
 		}
@@ -375,15 +381,18 @@ public class UaImpl implements SipListener, UaStun {
 	@Override
 	public void processTimeout(TimeoutEvent timeoutEvent) {
 		if (timeoutEvent.isServerTransaction()) {
-			ServerTransaction serverTransaction = timeoutEvent.getServerTransaction();
+			ServerTransaction serverTransaction = timeoutEvent
+					.getServerTransaction();
 			log.error("Timeout event found for Server Transaction with ID: "
 					+ serverTransaction.getBranchId());
 			STransaction sTransaction;
-			if ((sTransaction = (STransaction) serverTransaction.getApplicationData()) != null) {
+			if ((sTransaction = (STransaction) serverTransaction
+					.getApplicationData()) != null) {
 				sTransaction.processTimeOut(timeoutEvent);
 			}
 		} else {
-			ClientTransaction clientTransaction = timeoutEvent.getClientTransaction();
+			ClientTransaction clientTransaction = timeoutEvent
+					.getClientTransaction();
 			log.error("Timeout event found for Client Transaction with ID:\n"
 					+ clientTransaction.getBranchId());
 			CTransaction cTransaction = (CTransaction) clientTransaction
@@ -393,7 +402,8 @@ public class UaImpl implements SipListener, UaStun {
 	}
 
 	@Override
-	public void processTransactionTerminated(TransactionTerminatedEvent trnsTerminatedEv) {
+	public void processTransactionTerminated(
+			TransactionTerminatedEvent trnsTerminatedEv) {
 		if (trnsTerminatedEv.isServerTransaction()) {
 			log.info("Server Transaction terminated with ID: "
 					+ trnsTerminatedEv.getServerTransaction().getBranchId());
@@ -409,14 +419,16 @@ public class UaImpl implements SipListener, UaStun {
 
 		// In server transaction localparty is addressed in TO header
 		Address address;
-		if ((address = ((ToHeader) request.getHeader(ToHeader.NAME)).getAddress()) == null) {
+		if ((address = ((ToHeader) request.getHeader(ToHeader.NAME))
+				.getAddress()) == null) {
 			String msg = "Malformed SIP request. Unable to get To header address";
 			log.warn(msg);
 			throw new SipTransactionException(msg);
 		}
 		SipURI sipUri;
 		if (!address.getURI().isSipURI()) {
-			String msg = "Unsupported URI format:" + address.getURI().toString();
+			String msg = "Unsupported URI format:"
+					+ address.getURI().toString();
 			log.warn(msg);
 			throw new SipTransactionException(msg);
 		} else {
@@ -427,7 +439,8 @@ public class UaImpl implements SipListener, UaStun {
 		if ((epImpl = endPoints.get(sipUri.getUser() + "@" + sipUri.getHost())) != null) {
 			return epImpl;
 		} else {
-			String msg = "End point not registered with this UA:" + sipUri.toString();
+			String msg = "End point not registered with this UA:"
+					+ sipUri.toString();
 			log.warn(msg);
 			throw new SipTransactionException(msg);
 		}
@@ -526,9 +539,9 @@ public class UaImpl implements SipListener, UaStun {
 	// User manager interface
 	//
 	// ///////////
-	public EndPoint registerEndPoint(String user, String realm, String password,
-			int expires, EndPointListener handler) throws ParseException,
-			ServerInternalErrorException {
+	public EndPoint registerEndPoint(String user, String realm,
+			String password, int expires, EndPointListener handler)
+			throws ParseException, ServerInternalErrorException {
 		SipEndPointImpl epImpl;
 		String epAddress = user + "@" + realm;
 		if ((epImpl = endPoints.get(epAddress)) != null) {
@@ -538,16 +551,16 @@ public class UaImpl implements SipListener, UaStun {
 			return epImpl;
 		}
 
-		epImpl = new SipEndPointImpl(user, realm, password, expires, this, handler,
-				context);
+		epImpl = new SipEndPointImpl(user, realm, password, expires, this,
+				handler, context);
 		endPoints.put(epAddress, epImpl);
 		return epImpl;
 	}
 
 	private void sendStateless(int code, Request request) {
 		try {
-			sipProvider.sendResponse(UaFactory.getMessageFactory().createResponse(code,
-					request));
+			sipProvider.sendResponse(UaFactory.getMessageFactory()
+					.createResponse(code, request));
 		} catch (Exception e) {
 			log.error("UA: Unable to send stateless response code:" + code
 					+ ". GIVE UP!!!", e);
@@ -562,8 +575,9 @@ public class UaImpl implements SipListener, UaStun {
 				config.getStunAddress(), config.getStunPort());
 
 		info = test.test();
-		log.debug("Stun test passed: Public Ip : " + info.getPublicIP().getHostAddress()
-				+ " Public port : " + info.getPublicPort());
+		log.debug("Stun test passed: Public Ip : "
+				+ info.getPublicIP().getHostAddress() + " Public port : "
+				+ info.getPublicPort());
 		return info;
 	}
 
@@ -573,14 +587,17 @@ public class UaImpl implements SipListener, UaStun {
 
 	@Override
 	public void registerEndpoint(EndPoint endpoint) {
-		// TODO Auto-generated method stub
-
+		if (!(endpoint instanceof SipEndPointImpl))
+			return;
+		endPoints.put(((SipEndPointImpl) endpoint).getAddress().toString(),
+				(SipEndPointImpl) endpoint);
 	}
 
 	@Override
 	public void unregisterEndpoint(EndPoint endpoint) {
-		// TODO Auto-generated method stub
-
+		if (!(endpoint instanceof SipEndPointImpl))
+		return;
+		endPoints.remove(((SipEndPointImpl) endpoint).getAddress().toString());
 	}
 
 	@Override

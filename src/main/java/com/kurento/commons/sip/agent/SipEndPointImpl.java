@@ -218,6 +218,7 @@ public class SipEndPointImpl implements EndPoint {
 		log.info("Send REGISTER request: " + sipUriAddress);
 		log.debug("Time is :" + new Date());
 		CRegister register;
+		ua.registerEndpoint(this);
 
 		// Register new contact
 		register = new CRegister(this);
