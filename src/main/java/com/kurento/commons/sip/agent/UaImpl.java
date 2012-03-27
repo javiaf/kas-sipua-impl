@@ -596,7 +596,7 @@ public class UaImpl implements SipListener, UaStun {
 	@Override
 	public void unregisterEndpoint(EndPoint endpoint) {
 		if (!(endpoint instanceof SipEndPointImpl))
-		return;
+			return;
 		endPoints.remove(((SipEndPointImpl) endpoint).getAddress().toString());
 	}
 
