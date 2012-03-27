@@ -7,6 +7,6 @@ public interface UaStun extends UA {
 	/**
 	 * Return the information of the Stun
 	 */
-	public DiscoveryInfo getConnectionType();
+	public DiscoveryInfo getConnectionType() throws Exception;
 
 }

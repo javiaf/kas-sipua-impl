@@ -584,7 +584,9 @@ public class UaImpl implements SipListener, UaStun {
 	}
 
 	@Override
-	public DiscoveryInfo getConnectionType() {
+	public DiscoveryInfo getConnectionType() throws Exception {
+		if (info == null)
+			throw new Exception("info is null");
 		return info;
 	}
 
