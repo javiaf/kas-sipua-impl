@@ -7,8 +7,6 @@ import android.os.IBinder;
 import android.util.Log;
 
 import com.kurento.commons.sip.agent.SipEndPointImpl;
-import com.kurento.commons.sip.transaction.CRegister;
-import com.kurento.commons.ua.exception.ServerInternalErrorException;
 
 public class RegisterService extends Service {
 	private final static String LOG_TAG = "RegisterService";
@@ -33,15 +31,11 @@ public class RegisterService extends Service {
 		Log.d(LOG_TAG, "On start method.");
 		SipEndPointImpl ep = SecondeService.getEndpoint();
 		if (ep != null) {
-			CRegister register;
-			try {
-				int  expirestTime = ep.getExpires();
-				Log.d(LOG_TAG, "Sending register from Second service with expires tiem  " + expirestTime);
-				register = new CRegister(ep);
-				register.sendRequest(null);
-			} catch (ServerInternalErrorException e) {
-	
-			}
+			int expiresTime = ep.getExpires();
+			Log.d(LOG_TAG,
+					"Sending register from Second service with expires tiem  "
+							+ expiresTime);
+			ep.setExpiresAndRegister(expiresTime);
 		}
 		this.stopSelf();
 	}

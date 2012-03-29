@@ -16,17 +16,24 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
 package com.kurento.commons.sip.agent;
 
+import java.net.Inet4Address;
 import java.net.InetAddress;
+import java.net.NetworkInterface;
+import java.net.SocketException;
 import java.text.ParseException;
+import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Properties;
+import java.util.TooManyListenersException;
 
 import javax.sip.ClientTransaction;
 import javax.sip.Dialog;
 import javax.sip.DialogTerminatedEvent;
 import javax.sip.IOExceptionEvent;
+import javax.sip.InvalidArgumentException;
 import javax.sip.ListeningPoint;
 import javax.sip.ObjectInUseException;
+import javax.sip.PeerUnavailableException;
 import javax.sip.RequestEvent;
 import javax.sip.ResponseEvent;
 import javax.sip.ServerTransaction;
@@ -35,6 +42,7 @@ import javax.sip.SipProvider;
 import javax.sip.SipStack;
 import javax.sip.TimeoutEvent;
 import javax.sip.TransactionTerminatedEvent;
+import javax.sip.TransportNotSupportedException;
 import javax.sip.address.Address;
 import javax.sip.address.SipURI;
 import javax.sip.header.ToHeader;
@@ -44,7 +52,12 @@ import javax.sip.message.Response;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 
 import com.kurento.commons.sip.exception.SipTransactionException;
 import com.kurento.commons.sip.transaction.CTransaction;
@@ -56,7 +69,6 @@ import com.kurento.commons.sip.transaction.STransaction;
 import com.kurento.commons.sip.util.NatKeepAlive;
 import com.kurento.commons.sip.util.SipConfig;
 import com.kurento.commons.ua.EndPoint;
-import com.kurento.commons.ua.EndPointListener;
 import com.kurento.commons.ua.UaStun;
 import com.kurento.commons.ua.exception.ServerInternalErrorException;
 
@@ -85,13 +97,18 @@ public class UaImpl implements SipListener, UaStun {
 	private int maxForwards = 70;
 	private NatKeepAlive keepAlive;
 	private TypeStun typeStun;
+	private String stunProxy;
+
+	private SipConfig config;
 
 	private DiscoveryInfo info;
 
+	private IntentFilter intentFilter;
 	// User List
 	private HashMap<String, SipEndPointImpl> endPoints = new HashMap<String, SipEndPointImpl>();
 
 	private Context context;
+	private int contWifi = 0;
 
 	private String version = "1.6";
 
@@ -101,79 +118,177 @@ public class UaImpl implements SipListener, UaStun {
 	//
 	// /////////////////////////
 
-	protected UaImpl(SipConfig config, Context context) throws Exception {
+	private BroadcastReceiver mReceiver = new BroadcastReceiver() {
 
-		this.localAddress = config.getLocalAddress();
-		this.localPort = config.getLocalPort();
+		@Override
+		public void onReceive(Context context, Intent intent) {
+			String action = intent.getAction();
+
+			if (ConnectivityManager.CONNECTIVITY_ACTION.equals(action)) {
+
+				NetworkInfo ni = intent.getExtras()
+						.getParcelable("networkInfo");
+				if (ni.getState().equals(NetworkInfo.State.CONNECTED)) {
+					InetAddress localAddressNew = getAndroidLocalAddress();
+					if (localAddressNew != null
+							&& !localAddressNew.getHostAddress().equals(
+									localAddress)) {
+						config.setLocalAddress(localAddressNew.getHostAddress());
+						localAddress = localAddressNew.getHostAddress();
+						DiscoveryInfo stunInfo = null;
+						if (stunProxy != null && !"".equals(stunProxy)) {
+							int trying = 0;
+							while (trying < 5) {
+								try {
+									stunInfo = runStunTest(config);
+									checkNatSupported(stunInfo);
+									InetAddress publicInet = stunInfo
+											.getPublicIP();
+									localAddress = stunInfo.getLocalIP()
+											.getHostAddress();
+									publicAddress = publicInet.getHostAddress();
+									publicPort = stunInfo.getPublicPort();
+									localPort = stunInfo.getLocalPort();
+									break;
+								} catch (Exception e) {
+									log.error("runStunTest = "
+											+ e.getLocalizedMessage() + ";"
+											+ e.getCause());
+									config.setLocalPort(config.getLocalPort() + 1);
+								}
+							}
+						} else {
+							publicAddress = config.getLocalAddress();
+							publicPort = config.getLocalPort() + 1;
+							localPort = publicPort;
+							info = new DiscoveryInfo(localAddressNew);
+							info.setPublicIP(localAddressNew);
+							info.setPublicPort(publicPort);
+							info.setLocalPort(localPort);
+						}
+						configureSipStack();
+
+						for (SipEndPointImpl endpoint : endPoints.values()) {
+							try {
+								endpoint.terminate();
+								endpoint.reconfigureEndPoint();
+								endpoint.register();
+							} catch (ServerInternalErrorException e) {
+								log.error("Error finishing endpoint "
+										+ endpoint);
+								log.info("Error finishing endpoint");
+							} catch (ParseException e) {
+								log.error("Error Parse endpoint");
+								e.printStackTrace();
+							}
+						}
+					}
+				}
+			}
+		}
+	};
+
+	protected UaImpl(SipConfig config, Context context) throws Exception {
+		this.config = config;
+		this.context = context;
+
 		this.proxyAddress = config.getProxyAddress();
 		this.proxyPort = config.getProxyPort();
 		this.transport = config.getTransport();
 		this.maxForwards = config.getMaxForards();
-		String stunProxy = config.getStunAddress();
+		this.stunProxy = config.getStunAddress();
 
-		// this.publicAddress = config.getPublicAddress();
-		// this.publicPort = config.getPublicPort();
+		// Register to actions of Android
+		intentFilter = new IntentFilter();
+		intentFilter.addAction(ConnectivityManager.CONNECTIVITY_ACTION);
+		this.context.registerReceiver(mReceiver, intentFilter);
 
-		DiscoveryInfo stunInfo = null;
-		if (stunProxy != null && !"".equals(stunProxy)) {
-			stunInfo = runStunTest(config);
+	}
 
-			checkNatSupported(stunInfo);
+	private void configureSipStack() {
+		try {
+			terminateSipStack();
 
-			InetAddress publicInet = stunInfo.getPublicIP();
-			publicAddress = publicInet.getHostAddress();
-			publicPort = stunInfo.getPublicPort();
-			this.localPort = stunInfo.getLocalPort();
-		} else {
-			publicAddress = config.getLocalAddress();
-			publicPort = config.getLocalPort();
+			log.info("starting JAIN-SIP stack initializacion ...");
+			log.info("SipUa version " + version);
+
+			Properties jainProps = new Properties();
+
+			String outboundProxy = proxyAddress + ":" + proxyPort + "/"
+					+ transport;
+			jainProps.setProperty("javax.sip.OUTBOUND_PROXY", outboundProxy);
+
+			jainProps.setProperty("javax.sip.STACK_NAME",
+					"siplib_" + System.currentTimeMillis());
+			jainProps.setProperty("gov.nist.javax.sip.REENTRANT_LISTENER",
+					"true");
+
+			// Drop the client connection after we are done with the
+			// transaction.
+			jainProps.setProperty(
+					"gov.nist.javax.sip.CACHE_CLIENT_CONNECTIONS", "true");
+			jainProps.setProperty("gov.nist.javax.sip.THREAD_POOL_SIZE", "100");
+			jainProps.setProperty("gov.nist.javax.sip.THREAD_POOL_SIZE", "100");
+
+			// Set to 0 (or NONE) in your production code for max speed.
+			// You need 16 (or TRACE) for logging traces. 32 (or DEBUG) for
+			// debug +
+			// traces.
+			// Your code will limp at 32 but it is best for debugging.
+			// jainProps.setProperty("gov.nist.javax.sip.TRACE_LEVEL", "16");
+
+			log.info("Stack properties: " + jainProps);
+
+			// Create SIP factory objects
+
+			sipStack = UaFactory.getSipFactory().createSipStack(jainProps);
+			log.info("Local Addres = " + localAddress + ":" + localPort
+					+ "; Transport = " + transport);
+			ListeningPoint listeningPoint = sipStack.createListeningPoint(
+					localAddress, localPort, transport);
+			listeningPoint.setSentBy(publicAddress + ":" + publicPort);
+			sipProvider = sipStack.createSipProvider(listeningPoint);
+			sipProvider.addSipListener(this);
+
+			if (!publicAddress.equals(localAddress)
+					&& config.isEnableKeepAlive()) {
+				log.debug("Creating keepalive for hole punching");
+				keepAlive = new NatKeepAlive(config, listeningPoint);
+				keepAlive.start();
+			}
+		} catch (PeerUnavailableException e) {
+			log.error(e.getLocalizedMessage());
+		} catch (TransportNotSupportedException e) {
+			log.error(e.getLocalizedMessage());
+		} catch (InvalidArgumentException e) {
+			log.error(e.getLocalizedMessage());
+		} catch (ParseException e) {
+			log.error(e.getLocalizedMessage());
+		} catch (ObjectInUseException e) {
+			log.error(e.getLocalizedMessage());
+		} catch (TooManyListenersException e) {
+			log.error(e.getLocalizedMessage());
 		}
+	}
 
-		log.info("starting JAIN-SIP stack initializacion ...");
-		log.info("SipUa version " + version);
-
-		Properties jainProps = new Properties();
-
-		String outboundProxy = proxyAddress + ":" + proxyPort + "/" + transport;
-		jainProps.setProperty("javax.sip.OUTBOUND_PROXY", outboundProxy);
-
-		jainProps.setProperty("javax.sip.STACK_NAME",
-				"siplib_" + System.currentTimeMillis());
-		jainProps.setProperty("gov.nist.javax.sip.REENTRANT_LISTENER", "true");
-
-		// Drop the client connection after we are done with the transaction.
-		jainProps.setProperty("gov.nist.javax.sip.CACHE_CLIENT_CONNECTIONS",
-				"true");
-		jainProps.setProperty("gov.nist.javax.sip.THREAD_POOL_SIZE", "100");
-		jainProps.setProperty("gov.nist.javax.sip.THREAD_POOL_SIZE", "100");
-
-		// Set to 0 (or NONE) in your production code for max speed.
-		// You need 16 (or TRACE) for logging traces. 32 (or DEBUG) for debug +
-		// traces.
-		// Your code will limp at 32 but it is best for debugging.
-		// jainProps.setProperty("gov.nist.javax.sip.TRACE_LEVEL", "16");
-
-		log.info("Stack properties: " + jainProps);
-
-		// Create SIP factory objects
-		sipStack = UaFactory.getSipFactory().createSipStack(jainProps);
-
-		ListeningPoint listeningPoint = sipStack.createListeningPoint(
-				localAddress, localPort, transport);
-		listeningPoint.setSentBy(publicAddress + ":" + publicPort);
-		sipProvider = sipStack.createSipProvider(listeningPoint);
-		sipProvider.addSipListener(this);
-
-		if (!publicAddress.equals(localAddress) && config.isEnableKeepAlive()) {
-			log.debug("Creating keepalive for hole punching");
-			keepAlive = new NatKeepAlive(config, listeningPoint);
-			keepAlive.start();
+	public InetAddress getAndroidLocalAddress() {
+		try {
+			for (Enumeration<NetworkInterface> en = NetworkInterface
+					.getNetworkInterfaces(); en.hasMoreElements();) {
+				NetworkInterface intf = en.nextElement();
+				for (Enumeration<InetAddress> enumIpAddr = intf
+						.getInetAddresses(); enumIpAddr.hasMoreElements();) {
+					InetAddress inetAddress = enumIpAddr.nextElement();
+					if (!inetAddress.isLoopbackAddress()
+							&& (inetAddress instanceof Inet4Address)) {
+						return inetAddress;
+					}
+				}
+			}
+		} catch (SocketException e) {
+			e.printStackTrace();
 		}
-
-		this.context = context;
-		log.info("SIP stack initializacion complete. Listening on "
-				+ localAddress + ":" + localPort + "/" + transport);
-
+		return null;
 	}
 
 	private void checkNatSupported(DiscoveryInfo stunInfo)
@@ -208,6 +323,7 @@ public class UaImpl implements SipListener, UaStun {
 	}
 
 	public void terminate() {
+		context.unregisterReceiver(mReceiver);
 		log.info("SIP stack terminating ...");
 		log.info("Stopping registered endpoits.");
 		if (keepAlive != null) {
@@ -221,37 +337,43 @@ public class UaImpl implements SipListener, UaStun {
 				log.error("Error finishing endpoint " + endpoint);
 			}
 		}
-		while (true) {
-			try {
-				log.info("Delete Sip listening point");
-				sipStack.deleteListeningPoint(sipProvider
-						.getListeningPoint(transport));
-				break;
-			} catch (ObjectInUseException e) {
-				try {
-					Thread.sleep(1000);
-				} catch (InterruptedException e1) {
-					continue;
-				}
-			}
-		}
-		sipProvider.removeSipListener(this);
 
-		while (true) {
-			try {
-				sipStack.deleteSipProvider(sipProvider);
-				break;
-			} catch (ObjectInUseException e) {
+		terminateSipStack();
+	}
+
+	private void terminateSipStack() {
+		if (sipStack != null) {
+			while (true) {
 				try {
-					Thread.sleep(1000);
-				} catch (InterruptedException e1) {
-					continue;
+					log.info("Delete Sip listening point");
+					sipStack.deleteListeningPoint(sipProvider
+							.getListeningPoint(transport));
+					break;
+				} catch (ObjectInUseException e) {
+					try {
+						Thread.sleep(1000);
+					} catch (InterruptedException e1) {
+						continue;
+					}
 				}
 			}
+			sipProvider.removeSipListener(this);
+
+			while (true) {
+				try {
+					sipStack.deleteSipProvider(sipProvider);
+					break;
+				} catch (ObjectInUseException e) {
+					try {
+						Thread.sleep(1000);
+					} catch (InterruptedException e1) {
+						continue;
+					}
+				}
+			}
+			sipStack.stop();
+			log.info("SIP stack terminated");
 		}
-		sipStack.stop();
-		sipProvider = null;
-		log.info("SIP stack terminated");
 	}
 
 	// /////////////////////////
@@ -540,23 +662,23 @@ public class UaImpl implements SipListener, UaStun {
 	// User manager interface
 	//
 	// ///////////
-	public EndPoint registerEndPoint(String user, String realm,
-			String password, int expires, EndPointListener handler)
-			throws ParseException, ServerInternalErrorException {
-		SipEndPointImpl epImpl;
-		String epAddress = user + "@" + realm;
-		if ((epImpl = endPoints.get(epAddress)) != null) {
-			if (epImpl.getExpires() == 0) {
-				epImpl.setExpires(expires);
-			}
-			return epImpl;
-		}
-
-		epImpl = new SipEndPointImpl(user, realm, password, expires, this,
-				handler, context);
-		endPoints.put(epAddress, epImpl);
-		return epImpl;
-	}
+	// public EndPoint registerEndPoint(String user, String realm,
+	// String password, int expires, EndPointListener handler)
+	// throws ParseException, ServerInternalErrorException {
+	// SipEndPointImpl epImpl;
+	// String epAddress = user + "@" + realm;
+	// if ((epImpl = endPoints.get(epAddress)) != null) {
+	// if (epImpl.getExpires() == 0) {
+	// epImpl.setExpires(expires);
+	// }
+	// return epImpl;
+	// }
+	//
+	// epImpl = new SipEndPointImpl(user, realm, password, expires, this,
+	// handler, context);
+	// endPoints.put(epAddress, epImpl);
+	// return epImpl;
+	// }
 
 	private void sendStateless(int code, Request request) {
 		try {
@@ -571,6 +693,7 @@ public class UaImpl implements SipListener, UaStun {
 	private DiscoveryInfo runStunTest(SipConfig config) throws Exception {
 		info = null;
 
+		log.info("RunStunTest = " + config.getLocalAddress());
 		InetAddress addr = InetAddress.getByName(config.getLocalAddress());
 		DiscoveryTest test = new DiscoveryTest(addr, config.getLocalPort(),
 				config.getStunAddress(), config.getStunPort());

@@ -48,9 +48,11 @@ import com.kurento.commons.ua.exception.ServerInternalErrorException;
 
 public class SipEndPointImpl implements EndPoint {
 
-	private final static Logger log = LoggerFactory.getLogger(SipEndPointImpl.class);
+	private final static Logger log = LoggerFactory
+			.getLogger(SipEndPointImpl.class);
 
 	private int expires = 3600;
+	private boolean isRegister = false;
 
 	private String userName;
 	private String realm;
@@ -81,31 +83,39 @@ public class SipEndPointImpl implements EndPoint {
 	protected SipEndPointImpl(String userName, String realm, String password,
 			int expires, UaImpl ua, EndPointListener handler, Context context)
 			throws ParseException, ServerInternalErrorException {
-		this.userName = userName;
-		this.realm = realm;
-
-		this.expires = expires;
-
 		this.ua = ua;
 		this.listener = handler;
-
+		this.androidContext = context;
+		this.userName = userName;
+		this.realm = realm;
+		this.expires = expires;
+		this.password = password;
 		this.sipUriAddress = UaFactory.getAddressFactory().createAddress(
-				"sip:" + userName + "@" + realm);
+				"sip:" + this.userName + "@" + this.realm);
+
+		reconfigureEndPoint();
+		ua.registerEndpoint(this);
+	}
+
+	protected void reconfigureEndPoint() throws ParseException,
+			ServerInternalErrorException {
+
 		this.contactAddress = UaFactory.getAddressFactory().createAddress(
 				"sip:" + userName + "@" + ua.getPublicAddress() + ":"
 						+ ua.getPublicPort());
-		this.password = password;
-		this.androidContext = context;
-
-		createRegisterManger();
-		register();
+		// The register will do the UA when it has connectivity
+		// register();
 	}
 
 	private void createRegisterManger() {
-		log.debug("Creating register manager");
+		log.info("Creating register manager");
 		SecondeService service = new SecondeService(this);
-		long period = (long) (expires * 1000);
-		log.debug("Register period set as " + period);
+		long period = (long) (getExpires() * 1000);
+		if (period == 0) {
+			log.info("Expires is 0.");
+			return;
+		}
+		log.info("Register period set as " + period);
 		alarmManager = (AlarmManager) androidContext
 				.getSystemService(Context.ALARM_SERVICE);
 		Intent myIntent = new Intent(androidContext, RegisterService.class);
@@ -141,17 +151,11 @@ public class SipEndPointImpl implements EndPoint {
 
 	@Override
 	public void terminate() throws ServerInternalErrorException {
-		log.info("terminating endpoint");
-		expires = 0;
-		alarmManager.cancel(pendingIntent);
-		CRegister register;
-
-		register = new CRegister(this);
-		register.sendRequest(null);
-
+		if (getIsRegister()) {
+			log.info("terminating endpoint");
+			setExpiresAndRegister(0);
+		}
 	}
-
-	// register();
 
 	// ///////////////////////////
 	//
@@ -161,15 +165,31 @@ public class SipEndPointImpl implements EndPoint {
 
 	protected void incomingCall(SipContext incomingCall) {
 		// notifyEvent can not be used as the source must be of type SipCall
-		EndPointEvent event = new EndPointEvent(
-				EndPointEvent.INCOMING_CALL, incomingCall);
+		EndPointEvent event = new EndPointEvent(EndPointEvent.INCOMING_CALL,
+				incomingCall);
 		if (listener != null) {
 			listener.onEvent(event);
 		}
 	}
 
+	private synchronized void setIsRegister(boolean isRegister) {
+		this.isRegister = isRegister;
+	}
+
+	private synchronized boolean getIsRegister() {
+		return this.isRegister;
+	}
+
 	public void notifyEvent(EndpointEventEnum eventType) {
 		EndPointEvent event = new EndPointEvent(eventType, this);
+		if (EndPointEvent.REGISTER_USER_SUCESSFUL.equals(eventType)) {
+			setIsRegister(true);
+		} else if (EndPointEvent.REGISTER_USER_FAIL.equals(eventType)
+				|| EndPointEvent.REGISTER_USER_NOT_FOUND.equals(eventType)) {
+			if (alarmManager != null)
+				alarmManager.cancel(pendingIntent);
+			setIsRegister(false);
+		}
 		if (listener != null) {
 			listener.onEvent(event);
 		}
@@ -193,12 +213,23 @@ public class SipEndPointImpl implements EndPoint {
 		return ua;
 	}
 
-	public void setExpires(int expires) {
+	public void setExpiresAndRegister(int expires) {
+		if (expires == 0) {
+			if (alarmManager != null)
+				alarmManager.cancel(pendingIntent);
+		} else if (this.expires != expires) {
+			if (alarmManager != null)
+				alarmManager.cancel(pendingIntent);
+			createRegisterManger();
+		}
 		this.expires = expires;
 		try {
-			this.register();
+			CRegister register;
+			register = new CRegister(this);
+			register.sendRequest(null);
 		} catch (ServerInternalErrorException e) {
 			log.error(e.toString());
+			e.printStackTrace();
 		}
 	}
 
@@ -214,29 +245,12 @@ public class SipEndPointImpl implements EndPoint {
 		return userName;
 	}
 
-	private void register() throws ServerInternalErrorException {
+	protected void register() throws ServerInternalErrorException {
 		log.info("Send REGISTER request: " + sipUriAddress);
 		log.debug("Time is :" + new Date());
-		CRegister register;
-		ua.registerEndpoint(this);
+		expires = 3600;
 
-		// Register new contact
-		register = new CRegister(this);
-		register.sendRequest(null);
-
-		// Set up a register timer if > 0
-		if (expires > 0) {
-			RegisterTask registerTask = this.new RegisterTask(this);
-			long period = (long) (expires * 1000 * 0.8);
-			log.debug("Register period is = " + period);
-			timer.schedule(registerTask, period);
-			scheduledTasks.add(registerTask);
-		} else {
-			for (TimerTask task : scheduledTasks) {
-				task.cancel();
-			}
-		}
-
+		setExpiresAndRegister(expires);
 	}
 
 	private class RegisterTask extends TimerTask {
@@ -282,19 +296,5 @@ public class SipEndPointImpl implements EndPoint {
 		}
 
 	}
-
-	// @Override
-	// public void options(String remoteParty, CallListener callController)
-	// throws ServerInternalErrorException {
-	// Address remotePartyAddress;
-	// try {
-	// remotePartyAddress = UaFactory.getAddressFactory().createAddress(
-	// remoteParty);
-	// } catch (ParseException e) {
-	// throw new ServerInternalErrorException(e.toString());
-	// }
-	// new COptions(this, remotePartyAddress);
-	//
-	// }
 
 }
