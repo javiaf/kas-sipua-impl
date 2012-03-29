@@ -74,6 +74,13 @@ public abstract class CTransaction extends Transaction {
 	//
 	// ////////////
 
+	/**
+	 * Allows creation of out of dialog Client Transactions
+	 * @param method
+	 * @param localParty
+	 * @param remoteParty
+	 * @throws ServerInternalErrorException
+	 */
 	protected CTransaction(String method, SipEndPointImpl localParty,
 			Address remoteParty) throws ServerInternalErrorException {
 		super(method, localParty, remoteParty);
@@ -81,7 +88,7 @@ public abstract class CTransaction extends Transaction {
 	}
 
 	/**
-	 * This constructor is intended to create a transaction within a dialog.
+	 * This constructor is intended to create a Client Transaction within a dialog.
 	 * 
 	 * @param method
 	 * @param dialog
@@ -94,11 +101,22 @@ public abstract class CTransaction extends Transaction {
 		createRequest();
 	}
 
+	/**
+	 * This constructor is intented to create a Client Transaction when  request is already
+	 * available (only for cancel requests)
+	 * 
+	 * @param method
+	 * @param request
+	 * @param localParty
+	 * @param remoteParty
+	 * @throws ServerInternalErrorException
+	 */
 	protected CTransaction(String method, Request request,
 			SipEndPointImpl localParty, Address remoteParty)
 			throws ServerInternalErrorException {
 		super(method, localParty, remoteParty);
 		this.request = request;
+		setClientTransaction();
 	}
 
 	// //////////////
@@ -160,6 +178,10 @@ public abstract class CTransaction extends Transaction {
 						"Dialog is not yet established", e);
 			}
 		}
+		setClientTransaction();
+	}
+
+	private void setClientTransaction() throws ServerInternalErrorException {
 		// Create client transaction
 		try {
 			clientTransaction = localParty.getUa().getSipProvider()
