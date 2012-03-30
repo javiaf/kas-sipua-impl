@@ -13,7 +13,7 @@ GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>
-*/
+ */
 package com.kurento.commons.sip.transaction;
 
 import java.text.ParseException;
@@ -76,6 +76,7 @@ public abstract class CTransaction extends Transaction {
 
 	/**
 	 * Allows creation of out of dialog Client Transactions
+	 * 
 	 * @param method
 	 * @param localParty
 	 * @param remoteParty
@@ -88,7 +89,8 @@ public abstract class CTransaction extends Transaction {
 	}
 
 	/**
-	 * This constructor is intended to create a Client Transaction within a dialog.
+	 * This constructor is intended to create a Client Transaction within a
+	 * dialog.
 	 * 
 	 * @param method
 	 * @param dialog
@@ -102,8 +104,8 @@ public abstract class CTransaction extends Transaction {
 	}
 
 	/**
-	 * This constructor is intented to create a Client Transaction when  request is already
-	 * available (only for cancel requests)
+	 * This constructor is intented to create a Client Transaction when request
+	 * is already available (only for cancel requests)
 	 * 
 	 * @param method
 	 * @param request
@@ -197,19 +199,23 @@ public abstract class CTransaction extends Transaction {
 		}
 	}
 
-	protected CallIdHeader buildCallIdHeader() throws ServerInternalErrorException {
+	protected CallIdHeader buildCallIdHeader()
+			throws ServerInternalErrorException {
 		try {
-		CallIdHeader callIdHeader;
-		if (!(dialog != null && (callIdHeader = dialog.getCallId()) != null)) {
-			if(localParty.getUa() == null || localParty.getUa().getSipProvider() != null) {
-				callIdHeader = localParty.getUa().getSipProvider().getNewCallId();
-			} else {
-				throw new ServerInternalErrorException("User Agent not initialized.");
+			CallIdHeader callIdHeader;
+			if (!(dialog != null && (callIdHeader = dialog.getCallId()) != null)) {
+				if (localParty.getUa() == null
+						|| localParty.getUa().getSipProvider() != null) {
+					callIdHeader = localParty.getUa().getSipProvider()
+							.getNewCallId();
+				} else {
+					throw new ServerInternalErrorException(
+							"User Agent not initialized.");
+				}
 			}
-		}
-		return callIdHeader;
-		} catch ( Exception e) {
-			log.error("Error building call id hearder." +  e.getMessage(), e);
+			return callIdHeader;
+		} catch (Exception e) {
+			log.error("Error building call id hearder." + e.getMessage(), e);
 			throw new ServerInternalErrorException("Error building hearder.", e);
 		}
 	}
@@ -357,14 +363,10 @@ public abstract class CTransaction extends Transaction {
 	public void sendCancel() throws ServerInternalErrorException {
 		if (request != null) {
 			try {
-				ClientTransaction cancelTransaction = localParty.getUa()
-						.getSipProvider().getNewClientTransaction(request);
-				log.info("SIP send request\n"
-						+ ">>>>>>>>>> SIP send request >>>>>>>>>>\n"
-						+ cancelTransaction.getRequest().toString()
-						+ ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
-				cancelTransaction.sendRequest();
+				clientTransaction.sendRequest();
 			} catch (SipException e) {
+				log.error(e.getLocalizedMessage());
+				e.printStackTrace();
 				throw new ServerInternalErrorException(
 						"Sip Exception sending CANCEL request", e);
 			}
