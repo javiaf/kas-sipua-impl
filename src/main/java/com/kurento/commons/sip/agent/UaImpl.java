@@ -152,6 +152,7 @@ public class UaImpl implements SipListener, UaStun {
 									localPort = stunInfo.getLocalPort();
 									break;
 								} catch (Exception e) {
+									trying++;
 									log.error("runStunTest = "
 											+ e.getLocalizedMessage() + ";"
 											+ e.getCause());
