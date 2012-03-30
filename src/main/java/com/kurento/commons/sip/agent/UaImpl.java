@@ -323,7 +323,7 @@ public class UaImpl implements SipListener, UaStun {
 	}
 
 	public void terminate() {
-		context.unregisterReceiver(mReceiver);
+
 		log.info("SIP stack terminating ...");
 		log.info("Stopping registered endpoits.");
 		if (keepAlive != null) {
@@ -339,6 +339,7 @@ public class UaImpl implements SipListener, UaStun {
 		}
 
 		terminateSipStack();
+		context.unregisterReceiver(mReceiver);
 	}
 
 	private void terminateSipStack() {
@@ -559,7 +560,8 @@ public class UaImpl implements SipListener, UaStun {
 		}
 
 		SipEndPointImpl epImpl;
-		if ((epImpl = endPoints.get(sipUri.getUser() + "@" + sipUri.getHost())) != null) {
+		if ((epImpl = endPoints.get("sip:" + sipUri.getUser() + "@"
+				+ sipUri.getHost())) != null) {
 			return epImpl;
 		} else {
 			String msg = "End point not registered with this UA:"
