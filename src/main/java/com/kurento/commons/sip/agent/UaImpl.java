@@ -78,6 +78,7 @@ import de.javawi.jstun.test.DiscoveryTest;
 public class UaImpl implements SipListener, UaStun {
 
 	private static final Logger log = LoggerFactory.getLogger(UaImpl.class);
+	private final int NUMBER_TRY = 10;
 
 	// Sip Stack
 	private SipProvider sipProvider;
@@ -138,7 +139,7 @@ public class UaImpl implements SipListener, UaStun {
 						DiscoveryInfo stunInfo = null;
 						if (stunProxy != null && !"".equals(stunProxy)) {
 							int trying = 0;
-							while (trying < 5) {
+							while (trying < NUMBER_TRY) {
 								try {
 									stunInfo = runStunTest(config);
 									checkNatSupported(stunInfo);
