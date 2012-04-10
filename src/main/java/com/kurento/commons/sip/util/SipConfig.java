@@ -32,7 +32,6 @@ package com.kurento.commons.sip.util;
  * 
  */
 public class SipConfig {
-	private String localAddress = "193.147.51.12";
 	private int localPort = 5070;
 	
 	private String stunAddress;
@@ -52,24 +51,8 @@ public class SipConfig {
 	}
 
 	/**
-	 * Get local address value
-	 * @return String with the local address value
-	 * 
-	 */
-	public String getLocalAddress() {
-		return localAddress;
-	}
-	
-	/**
-	 * Sets the local address value as a String
-	 * @param localAddress
-	 */
-	public void setLocalAddress(String localAddress) {
-		this.localAddress = localAddress;
-	}
-
-	/**
 	 * Returns the local port where the SIP stack binds to
+	 * 
 	 * @return
 	 */
 	public int getLocalPort() {
@@ -78,6 +61,7 @@ public class SipConfig {
 
 	/**
 	 * Sets the local port where the SIP stack will bind to
+	 * 
 	 * @param localPort
 	 */
 	public void setLocalPort(int localPort) {
@@ -149,8 +133,7 @@ public class SipConfig {
 	}
 
 	public String toString() {
-		return "\n" + "Local Address: " + localAddress + "\n"
-				+ "Local Port   : " + localPort + "\n" + "Proxy Address: "
+		return "\n" + "Local Port   : " + localPort + "\n" + "Proxy Address: "
 				+ proxyAddress + "\n" + "Proxy Port   : " + proxyPort + "\n"
 				+ "Transport    : " + transport + "\n" + "Max Forwards : "
 				+ maxForards + "\n";

@@ -90,15 +90,10 @@ public class UaImpl implements SipListener, UaStun {
 	private String localAddress = "127.0.0.1";
 	private int localPort = 5060;
 	private String publicAddress = "127.0.0.1";
-
 	private int publicPort = 5060;
-	private String proxyAddress = "127.0.0.1";
-	private int proxyPort = 5060;
-	private String transport = "UDP";
-	private int maxForwards = 70;
+
 	private NatKeepAlive keepAlive;
 	private TypeStun typeStun;
-	private String stunProxy;
 
 	private SipConfig config;
 
@@ -134,14 +129,14 @@ public class UaImpl implements SipListener, UaStun {
 					if (localAddressNew != null
 							&& !localAddressNew.getHostAddress().equals(
 									localAddress)) {
-						config.setLocalAddress(localAddressNew.getHostAddress());
 						localAddress = localAddressNew.getHostAddress();
 						DiscoveryInfo stunInfo = null;
-						if (stunProxy != null && !"".equals(stunProxy)) {
+						if (config.getStunAddress() != null
+								&& !"".equals((config.getStunAddress()))) {
 							int trying = 0;
 							while (trying < NUMBER_TRY) {
 								try {
-									stunInfo = runStunTest(config);
+									stunInfo = runStunTest();
 									checkNatSupported(stunInfo);
 									InetAddress publicInet = stunInfo
 											.getPublicIP();
@@ -156,13 +151,12 @@ public class UaImpl implements SipListener, UaStun {
 									log.error("runStunTest = "
 											+ e.getLocalizedMessage() + ";"
 											+ e.getCause());
-									config.setLocalPort(config.getLocalPort() + 1);
+									localPort++;
 								}
 							}
 						} else {
-							publicAddress = config.getLocalAddress();
-							publicPort = config.getLocalPort() + 1;
-							localPort = publicPort;
+							publicAddress = localAddress;
+							publicPort = localPort;
 							info = new DiscoveryInfo(localAddressNew);
 							info.setPublicIP(localAddressNew);
 							info.setPublicPort(publicPort);
@@ -194,11 +188,7 @@ public class UaImpl implements SipListener, UaStun {
 		this.config = config;
 		this.context = context;
 
-		this.proxyAddress = config.getProxyAddress();
-		this.proxyPort = config.getProxyPort();
-		this.transport = config.getTransport();
-		this.maxForwards = config.getMaxForards();
-		this.stunProxy = config.getStunAddress();
+		this.localPort = config.getLocalPort();
 
 		// Register to actions of Android
 		intentFilter = new IntentFilter();
@@ -216,8 +206,8 @@ public class UaImpl implements SipListener, UaStun {
 
 			Properties jainProps = new Properties();
 
-			String outboundProxy = proxyAddress + ":" + proxyPort + "/"
-					+ transport;
+			String outboundProxy = config.getProxyAddress() + ":"
+					+ config.getProxyPort() + "/" + config.getTransport();
 			jainProps.setProperty("javax.sip.OUTBOUND_PROXY", outboundProxy);
 
 			jainProps.setProperty("javax.sip.STACK_NAME",
@@ -245,9 +235,9 @@ public class UaImpl implements SipListener, UaStun {
 
 			sipStack = UaFactory.getSipFactory().createSipStack(jainProps);
 			log.info("Local Addres = " + localAddress + ":" + localPort
-					+ "; Transport = " + transport);
+					+ "; Transport = " + config.getTransport());
 			ListeningPoint listeningPoint = sipStack.createListeningPoint(
-					localAddress, localPort, transport);
+					localAddress, localPort, config.getTransport());
 			listeningPoint.setSentBy(publicAddress + ":" + publicPort);
 			sipProvider = sipStack.createSipProvider(listeningPoint);
 			sipProvider.addSipListener(this);
@@ -350,7 +340,7 @@ public class UaImpl implements SipListener, UaStun {
 				try {
 					log.info("Delete Sip listening point");
 					sipStack.deleteListeningPoint(sipProvider
-							.getListeningPoint(transport));
+							.getListeningPoint(config.getTransport()));
 					break;
 				} catch (ObjectInUseException e) {
 					try {
@@ -613,36 +603,16 @@ public class UaImpl implements SipListener, UaStun {
 		this.localPort = localPort;
 	}
 
-	public String getProxyAddress() {
-		return proxyAddress;
-	}
-
-	public void setProxyAddress(String proxyAddress) {
-		this.proxyAddress = proxyAddress;
-	}
-
-	public int getProxyPort() {
-		return proxyPort;
-	}
-
-	public void setProxyPort(int proxyPort) {
-		this.proxyPort = proxyPort;
-	}
-
 	public String getTransport() {
-		return transport;
-	}
-
-	public void setTransport(String transport) {
-		this.transport = transport;
-	}
-
-	public void setMaxForwards(int maxForwards) {
-		this.maxForwards = maxForwards;
+		if (config == null)
+			return "UDP";
+		return config.getTransport();
 	}
 
 	public int getMaxForwards() {
-		return maxForwards;
+		if (config == null)
+			return 70;
+		return config.getMaxForards();
 	}
 
 	public String getPublicAddress() {
@@ -694,12 +664,12 @@ public class UaImpl implements SipListener, UaStun {
 		}
 	}
 
-	private DiscoveryInfo runStunTest(SipConfig config) throws Exception {
+	private DiscoveryInfo runStunTest() throws Exception {
 		info = null;
 
-		log.info("RunStunTest = " + config.getLocalAddress());
-		InetAddress addr = InetAddress.getByName(config.getLocalAddress());
-		DiscoveryTest test = new DiscoveryTest(addr, config.getLocalPort(),
+		log.info("RunStunTest = " + localAddress + ":" + localPort);
+		InetAddress addr = InetAddress.getByName(localAddress);
+		DiscoveryTest test = new DiscoveryTest(addr, localPort,
 				config.getStunAddress(), config.getStunPort());
 
 		info = test.test();
