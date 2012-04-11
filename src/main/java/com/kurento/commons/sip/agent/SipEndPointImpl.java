@@ -151,7 +151,7 @@ public class SipEndPointImpl implements EndPoint {
 
 	@Override
 	public void terminate() throws ServerInternalErrorException {
-		if (getIsRegister()) {
+		if (isRegister()) {
 			log.info("terminating endpoint");
 			setExpiresAndRegister(0);
 		}
@@ -176,7 +176,7 @@ public class SipEndPointImpl implements EndPoint {
 		this.isRegister = isRegister;
 	}
 
-	private synchronized boolean getIsRegister() {
+	private synchronized boolean isRegister() {
 		return this.isRegister;
 	}
 
@@ -246,7 +246,7 @@ public class SipEndPointImpl implements EndPoint {
 	}
 
 	protected void register() throws ServerInternalErrorException {
-		log.info("Send REGISTER request: " + sipUriAddress);
+		log.info("Send REGISTER request: " + sipUriAddress + " > " + contactAddress);
 		log.debug("Time is :" + new Date());
 		expires = 3600;
 
