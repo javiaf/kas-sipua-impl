@@ -17,12 +17,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>
 package com.kurento.commons.sip.agent;
 
 import java.text.ParseException;
-import java.util.ArrayList;
+//import java.util.ArrayList;
 import java.util.Date;
-import java.util.List;
+//import java.util.List;
 import java.util.Random;
-import java.util.Timer;
-import java.util.TimerTask;
+//import java.util.Timer;
+//import java.util.TimerTask;
 
 import javax.sip.address.Address;
 import javax.sip.header.CallIdHeader;
@@ -36,7 +36,7 @@ import android.content.Context;
 import android.content.Intent;
 
 import com.kurento.commons.sip.android.RegisterService;
-import com.kurento.commons.sip.android.SecondeService;
+//import com.kurento.commons.sip.android.SecondeService;
 import com.kurento.commons.sip.transaction.CRegister;
 import com.kurento.commons.ua.Call;
 import com.kurento.commons.ua.CallListener;
@@ -61,15 +61,15 @@ public class SipEndPointImpl implements EndPoint {
 
 	private UaImpl ua;
 	private EndPointListener listener;
-	private List<TimerTask> scheduledTasks = new ArrayList<TimerTask>();
+	//private List<TimerTask> scheduledTasks = new ArrayList<TimerTask>();
 
 	private CallIdHeader registrarCallId;
 	private static Random rnd = new Random(System.currentTimeMillis());
 	private long cSeqNumber = Math.abs(rnd.nextLong() % 100000000);
 	private String password;
 
-	// Timer
-	private Timer timer = new Timer();
+	// Timer deprecated by android alarm manager
+	//private Timer timer = new Timer();
 	private Context androidContext;
 	private AlarmManager alarmManager;
 	PendingIntent pendingIntent;
@@ -109,7 +109,7 @@ public class SipEndPointImpl implements EndPoint {
 
 	private void createRegisterManger() {
 		log.info("Creating register manager");
-		SecondeService service = new SecondeService(this);
+		//SecondeService service = new SecondeService(this);
 		long period = (long) (getExpires() * 1000);
 		if (period == 0) {
 			log.info("Expires is 0.");
@@ -253,25 +253,26 @@ public class SipEndPointImpl implements EndPoint {
 		setExpiresAndRegister(expires);
 	}
 
-	private class RegisterTask extends TimerTask {
-
-		private SipEndPointImpl user;
-
-		protected RegisterTask(SipEndPointImpl user) {
-			this.user = user;
-		}
-
-		@Override
-		public void run() {
-			try {
-				register();
-			} catch (ServerInternalErrorException e) {
-				log.error("Unable to re-register user:" + user
-						+ ". Deleting from list of users");
-				user.notifyEvent(EndPointEvent.REGISTER_USER_FAIL);
-			}
-		}
-	}
+	// TimerTask deprecated
+//	private class RegisterTask extends TimerTask {
+//
+//		private SipEndPointImpl user;
+//
+//		protected RegisterTask(SipEndPointImpl user) {
+//			this.user = user;
+//		}
+//
+//		@Override
+//		public void run() {
+//			try {
+//				register();
+//			} catch (ServerInternalErrorException e) {
+//				log.error("Unable to re-register user:" + user
+//						+ ". Deleting from list of users");
+//				user.notifyEvent(EndPointEvent.REGISTER_USER_FAIL);
+//			}
+//		}
+//	}
 
 	@Override
 	public Call dial(String remoteParty, CallListener callController)
