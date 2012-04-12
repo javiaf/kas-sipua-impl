@@ -16,10 +16,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
 package com.kurento.commons.sip.agent;
 
+import java.io.IOException;
 import java.net.Inet4Address;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.net.SocketException;
+import java.net.UnknownHostException;
 import java.text.ParseException;
 import java.util.Enumeration;
 import java.util.HashMap;
@@ -72,13 +74,17 @@ import com.kurento.commons.ua.EndPoint;
 import com.kurento.commons.ua.UaStun;
 import com.kurento.commons.ua.exception.ServerInternalErrorException;
 
+import de.javawi.jstun.attribute.MessageAttributeException;
+import de.javawi.jstun.attribute.MessageAttributeParsingException;
+import de.javawi.jstun.header.MessageHeaderParsingException;
 import de.javawi.jstun.test.DiscoveryInfo;
 import de.javawi.jstun.test.DiscoveryTest;
+import de.javawi.jstun.util.UtilityException;
 
 public class UaImpl implements SipListener, UaStun {
 
 	private static final Logger log = LoggerFactory.getLogger(UaImpl.class);
-	private final int NUMBER_TRY = 10;
+	private final int NUMBER_TRY = 20;
 
 	// Sip Stack
 	private SipProvider sipProvider;
@@ -93,7 +99,7 @@ public class UaImpl implements SipListener, UaStun {
 	private int publicPort = 5060;
 
 	private NatKeepAlive keepAlive;
-	private TypeStun typeStun;
+	//private TypeStun typeStun;
 
 	private SipConfig config;
 
@@ -104,7 +110,7 @@ public class UaImpl implements SipListener, UaStun {
 	private HashMap<String, SipEndPointImpl> endPoints = new HashMap<String, SipEndPointImpl>();
 
 	private Context context;
-	private int contWifi = 0;
+	//private int contWifi = 0;
 
 	private String version = "1.6";
 
@@ -119,49 +125,70 @@ public class UaImpl implements SipListener, UaStun {
 		@Override
 		public void onReceive(Context context, Intent intent) {
 			String action = intent.getAction();
-
+			log.debug("Received ACTION: " + action );
+			
 			if (ConnectivityManager.CONNECTIVITY_ACTION.equals(action)) {
-
 				NetworkInfo ni = intent.getExtras()
 						.getParcelable("networkInfo");
 				if (ni.getState().equals(NetworkInfo.State.CONNECTED)) {
 					InetAddress localAddressNew = getAndroidLocalAddress();
 					if (localAddressNew != null
-							&& !localAddressNew.getHostAddress().equals(
-									localAddress)) {
+							&& !localAddressNew.getHostAddress().equals(localAddress)) {
+						
+						log.debug("Found network interface change: " 
+								+ localAddressNew.getHostAddress() + " <== " + localAddress);
+
 						localAddress = localAddressNew.getHostAddress();
-						DiscoveryInfo stunInfo = null;
+						// Check if user has request STUN 
 						if (config.getStunAddress() != null
 								&& !"".equals((config.getStunAddress()))) {
+							//YES, Try for NUMBER_TRY
+							log.debug("STUN activated");
 							int trying = 0;
 							while (trying < NUMBER_TRY) {
-								try {
-									stunInfo = runStunTest();
-									checkNatSupported(stunInfo);
-									InetAddress publicInet = stunInfo
-											.getPublicIP();
-									localAddress = stunInfo.getLocalIP()
-											.getHostAddress();
-									publicAddress = publicInet.getHostAddress();
-									publicPort = stunInfo.getPublicPort();
-									localPort = stunInfo.getLocalPort();
+								// STUN error => give up
+								// IOError = socket already in use => try again and find a free socket
+								try{
+									try {
+										runStunTest();
+									} catch (MessageAttributeParsingException e) {
+										log.error("STUN test failed",e);
+									} catch (MessageHeaderParsingException e) {
+										log.error("STUN test failed",e);
+									} catch (UtilityException e) {
+										log.error("STUN test failed",e);
+									} catch (MessageAttributeException e) {
+										log.error("STUN test failed",e);
+									}
 									break;
-								} catch (Exception e) {
-									trying++;
-									log.error("runStunTest = "
-											+ e.getLocalizedMessage() + ";"
-											+ e.getCause());
+								} catch (IOException e) {
+									log.info("Address already in use:"+ localAddress +":" + localPort);
 									localPort++;
 								}
 							}
 						} else {
-							publicAddress = localAddress;
-							publicPort = localPort;
+							log.debug("STUN NOT activated");
 							info = new DiscoveryInfo(localAddressNew);
 							info.setPublicIP(localAddressNew);
 							info.setPublicPort(publicPort);
 							info.setLocalPort(localPort);
 						}
+						
+						// Verify if NAT must be supported
+						if (isNatSupported()) {
+							log.debug("Activate NAT support");
+							InetAddress publicInet = info.getPublicIP();
+							publicAddress = publicInet.getHostAddress();
+							publicPort = info.getPublicPort();
+							localAddress = info.getLocalIP().getHostAddress();
+							localPort = info.getLocalPort();
+						}
+						else {
+							log.debug("De-Activate NAT support");
+							publicAddress = localAddress;
+							publicPort = localPort;
+						}
+						
 						configureSipStack();
 
 						for (SipEndPointImpl endpoint : endPoints.values()) {
@@ -283,36 +310,49 @@ public class UaImpl implements SipListener, UaStun {
 		return null;
 	}
 
-	private void checkNatSupported(DiscoveryInfo stunInfo)
-			throws ServerInternalErrorException {
-		String message = "OK";
-		if (stunInfo.isBlockedUDP()) {
-			message = "BlockedUDP";
-			typeStun = TypeStun.BLOCKED_UDP;
-		} else if (stunInfo.isError()) {
-			message = "Stun Error";
-			typeStun = TypeStun.ERROR_STUN;
-		} else if (stunInfo.isSymmetricUDPFirewall()) {
-			message = "SymmetricUDPFirewall";
-			typeStun = TypeStun.SYMMETRIC_UDP_FIREWALL;
+	private boolean isNatSupported () {
+		if (info == null)
+			return false;
+		if (info.isFullCone()
+				|| info.isOpenAccess() 
+				|| info.isPortRestrictedCone()
+				|| info.isRestrictedCone()
+		){
+			return true;
 		} else {
-			// Stun supported
-			if (stunInfo.isFullCone())
-				typeStun = TypeStun.FULL_CONE;
-			else if (stunInfo.isOpenAccess())
-				typeStun = TypeStun.OPEN_ACCESS;
-			else if (stunInfo.isPortRestrictedCone())
-				typeStun = TypeStun.PORT_RESTRICTED_CONE;
-			else if (stunInfo.isRestrictedCone())
-				typeStun = TypeStun.RESTRICTED_CONE;
-			else if (stunInfo.isSymmetric())
-				typeStun = TypeStun.SYMMETRIC_CONE;
-
-			return;
+			return false;
 		}
-
-		throw new ServerInternalErrorException("Nat not supported. " + message);
 	}
+//	private void checkNatSupported(DiscoveryInfo stunInfo)
+//			throws ServerInternalErrorException {
+//		String message = "OK";
+//		if (stunInfo.isBlockedUDP()) {
+//			message = "BlockedUDP";
+//			typeStun = TypeStun.BLOCKED_UDP;
+//		} else if (stunInfo.isError()) {
+//			message = "Stun Error";
+//			typeStun = TypeStun.ERROR_STUN;
+//		} else if (stunInfo.isSymmetricUDPFirewall()) {
+//			message = "SymmetricUDPFirewall";
+//			typeStun = TypeStun.SYMMETRIC_UDP_FIREWALL;
+//		} else {
+//			// Stun supported
+//			if (stunInfo.isFullCone())
+//				typeStun = TypeStun.FULL_CONE;
+//			else if (stunInfo.isOpenAccess())
+//				typeStun = TypeStun.OPEN_ACCESS;
+//			else if (stunInfo.isPortRestrictedCone())
+//				typeStun = TypeStun.PORT_RESTRICTED_CONE;
+//			else if (stunInfo.isRestrictedCone())
+//				typeStun = TypeStun.RESTRICTED_CONE;
+//			else if (stunInfo.isSymmetric())
+//				typeStun = TypeStun.SYMMETRIC_CONE;
+//
+//			return;
+//		}
+//
+//		throw new ServerInternalErrorException("Nat not supported. " + message);
+//	}
 
 	public void terminate() {
 
@@ -664,19 +704,20 @@ public class UaImpl implements SipListener, UaStun {
 		}
 	}
 
-	private DiscoveryInfo runStunTest() throws Exception {
+	private void runStunTest() throws IOException, MessageAttributeParsingException, MessageHeaderParsingException, UtilityException, MessageAttributeException  {
 		info = null;
 
-		log.info("RunStunTest = " + localAddress + ":" + localPort);
+		log.debug("RunStunTest = " + localAddress + ":" + localPort);
 		InetAddress addr = InetAddress.getByName(localAddress);
 		DiscoveryTest test = new DiscoveryTest(addr, localPort,
-				config.getStunAddress(), config.getStunPort());
-
+			config.getStunAddress(), config.getStunPort());		
+			
 		info = test.test();
+			
+
 		log.debug("Stun test passed: Public Ip : "
 				+ info.getPublicIP().getHostAddress() + " Public port : "
 				+ info.getPublicPort());
-		return info;
 	}
 
 	public void setContext(Context context) {
