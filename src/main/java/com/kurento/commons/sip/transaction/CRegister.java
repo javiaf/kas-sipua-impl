@@ -192,7 +192,7 @@ public class CRegister extends CTransaction {
 
 	private String getAuthResponse(String userName, String realm,
 			String password, String method, String uri, String nonce, String algorithm) {
-		String cnonce = null;
+		//String cnonce = null;
 		MessageDigest messageDigest = null;
 		try {
 			messageDigest = MessageDigest.getInstance(algorithm);

@@ -18,7 +18,7 @@ package com.kurento.commons.sip.agent;
 
 import java.text.ParseException;
 //import java.util.ArrayList;
-import java.util.Date;
+//import java.util.Date;
 //import java.util.List;
 import java.util.Random;
 //import java.util.Timer;
@@ -58,7 +58,7 @@ public class SipEndPointImpl implements EndPoint {
 	private String realm;
 	private Address sipUriAddress;
 	private Address contactAddress;
-
+	
 	private UaImpl ua;
 	private EndPointListener listener;
 	//private List<TimerTask> scheduledTasks = new ArrayList<TimerTask>();
@@ -72,8 +72,9 @@ public class SipEndPointImpl implements EndPoint {
 	//private Timer timer = new Timer();
 	private Context androidContext;
 	private AlarmManager alarmManager;
-	PendingIntent pendingIntent;
+	private PendingIntent pendingIntent;
 
+	
 	// ////////////
 	//
 	// CONSTRUCTOR
@@ -92,7 +93,7 @@ public class SipEndPointImpl implements EndPoint {
 		this.password = password;
 		this.sipUriAddress = UaFactory.getAddressFactory().createAddress(
 				"sip:" + this.userName + "@" + this.realm);
-
+				
 		reconfigureEndPoint();
 		ua.registerEndpoint(this);
 	}
@@ -110,12 +111,13 @@ public class SipEndPointImpl implements EndPoint {
 	private void createRegisterManger() {
 		log.info("Creating register manager");
 		//SecondeService service = new SecondeService(this);
-		long period = (long) (getExpires() * 1000);
+		long period = (long) (getExpires() * 1000 * 0.8);
 		if (period == 0) {
-			log.info("Expires is 0.");
+			log.info("Expires is 0");
 			return;
 		}
 		log.info("Register period set as " + period);
+		RegisterService.setEndpoint(this);
 		alarmManager = (AlarmManager) androidContext
 				.getSystemService(Context.ALARM_SERVICE);
 		Intent myIntent = new Intent(androidContext, RegisterService.class);
@@ -124,7 +126,7 @@ public class SipEndPointImpl implements EndPoint {
 				.getService(androidContext, 0, myIntent, 0);
 		log.info("pendingIntent is " + pendingIntent.toString()
 				+ "period is : " + period);
-		alarmManager.setRepeating(AlarmManager.ELAPSED_REALTIME, 0, period,
+		alarmManager.setRepeating(AlarmManager.ELAPSED_REALTIME_WAKEUP, 0, period,
 				pendingIntent);
 		log.info("SipEndpoint initialized.");
 	}
@@ -210,26 +212,42 @@ public class SipEndPointImpl implements EndPoint {
 	}
 
 	public UaImpl getUa() {
-		return ua;
+		return this.ua;
 	}
 
 	public void setExpiresAndRegister(int expires) {
-		if (expires == 0) {
-			if (alarmManager != null)
-				alarmManager.cancel(pendingIntent);
-		} else if (this.expires != expires) {
-			if (alarmManager != null)
-				alarmManager.cancel(pendingIntent);
-			createRegisterManger();
-		}
+		
+		// Cancel previous schedulers
+		if (alarmManager != null)
+			alarmManager.cancel(pendingIntent);
+		// Set new expire value and register
 		this.expires = expires;
+					
+		if (this.expires != 0)
+			// Set new Register schedule
+			createRegisterManger();
+		else
+			// Send register with expires=0
+			register();
+
+
+	}
+
+	public void register() {
+		// Create call ID to avoid IP addresses that can be mangled by routers
+		this.registrarCallId = getUa().getSipProvider().getNewCallId();
+		try {
+			this.registrarCallId.setCallId(getUa().getInstanceId().toString());
+		} catch (ParseException e1) {
+			log.warn("Unable to set REGISTER call ID",e1);
+		}
+
 		try {
 			CRegister register;
 			register = new CRegister(this);
 			register.sendRequest(null);
 		} catch (ServerInternalErrorException e) {
-			log.error(e.toString());
-			e.printStackTrace();
+			log.error("REGISTER error",e);
 		}
 	}
 
@@ -245,13 +263,10 @@ public class SipEndPointImpl implements EndPoint {
 		return userName;
 	}
 
-	protected void register() throws ServerInternalErrorException {
-		log.info("Send REGISTER request: " + sipUriAddress + " > " + contactAddress);
-		log.debug("Time is :" + new Date());
-		expires = 3600;
-
-		setExpiresAndRegister(expires);
-	}
+//	protected void register(int expires) throws ServerInternalErrorException {
+//		log.info("Send REGISTER request: " + sipUriAddress + " > " + contactAddress);
+//		setExpiresAndRegister(expires);
+//	}
 
 	// TimerTask deprecated
 //	private class RegisterTask extends TimerTask {

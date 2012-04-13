@@ -21,12 +21,13 @@ import java.net.Inet4Address;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.net.SocketException;
-import java.net.UnknownHostException;
 import java.text.ParseException;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Properties;
+import java.util.Random;
 import java.util.TooManyListenersException;
+import java.util.UUID;
 
 import javax.sip.ClientTransaction;
 import javax.sip.Dialog;
@@ -112,13 +113,36 @@ public class UaImpl implements SipListener, UaStun {
 	private Context context;
 	//private int contWifi = 0;
 
-	private String version = "1.6";
+	// Register control
+	private UUID instanceId;
+	private int regId;
 
 	// /////////////////////////
 	//
 	// CONSTRUCTOR
 	//
 	// /////////////////////////
+	
+	protected UaImpl(SipConfig config, Context context) throws Exception {
+		this.config = config;
+		this.context = context;
+
+		this.localPort = config.getLocalPort();
+		
+		// instance-id: RFC5626
+		/* According to RFC5626 instance-id must stay the same on UA rebbot or
+		 * power cycle. This implementation assigns temporal UUID that stays the
+		 * same during UA's life cycle
+		 */
+		this.instanceId = UUID.randomUUID();
+		this.regId= 1;
+
+		// Register to actions of Android
+		intentFilter = new IntentFilter();
+		intentFilter.addAction(ConnectivityManager.CONNECTIVITY_ACTION);
+		this.context.registerReceiver(mReceiver, intentFilter);
+
+	}
 
 	private BroadcastReceiver mReceiver = new BroadcastReceiver() {
 
@@ -193,9 +217,9 @@ public class UaImpl implements SipListener, UaStun {
 
 						for (SipEndPointImpl endpoint : endPoints.values()) {
 							try {
-								endpoint.terminate();
+								//endpoint.terminate();
 								endpoint.reconfigureEndPoint();
-								endpoint.register();
+								endpoint.setExpiresAndRegister(3600);
 							} catch (ServerInternalErrorException e) {
 								log.error("Error finishing endpoint "
 										+ endpoint);
@@ -211,25 +235,11 @@ public class UaImpl implements SipListener, UaStun {
 		}
 	};
 
-	protected UaImpl(SipConfig config, Context context) throws Exception {
-		this.config = config;
-		this.context = context;
-
-		this.localPort = config.getLocalPort();
-
-		// Register to actions of Android
-		intentFilter = new IntentFilter();
-		intentFilter.addAction(ConnectivityManager.CONNECTIVITY_ACTION);
-		this.context.registerReceiver(mReceiver, intentFilter);
-
-	}
-
 	private void configureSipStack() {
 		try {
 			terminateSipStack();
 
 			log.info("starting JAIN-SIP stack initializacion ...");
-			log.info("SipUa version " + version);
 
 			Properties jainProps = new Properties();
 
@@ -746,4 +756,11 @@ public class UaImpl implements SipListener, UaStun {
 		return info;
 	}
 
+	public UUID getInstanceId() {
+		return instanceId;
+	}
+
+	public int getRegId() {
+		return regId;
+	}
 }
