@@ -20,6 +20,7 @@ import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.sdp.SdpException;
 import javax.sip.ClientTransaction;
 import javax.sip.DialogState;
 import javax.sip.InvalidArgumentException;
@@ -46,6 +47,7 @@ import javax.sip.message.Request;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.kurento.commons.media.format.conversor.SdpConversor;
 import com.kurento.commons.mscontrol.EventType;
 import com.kurento.commons.mscontrol.MediaErr;
 import com.kurento.commons.mscontrol.networkconnection.SdpPortManagerEvent;
@@ -402,8 +404,11 @@ public abstract class CTransaction extends Transaction {
 			if (eventType != null) { // ok
 				if (SdpPortManagerEvent.OFFER_GENERATED.equals(eventType)) {
 					// Generated after processSdpOffer : SDP = response to give
-					this.sendRequest(event.getMediaServerSdp());
-
+					try {
+						sendRequest( SdpConversor.sessionSpec2Sdp(event.getMediaServerSdp()).getBytes() );
+					} catch (SdpException e) {
+						log.warn("Unable to get local SDP", e);
+					}
 				} else if (SdpPortManagerEvent.ANSWER_PROCESSED
 						.equals(eventType)) {
 					log.debug("SdpPortManager successfully processed SDP answer received from remote peer");

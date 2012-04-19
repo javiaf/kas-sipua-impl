@@ -34,6 +34,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.kurento.commons.media.format.SessionSpec;
+import com.kurento.commons.media.format.conversor.SdpConversor;
 import com.kurento.commons.mscontrol.EventType;
 import com.kurento.commons.mscontrol.MediaErr;
 import com.kurento.commons.mscontrol.networkconnection.SdpPortManagerEvent;
@@ -177,8 +178,8 @@ public abstract class STransaction extends Transaction {
 			if (eventType != null) { // ok
 				SessionSpec ss;
 				try {
-					ss = new SessionSpec(new String(event.getMediaServerSdp()));
-					localSdp = ss.getSessionDescription();
+					ss = event.getMediaServerSdp();
+					localSdp = SdpConversor.sessionSpec2SessionDescription(ss);
 				} catch (SdpException e1) {
 					// TODO Auto-generated catch block
 					e1.printStackTrace();

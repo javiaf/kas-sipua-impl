@@ -14,8 +14,9 @@
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 
 		<!-- Dependency versions -->
-		<kcUaVersion>1.2.4</kcUaVersion>
+		<kcUaVersion>1.2.5-SNAPSHOT</kcUaVersion>
 		<kcMediaSpecVersion>1.2.0</kcMediaSpecVersion>
+		<kcMediaSpecConversorVersion>1.0.0-SNAPSHOT</kcMediaSpecConversorVersion>
 		<kcStunVersion>1.0.1</kcStunVersion>
 	</properties>
 
@@ -60,6 +61,11 @@
 			<artifactId>kc-stun</artifactId>
 			<version>${kcStunVersion}</version>
 			<type>jar</type>
+		</dependency>
+		<dependency>
+			<groupId>com.kurento.commons</groupId>
+			<artifactId>kc-mediaspec-conversor</artifactId>
+			<version>${kcMediaSpecConversorVersion}</version>
 		</dependency>
 
 		<dependency>

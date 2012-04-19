@@ -16,6 +16,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
 package com.kurento.commons.sip.transaction;
 
+import javax.sdp.SdpException;
 import javax.sip.DialogState;
 import javax.sip.InvalidArgumentException;
 import javax.sip.ResponseEvent;
@@ -25,6 +26,8 @@ import javax.sip.header.CSeqHeader;
 import javax.sip.message.Request;
 import javax.sip.message.Response;
 
+import com.kurento.commons.media.format.conversor.SdpConversor;
+import com.kurento.commons.media.format.exceptions.ArgumentNotSetException;
 import com.kurento.commons.mscontrol.EventType;
 import com.kurento.commons.mscontrol.networkconnection.SdpPortManagerEvent;
 import com.kurento.commons.sip.agent.SipContext;
@@ -165,8 +168,12 @@ public class CInvite extends CTransaction {
 			if (SdpPortManagerEvent.OFFER_GENERATED.equals(eventType)) {
 				// Request user confirmation before sending response
 				log.debug("SdpPortManager successfully generated a SDP to be send to remote peer");
-				sendRequest(event.getMediaServerSdp());
-
+				try {
+					sendRequest(SdpConversor.sessionSpec2Sdp(
+							event.getMediaServerSdp()).getBytes());
+				} catch (SdpException e) {
+					log.warn("Unable to get local SDP", e);
+				}
 			} else if (SdpPortManagerEvent.ANSWER_PROCESSED.equals(eventType)) {
 				// Notify call set up
 				log.debug("SdpPortManager successfully processed SDP answer received from remote peer");
