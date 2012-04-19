@@ -82,7 +82,7 @@ public class CInvite extends CTransaction {
 		} else if (statusCode == Response.REQUEST_TERMINATED) {
 			log.info("<<<<<<< " + statusCode + " TERMINATED: dialog: "
 					+ this.dialog + ", state: " + dialog.getState());
-			sendAck(null);
+			sendAck();
 			release();
 		} else if (statusCode == Response.TEMPORARILY_UNAVAILABLE
 				|| statusCode == Response.NOT_ACCEPTABLE_HERE
@@ -93,7 +93,7 @@ public class CInvite extends CTransaction {
 			log.info("<<<<<<< " + statusCode + " REJECT: dialog: "
 					+ this.dialog + ", state: " + dialog.getState());
 			sipContext.rejectedCall();
-			sendAck(null);
+			sendAck();
 			release();
 
 		} else if (statusCode == Response.OK) {
@@ -101,7 +101,7 @@ public class CInvite extends CTransaction {
 			log.info("<<<<<<< 200 OK: dialog: " + this.dialog + ", state: "
 					+ dialog.getState());
 			if (sipContext.hasPendingTransaction()) {
-				sendAck(null);
+				sendAck();
 				new CBye(sipContext);
 			} else {
 				byte[] rawContent = response.getRawContent();
@@ -113,7 +113,7 @@ public class CInvite extends CTransaction {
 				} else {
 					log.error("Found response to CInvite with no SDP answer");
 					sipContext.failedCall();
-					sendAck(null);
+					sendAck();
 					new CBye(sipContext);
 				}
 			}
@@ -121,12 +121,12 @@ public class CInvite extends CTransaction {
 			log.info("<<<<<<< " + statusCode + " FAIL: dialog: " + this.dialog
 					+ ", state: " + dialog.getState());
 			sipContext.failedCall();
-			sendAck(null);
+			sendAck();
 			release();
 		}
 	}
 
-	private void sendAck(byte[] sdp) throws ServerInternalErrorException {
+	private void sendAck() throws ServerInternalErrorException {
 		log.info("dialog.getState(): " + dialog.getState());
 		if (!DialogState.CONFIRMED.equals(dialog.getState()))
 			return;
@@ -177,7 +177,7 @@ public class CInvite extends CTransaction {
 			} else if (SdpPortManagerEvent.ANSWER_PROCESSED.equals(eventType)) {
 				// Notify call set up
 				log.debug("SdpPortManager successfully processed SDP answer received from remote peer");
-				sendAck(null);
+				sendAck();
 				sipContext.completedOutgoingCall(this);
 			} else {
 				super.onEvent(event);
