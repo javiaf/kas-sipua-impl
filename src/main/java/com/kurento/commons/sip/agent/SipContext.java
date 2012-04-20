@@ -17,11 +17,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>
 package com.kurento.commons.sip.agent;
 
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import javax.sdp.SdpException;
 import javax.sip.Dialog;
 import javax.sip.SipException;
 import javax.sip.address.Address;

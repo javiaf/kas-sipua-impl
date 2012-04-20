@@ -17,12 +17,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>
 package com.kurento.commons.sip.agent;
 
 import java.text.ParseException;
-//import java.util.ArrayList;
-//import java.util.Date;
-//import java.util.List;
 import java.util.Random;
-//import java.util.Timer;
-//import java.util.TimerTask;
 
 import javax.sip.address.Address;
 import javax.sip.header.CallIdHeader;
@@ -36,7 +31,6 @@ import android.content.Context;
 import android.content.Intent;
 
 import com.kurento.commons.sip.android.RegisterService;
-//import com.kurento.commons.sip.android.SecondeService;
 import com.kurento.commons.sip.transaction.CRegister;
 import com.kurento.commons.ua.Call;
 import com.kurento.commons.ua.CallListener;

@@ -16,8 +16,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>
 */
 package com.kurento.commons.sip.transaction;
 
-import java.util.Map;
-
 import javax.sdp.SdpException;
 import javax.sip.ServerTransaction;
 import javax.sip.TimeoutEvent;
@@ -29,8 +27,6 @@ import org.slf4j.LoggerFactory;
 
 import com.kurento.commons.media.format.SessionSpec;
 import com.kurento.commons.media.format.conversor.SdpConversor;
-import com.kurento.commons.media.format.enums.MediaType;
-import com.kurento.commons.media.format.enums.Mode;
 import com.kurento.commons.mscontrol.EventType;
 import com.kurento.commons.mscontrol.networkconnection.SdpPortManagerEvent;
 import com.kurento.commons.sip.agent.SipEndPointImpl;
