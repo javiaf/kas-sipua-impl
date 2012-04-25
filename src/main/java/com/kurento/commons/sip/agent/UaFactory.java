@@ -115,7 +115,7 @@ public class UaFactory {
 		if (UaFactory.context == null) {
 			throw new Exception("Android context not setted.");
 		}
-		UaImpl ua = new UaImpl(config,UaFactory.context);
+		UaImpl ua = new UaImpl(config);
 		return ua;
 	}
 

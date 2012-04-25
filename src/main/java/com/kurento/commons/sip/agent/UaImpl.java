@@ -55,13 +55,6 @@ import javax.sip.message.Response;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import android.content.BroadcastReceiver;
-import android.content.Context;
-import android.content.Intent;
-import android.content.IntentFilter;
-import android.net.ConnectivityManager;
-import android.net.NetworkInfo;
-
 import com.kurento.commons.sip.exception.SipTransactionException;
 import com.kurento.commons.sip.transaction.CTransaction;
 import com.kurento.commons.sip.transaction.SAck;
@@ -100,18 +93,16 @@ public class UaImpl implements SipListener, UaStun {
 	private int publicPort = 5060;
 
 	private NatKeepAlive keepAlive;
-	//private TypeStun typeStun;
+	// private TypeStun typeStun;
 
 	private SipConfig config;
 
 	private DiscoveryInfo info;
 
-	private IntentFilter intentFilter;
 	// User List
 	private HashMap<String, SipEndPointImpl> endPoints = new HashMap<String, SipEndPointImpl>();
 
-	private Context context;
-	//private int contWifi = 0;
+	// private int contWifi = 0;
 
 	// Register control
 	private UUID instanceId;
@@ -122,118 +113,194 @@ public class UaImpl implements SipListener, UaStun {
 	// CONSTRUCTOR
 	//
 	// /////////////////////////
-	
-	protected UaImpl(SipConfig config, Context context) throws Exception {
-		this.config = config;
-		this.context = context;
 
+	protected UaImpl(SipConfig config) throws Exception {
+		this.config = config;
 		this.localPort = config.getLocalPort();
-		
+
 		// instance-id: RFC5626
-		/* According to RFC5626 instance-id must stay the same on UA rebbot or
+		/*
+		 * According to RFC5626 instance-id must stay the same on UA rebbot or
 		 * power cycle. This implementation assigns temporal UUID that stays the
 		 * same during UA's life cycle
 		 */
 		this.instanceId = UUID.randomUUID();
-		this.regId= 1;
-
-		// Register to actions of Android
-		intentFilter = new IntentFilter();
-		intentFilter.addAction(ConnectivityManager.CONNECTIVITY_ACTION);
-		this.context.registerReceiver(mReceiver, intentFilter);
+		this.regId = 1;
 
 	}
 
-	private BroadcastReceiver mReceiver = new BroadcastReceiver() {
+	// //////////
 
-		@Override
-		public void onReceive(Context context, Intent intent) {
-			String action = intent.getAction();
-			log.debug("Received ACTION: " + action );
-			
-			if (ConnectivityManager.CONNECTIVITY_ACTION.equals(action)) {
-				NetworkInfo ni = intent.getExtras()
-						.getParcelable("networkInfo");
-				if (ni.getState().equals(NetworkInfo.State.CONNECTED)) {
-					InetAddress localAddressNew = getAndroidLocalAddress();
-					if (localAddressNew != null
-							&& !localAddressNew.getHostAddress().equals(localAddress)) {
-						
-						log.debug("Found network interface change: " 
-								+ localAddressNew.getHostAddress() + " <== " + localAddress);
+	public void onNetworkChange() {
+		log.info("Reconfigure SIP UA network connection");
 
-						localAddress = localAddressNew.getHostAddress();
-						// Check if user has request STUN 
-						if (config.getStunAddress() != null
-								&& !"".equals((config.getStunAddress()))) {
-							//YES, Try for NUMBER_TRY
-							log.debug("STUN activated");
-							int trying = 0;
-							while (trying < NUMBER_TRY) {
-								// STUN error => give up
-								// IOError = socket already in use => try again and find a free socket
-								try{
-									try {
-										runStunTest();
-									} catch (MessageAttributeParsingException e) {
-										log.error("STUN test failed",e);
-									} catch (MessageHeaderParsingException e) {
-										log.error("STUN test failed",e);
-									} catch (UtilityException e) {
-										log.error("STUN test failed",e);
-									} catch (MessageAttributeException e) {
-										log.error("STUN test failed",e);
-									}
-									break;
-								} catch (IOException e) {
-									log.info("Address already in use:"+ localAddress +":" + localPort);
-									localPort++;
-								}
-							}
-						} else {
-							log.debug("STUN NOT activated");
-							info = new DiscoveryInfo(localAddressNew);
-							info.setPublicIP(localAddressNew);
-							info.setPublicPort(publicPort);
-							info.setLocalPort(localPort);
-						}
-						
-						// Verify if NAT must be supported
-						if (isNatSupported()) {
-							log.debug("Activate NAT support");
-							InetAddress publicInet = info.getPublicIP();
-							publicAddress = publicInet.getHostAddress();
-							publicPort = info.getPublicPort();
-							localAddress = info.getLocalIP().getHostAddress();
-							localPort = info.getLocalPort();
-						}
-						else {
-							log.debug("De-Activate NAT support");
-							publicAddress = localAddress;
-							publicPort = localPort;
-						}
-						
-						configureSipStack();
+		InetAddress localAddressNew = getAndroidLocalAddress();
+		if (localAddressNew != null
+				&& !localAddressNew.getHostAddress().equals(localAddress)) {
+			// Detected Network interface change
+			log.debug("Found network interface change: "
+					+ localAddressNew.getHostAddress() + " <== " + localAddress);
 
-						for (SipEndPointImpl endpoint : endPoints.values()) {
-							try {
-								//endpoint.terminate();
-								endpoint.reconfigureEndPoint();
-								endpoint.setExpiresAndRegister(3600);
-							} catch (ServerInternalErrorException e) {
-								log.error("Error finishing endpoint "
-										+ endpoint);
-								log.info("Error finishing endpoint");
-							} catch (ParseException e) {
-								log.error("Error Parse endpoint");
-								e.printStackTrace();
-							}
+			localAddress = localAddressNew.getHostAddress();
+			// Check if user has request STUN
+			if (config.getStunAddress() != null
+					&& !"".equals((config.getStunAddress()))) {
+				// YES, Try for NUMBER_TRY
+				log.debug("STUN activated");
+				int trying = 0;
+				while (trying < NUMBER_TRY) {
+					// STUN error => give up
+					// IOError = socket already in use => try again and find a
+					// free socket
+					try {
+						try {
+							runStunTest();
+						} catch (MessageAttributeParsingException e) {
+							log.error("STUN test failed", e);
+						} catch (MessageHeaderParsingException e) {
+							log.error("STUN test failed", e);
+						} catch (UtilityException e) {
+							log.error("STUN test failed", e);
+						} catch (MessageAttributeException e) {
+							log.error("STUN test failed", e);
 						}
+						break;
+					} catch (IOException e) {
+						log.info("Address already in use:" + localAddress + ":"
+								+ localPort);
+						localPort++;
 					}
+				}
+			} else {
+				log.debug("STUN NOT activated");
+				info = new DiscoveryInfo(localAddressNew);
+				info.setPublicIP(localAddressNew);
+				info.setPublicPort(publicPort);
+				info.setLocalPort(localPort);
+			}
+
+			// Verify if NAT must be supported
+			if (isNatSupported()) {
+				log.debug("Activate NAT support");
+				InetAddress publicInet = info.getPublicIP();
+				publicAddress = publicInet.getHostAddress();
+				publicPort = info.getPublicPort();
+				localAddress = info.getLocalIP().getHostAddress();
+				localPort = info.getLocalPort();
+			} else {
+				log.debug("De-Activate NAT support");
+				publicAddress = localAddress;
+				publicPort = localPort;
+			}
+
+			configureSipStack();
+
+			for (SipEndPointImpl endpoint : endPoints.values()) {
+				try {
+					// endpoint.terminate();
+					endpoint.reconfigureEndPoint();
+					endpoint.setExpiresAndRegister(3600);
+				} catch (ServerInternalErrorException e) {
+					log.error("Error finishing endpoint " + endpoint);
+					log.info("Error finishing endpoint");
+				} catch (ParseException e) {
+					log.error("Error Parse endpoint");
+					e.printStackTrace();
 				}
 			}
 		}
-	};
+	}
+
+	// private BroadcastReceiver mReceiver = new BroadcastReceiver() {
+	//
+	// @Override
+	// public void onReceive(Context context, Intent intent) {
+	// String action = intent.getAction();
+	// log.debug("Received ACTION: " + action );
+	//
+	// if (ConnectivityManager.CONNECTIVITY_ACTION.equals(action)) {
+	// NetworkInfo ni = intent.getExtras()
+	// .getParcelable("networkInfo");
+	// if (ni.getState().equals(NetworkInfo.State.CONNECTED)) {
+	// InetAddress localAddressNew = getAndroidLocalAddress();
+	// if (localAddressNew != null
+	// && !localAddressNew.getHostAddress().equals(localAddress)) {
+	//
+	// log.debug("Found network interface change: "
+	// + localAddressNew.getHostAddress() + " <== " + localAddress);
+	//
+	// localAddress = localAddressNew.getHostAddress();
+	// // Check if user has request STUN
+	// if (config.getStunAddress() != null
+	// && !"".equals((config.getStunAddress()))) {
+	// //YES, Try for NUMBER_TRY
+	// log.debug("STUN activated");
+	// int trying = 0;
+	// while (trying < NUMBER_TRY) {
+	// // STUN error => give up
+	// // IOError = socket already in use => try again and find a free socket
+	// try{
+	// try {
+	// runStunTest();
+	// } catch (MessageAttributeParsingException e) {
+	// log.error("STUN test failed",e);
+	// } catch (MessageHeaderParsingException e) {
+	// log.error("STUN test failed",e);
+	// } catch (UtilityException e) {
+	// log.error("STUN test failed",e);
+	// } catch (MessageAttributeException e) {
+	// log.error("STUN test failed",e);
+	// }
+	// break;
+	// } catch (IOException e) {
+	// log.info("Address already in use:"+ localAddress +":" + localPort);
+	// localPort++;
+	// }
+	// }
+	// } else {
+	// log.debug("STUN NOT activated");
+	// info = new DiscoveryInfo(localAddressNew);
+	// info.setPublicIP(localAddressNew);
+	// info.setPublicPort(publicPort);
+	// info.setLocalPort(localPort);
+	// }
+	//
+	// // Verify if NAT must be supported
+	// if (isNatSupported()) {
+	// log.debug("Activate NAT support");
+	// InetAddress publicInet = info.getPublicIP();
+	// publicAddress = publicInet.getHostAddress();
+	// publicPort = info.getPublicPort();
+	// localAddress = info.getLocalIP().getHostAddress();
+	// localPort = info.getLocalPort();
+	// }
+	// else {
+	// log.debug("De-Activate NAT support");
+	// publicAddress = localAddress;
+	// publicPort = localPort;
+	// }
+	//
+	// configureSipStack();
+	//
+	// for (SipEndPointImpl endpoint : endPoints.values()) {
+	// try {
+	// //endpoint.terminate();
+	// endpoint.reconfigureEndPoint();
+	// endpoint.setExpiresAndRegister(3600);
+	// } catch (ServerInternalErrorException e) {
+	// log.error("Error finishing endpoint "
+	// + endpoint);
+	// log.info("Error finishing endpoint");
+	// } catch (ParseException e) {
+	// log.error("Error Parse endpoint");
+	// e.printStackTrace();
+	// }
+	// }
+	// }
+	// }
+	// }
+	// }
+	// };
 
 	private void configureSipStack() {
 		try {
@@ -300,7 +367,7 @@ public class UaImpl implements SipListener, UaStun {
 		}
 	}
 
-	public InetAddress getAndroidLocalAddress() {
+	private InetAddress getAndroidLocalAddress() {
 		try {
 			for (Enumeration<NetworkInterface> en = NetworkInterface
 					.getNetworkInterfaces(); en.hasMoreElements();) {
@@ -320,49 +387,16 @@ public class UaImpl implements SipListener, UaStun {
 		return null;
 	}
 
-	private boolean isNatSupported () {
+	private boolean isNatSupported() {
 		if (info == null)
 			return false;
-		if (info.isFullCone()
-				|| info.isOpenAccess() 
-				|| info.isPortRestrictedCone()
-				|| info.isRestrictedCone()
-		){
+		if (info.isFullCone() || info.isOpenAccess()
+				|| info.isPortRestrictedCone() || info.isRestrictedCone()) {
 			return true;
 		} else {
 			return false;
 		}
 	}
-//	private void checkNatSupported(DiscoveryInfo stunInfo)
-//			throws ServerInternalErrorException {
-//		String message = "OK";
-//		if (stunInfo.isBlockedUDP()) {
-//			message = "BlockedUDP";
-//			typeStun = TypeStun.BLOCKED_UDP;
-//		} else if (stunInfo.isError()) {
-//			message = "Stun Error";
-//			typeStun = TypeStun.ERROR_STUN;
-//		} else if (stunInfo.isSymmetricUDPFirewall()) {
-//			message = "SymmetricUDPFirewall";
-//			typeStun = TypeStun.SYMMETRIC_UDP_FIREWALL;
-//		} else {
-//			// Stun supported
-//			if (stunInfo.isFullCone())
-//				typeStun = TypeStun.FULL_CONE;
-//			else if (stunInfo.isOpenAccess())
-//				typeStun = TypeStun.OPEN_ACCESS;
-//			else if (stunInfo.isPortRestrictedCone())
-//				typeStun = TypeStun.PORT_RESTRICTED_CONE;
-//			else if (stunInfo.isRestrictedCone())
-//				typeStun = TypeStun.RESTRICTED_CONE;
-//			else if (stunInfo.isSymmetric())
-//				typeStun = TypeStun.SYMMETRIC_CONE;
-//
-//			return;
-//		}
-//
-//		throw new ServerInternalErrorException("Nat not supported. " + message);
-//	}
 
 	public void terminate() {
 
@@ -381,7 +415,6 @@ public class UaImpl implements SipListener, UaStun {
 		}
 
 		terminateSipStack();
-		context.unregisterReceiver(mReceiver);
 	}
 
 	private void terminateSipStack() {
@@ -686,23 +719,6 @@ public class UaImpl implements SipListener, UaStun {
 	// User manager interface
 	//
 	// ///////////
-	// public EndPoint registerEndPoint(String user, String realm,
-	// String password, int expires, EndPointListener handler)
-	// throws ParseException, ServerInternalErrorException {
-	// SipEndPointImpl epImpl;
-	// String epAddress = user + "@" + realm;
-	// if ((epImpl = endPoints.get(epAddress)) != null) {
-	// if (epImpl.getExpires() == 0) {
-	// epImpl.setExpires(expires);
-	// }
-	// return epImpl;
-	// }
-	//
-	// epImpl = new SipEndPointImpl(user, realm, password, expires, this,
-	// handler, context);
-	// endPoints.put(epAddress, epImpl);
-	// return epImpl;
-	// }
 
 	private void sendStateless(int code, Request request) {
 		try {
@@ -714,24 +730,21 @@ public class UaImpl implements SipListener, UaStun {
 		}
 	}
 
-	private void runStunTest() throws IOException, MessageAttributeParsingException, MessageHeaderParsingException, UtilityException, MessageAttributeException  {
+	private void runStunTest() throws IOException,
+			MessageAttributeParsingException, MessageHeaderParsingException,
+			UtilityException, MessageAttributeException {
 		info = null;
 
 		log.debug("RunStunTest = " + localAddress + ":" + localPort);
 		InetAddress addr = InetAddress.getByName(localAddress);
 		DiscoveryTest test = new DiscoveryTest(addr, localPort,
-			config.getStunAddress(), config.getStunPort());		
-			
+				config.getStunAddress(), config.getStunPort());
+
 		info = test.test();
-			
 
 		log.debug("Stun test passed: Public Ip : "
 				+ info.getPublicIP().getHostAddress() + " Public port : "
 				+ info.getPublicPort());
-	}
-
-	public void setContext(Context context) {
-		this.context = context;
 	}
 
 	@Override
