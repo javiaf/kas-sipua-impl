@@ -302,14 +302,14 @@ public abstract class CTransaction extends Transaction {
 	protected ContactHeader buildContactHeader() throws ServerInternalErrorException {
 		ContactHeader contact = UaFactory.getHeaderFactory().createContactHeader(
 				localParty.getContact());
-		try {
-			// Params from RFC5626
-			contact.setParameter("+sip.instance", "\"<urn:uuid:"+ localParty.getUa().getInstanceId()+">\"");
-			contact.setParameter("reg-id",String.valueOf(localParty.getUa().getRegId()));
-		} catch (ParseException e) {
-			throw new ServerInternalErrorException(
-					"ParseException building contact header", e);
-		}		
+//		try {
+//			// Params from RFC5626
+//			contact.setParameter("+sip.instance", "\"<urn:uuid:"+ localParty.getUa().getInstanceId()+">\"");
+//			contact.setParameter("reg-id",String.valueOf(localParty.getUa().getRegId()));
+//		} catch (ParseException e) {
+//			throw new ServerInternalErrorException(
+//					"ParseException building contact header", e);
+//		}		
 		return contact;
 	}
 
