@@ -130,7 +130,7 @@ public class UaImpl implements SipListener, UaStun {
 
 	// //////////
 
-	public void onNetworkChange() {
+	public void reconfigure() {
 		log.info("Reconfigure SIP UA network connection");
 
 		InetAddress localAddressNew = getAndroidLocalAddress();
