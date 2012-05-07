@@ -39,6 +39,7 @@ import com.kurento.commons.ua.EndPointListener;
 import com.kurento.commons.ua.event.EndPointEvent;
 import com.kurento.commons.ua.event.EndpointEventEnum;
 import com.kurento.commons.ua.exception.ServerInternalErrorException;
+import com.kurento.commons.ua.timer.KurentoUaTimer;
 
 public class SipEndPointImpl implements EndPoint {
 
@@ -62,8 +63,8 @@ public class SipEndPointImpl implements EndPoint {
 	private long cSeqNumber = Math.abs(rnd.nextLong() % 100000000);
 	private String password;
 
-	// Timer deprecated by android alarm manager
-	//private Timer timer = new Timer();
+	private KurentoUaTimer timer;
+
 	private Context androidContext;
 	private AlarmManager alarmManager;
 	private PendingIntent pendingIntent;
@@ -75,6 +76,25 @@ public class SipEndPointImpl implements EndPoint {
 	//
 	// ////////////
 
+	protected SipEndPointImpl(String userName, String realm, String password,
+			int expires, UaImpl ua, EndPointListener handler, KurentoUaTimer timer)
+			throws ParseException, ServerInternalErrorException {
+		this.ua = ua;
+		this.listener = handler;
+		this.timer=timer;
+		this.userName = userName;
+		this.realm = realm;
+		this.expires = expires;
+		this.password = password;
+		this.sipUriAddress = UaFactory.getAddressFactory().createAddress(
+				"sip:" + this.userName + "@" + this.realm);
+				
+		reconfigureEndPoint();
+		ua.registerEndpoint(this);
+		
+	}
+	
+	@Deprecated
 	protected SipEndPointImpl(String userName, String realm, String password,
 			int expires, UaImpl ua, EndPointListener handler, Context context)
 			throws ParseException, ServerInternalErrorException {
