@@ -16,6 +16,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>
 */
 package com.kurento.commons.sip.transaction;
 
+import javax.sdp.SdpException;
 import javax.sdp.SessionDescription;
 import javax.sip.Dialog;
 import javax.sip.TimeoutEvent;
@@ -24,6 +25,7 @@ import javax.sip.address.Address;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.kurento.commons.media.format.conversor.SdpConversor;
 import com.kurento.commons.mscontrol.MediaEventListener;
 import com.kurento.commons.mscontrol.MsControlException;
 import com.kurento.commons.mscontrol.networkconnection.NetworkConnection;
@@ -89,7 +91,12 @@ public abstract class Transaction implements
 		try {
 			createSdpPortManager();
 			sdpPortManager.addListener(this);
-			sdpPortManager.processSdpOffer(rawSdp);
+			String sdp = new String(rawSdp);
+			try {
+				sdpPortManager.processSdpOffer(SdpConversor.sdp2SessionSpec(sdp));
+			} catch (SdpException e) {
+				log.error("Can not obtain Session Spec from ", sdp, e);
+			}
 		} catch (MsControlException e) {
 			throw new ServerInternalErrorException(
 					"SDP negociation error while processing answer", e);
@@ -104,7 +111,12 @@ public abstract class Transaction implements
 		try {
 			createSdpPortManager();
 			sdpPortManager.addListener(this);
-			sdpPortManager.processSdpAnswer(rawSdp);
+			String sdp = new String(rawSdp);
+			try {
+				sdpPortManager.processSdpAnswer(SdpConversor.sdp2SessionSpec(sdp));
+			} catch (SdpException e) {
+				log.error("Can not obtain Session Spec from ", sdp, e);
+			}
 		} catch (MsControlException e) {
 			throw new ServerInternalErrorException(
 					"SDP negociation error while processing answer", e);

@@ -16,6 +16,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
 package com.kurento.commons.sip.transaction;
 
+import javax.sdp.SdpException;
 import javax.sip.DialogState;
 import javax.sip.InvalidArgumentException;
 import javax.sip.ResponseEvent;
@@ -25,6 +26,7 @@ import javax.sip.header.CSeqHeader;
 import javax.sip.message.Request;
 import javax.sip.message.Response;
 
+import com.kurento.commons.media.format.conversor.SdpConversor;
 import com.kurento.commons.mscontrol.EventType;
 import com.kurento.commons.mscontrol.networkconnection.SdpPortManagerEvent;
 import com.kurento.commons.sip.agent.SipContext;
@@ -79,7 +81,7 @@ public class CInvite extends CTransaction {
 		} else if (statusCode == Response.REQUEST_TERMINATED) {
 			log.info("<<<<<<< " + statusCode + " TERMINATED: dialog: "
 					+ this.dialog + ", state: " + dialog.getState());
-			sendAck(null);
+			sendAck();
 			release();
 		} else if (statusCode == Response.TEMPORARILY_UNAVAILABLE
 				|| statusCode == Response.NOT_ACCEPTABLE_HERE
@@ -90,7 +92,7 @@ public class CInvite extends CTransaction {
 			log.info("<<<<<<< " + statusCode + " REJECT: dialog: "
 					+ this.dialog + ", state: " + dialog.getState());
 			sipContext.rejectedCall();
-			sendAck(null);
+			sendAck();
 			release();
 
 		} else if (statusCode == Response.OK) {
@@ -98,7 +100,7 @@ public class CInvite extends CTransaction {
 			log.info("<<<<<<< 200 OK: dialog: " + this.dialog + ", state: "
 					+ dialog.getState());
 			if (sipContext.hasPendingTransaction()) {
-				sendAck(null);
+				sendAck();
 				new CBye(sipContext);
 			} else {
 				byte[] rawContent = response.getRawContent();
@@ -110,7 +112,7 @@ public class CInvite extends CTransaction {
 				} else {
 					log.error("Found response to CInvite with no SDP answer");
 					sipContext.failedCall();
-					sendAck(null);
+					sendAck();
 					new CBye(sipContext);
 				}
 			}
@@ -118,12 +120,12 @@ public class CInvite extends CTransaction {
 			log.info("<<<<<<< " + statusCode + " FAIL: dialog: " + this.dialog
 					+ ", state: " + dialog.getState());
 			sipContext.failedCall();
-			sendAck(null);
+			sendAck();
 			release();
 		}
 	}
 
-	private void sendAck(byte[] sdp) throws ServerInternalErrorException {
+	private void sendAck() throws ServerInternalErrorException {
 		log.info("dialog.getState(): " + dialog.getState());
 		if (!DialogState.CONFIRMED.equals(dialog.getState()))
 			return;
@@ -165,12 +167,16 @@ public class CInvite extends CTransaction {
 			if (SdpPortManagerEvent.OFFER_GENERATED.equals(eventType)) {
 				// Request user confirmation before sending response
 				log.debug("SdpPortManager successfully generated a SDP to be send to remote peer");
-				sendRequest(event.getMediaServerSdp());
-
+				try {
+					sendRequest(SdpConversor.sessionSpec2Sdp(
+							event.getMediaServerSdp()).getBytes());
+				} catch (SdpException e) {
+					log.warn("Unable to get local SDP", e);
+				}
 			} else if (SdpPortManagerEvent.ANSWER_PROCESSED.equals(eventType)) {
 				// Notify call set up
 				log.debug("SdpPortManager successfully processed SDP answer received from remote peer");
-				sendAck(null);
+				sendAck();
 				sipContext.completedOutgoingCall(this);
 			} else {
 				super.onEvent(event);

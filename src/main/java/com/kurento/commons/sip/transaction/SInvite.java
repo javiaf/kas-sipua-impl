@@ -16,8 +16,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>
 */
 package com.kurento.commons.sip.transaction;
 
-import java.util.Map;
-
 import javax.sdp.SdpException;
 import javax.sip.ServerTransaction;
 import javax.sip.TimeoutEvent;
@@ -28,11 +26,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.kurento.commons.media.format.SessionSpec;
-import com.kurento.commons.media.format.SpecTools;
+import com.kurento.commons.media.format.conversor.SdpConversor;
 import com.kurento.commons.mscontrol.EventType;
 import com.kurento.commons.mscontrol.networkconnection.SdpPortManagerEvent;
-import com.kurento.commons.sdp.enums.MediaType;
-import com.kurento.commons.sdp.enums.Mode;
 import com.kurento.commons.sip.agent.SipEndPointImpl;
 import com.kurento.commons.sip.exception.SipTransactionException;
 import com.kurento.commons.ua.exception.ServerInternalErrorException;
@@ -99,11 +95,9 @@ public class SInvite extends STransaction {
 			log.debug("SdpPortManager successfully generated a SDP to be send to remote peer");
 			SessionSpec session;
 			try {
-				session = new SessionSpec(new String(event.getMediaServerSdp()));
-				localSdp = session.getSessionDescription();
-				Map<MediaType, Mode> mediaTypesModes = SpecTools
-						.getModesOfFirstMediaTypes(session);
-				sipContext.incominCall(this, mediaTypesModes);
+				session = event.getMediaServerSdp();
+				localSdp = SdpConversor.sessionSpec2SessionDescription(session);
+				sipContext.incominCall(this, session);
 			} catch (SdpException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();

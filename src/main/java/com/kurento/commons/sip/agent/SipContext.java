@@ -16,9 +16,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>
 */
 package com.kurento.commons.sip.agent;
 
+import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
-import javax.sdp.SdpException;
 import javax.sip.Dialog;
 import javax.sip.SipException;
 import javax.sip.address.Address;
@@ -28,14 +29,14 @@ import javax.sip.message.Response;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.kurento.commons.media.format.MediaSpec;
 import com.kurento.commons.media.format.SessionSpec;
-import com.kurento.commons.media.format.SpecTools;
+import com.kurento.commons.media.format.enums.MediaType;
+import com.kurento.commons.media.format.enums.Mode;
 import com.kurento.commons.mscontrol.MsControlException;
 import com.kurento.commons.mscontrol.join.Joinable;
 import com.kurento.commons.mscontrol.join.JoinableStream.StreamType;
 import com.kurento.commons.mscontrol.networkconnection.NetworkConnection;
-import com.kurento.commons.sdp.enums.MediaType;
-import com.kurento.commons.sdp.enums.Mode;
 import com.kurento.commons.sip.transaction.CBye;
 import com.kurento.commons.sip.transaction.CCancel;
 import com.kurento.commons.sip.transaction.CInvite;
@@ -244,15 +245,14 @@ public class SipContext implements Call {
 	//
 	// ////////////////////
 
-	public void incominCall(SInvite pendingInvite,
-			Map<MediaType, Mode> mediaTypesModes) {
+	public void incominCall(SInvite pendingInvite, SessionSpec session) {
 		// Store pending request
 		log.info("Incoming call signalled with callId:"
 				+ pendingInvite.getServerTransaction().getDialog().getCallId());
 		this.incomingPendingRequest = pendingInvite;
 		this.remoteParty = this.incomingPendingRequest.getServerTransaction()
 				.getDialog().getRemoteParty();
-		this.mediaTypesModes = mediaTypesModes;
+		this.mediaTypesModes = getModesOfMediaTypes(session);
 		this.networkConnection=incomingPendingRequest.getNetworkConnection();
 
 		// Notify the incoming call to EndPoint controllers
@@ -311,19 +311,9 @@ public class SipContext implements Call {
 		} else {
 			try {
 				networkConnection.confirm();
-				SessionSpec session;
-				try {
-					session = new SessionSpec(new String(networkConnection
-							.getSdpPortManager()
-							.getMediaServerSessionDescription()));
-
-					this.mediaTypesModes = SpecTools
-							.getModesOfFirstMediaTypes(session);
-				} catch (SdpException e) {
-					log.error("Unable to get local SDP. Terminate call", e);
-					hangup = true;
-				}
-
+				SessionSpec session = networkConnection.getSdpPortManager()
+						.getMediaServerSessionDescription();
+				this.mediaTypesModes = getModesOfMediaTypes(session);
 			} catch (MsControlException e) {
 				log.error("Unable to set up media session. Terminate call", e);
 				hangup = true;
@@ -381,4 +371,19 @@ public class SipContext implements Call {
 		// TODO Auto-generated method stub
 		return null;
 	}
+
+	private static Map<MediaType, Mode> getModesOfMediaTypes(SessionSpec session) {
+		Map<MediaType, Mode> map = new HashMap<MediaType, Mode>();
+		for (MediaSpec m : session.getMediaSpecs()) {
+			Set<MediaType> mediaTypes = m.getTypes();
+			if (mediaTypes.size() != 1)
+				continue;
+			for (MediaType t : mediaTypes) {
+				map.put(t, m.getMode());
+				break;
+			}
+		}
+		return map;
+	}
+
 }
