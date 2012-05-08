@@ -222,7 +222,7 @@ public class SipContext implements Call {
 	protected void connect(Address remoteParty)
 			throws ServerInternalErrorException {
 		this.remoteParty = remoteParty;
-		log.info("Request connection from" + localEndPoint.getAddress()
+		log.info("Request connection from " + localEndPoint.getAddress()
 				+ " => To => " + remoteParty);
 		// Create transaction INVITE
 		CInvite invite = new CInvite(this);
