@@ -25,12 +25,6 @@ import javax.sip.header.CallIdHeader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import android.app.AlarmManager;
-import android.app.PendingIntent;
-import android.content.Context;
-import android.content.Intent;
-
-import com.kurento.commons.sip.android.RegisterService;
 import com.kurento.commons.sip.transaction.CRegister;
 import com.kurento.commons.ua.Call;
 import com.kurento.commons.ua.CallListener;
@@ -40,6 +34,7 @@ import com.kurento.commons.ua.event.EndPointEvent;
 import com.kurento.commons.ua.event.EndpointEventEnum;
 import com.kurento.commons.ua.exception.ServerInternalErrorException;
 import com.kurento.commons.ua.timer.KurentoUaTimer;
+import com.kurento.commons.ua.timer.KurentoUaTimerTask;
 
 public class SipEndPointImpl implements EndPoint {
 
@@ -65,10 +60,7 @@ public class SipEndPointImpl implements EndPoint {
 	private String password;
 
 	private KurentoUaTimer timer;
-
-	private Context androidContext;
-	private AlarmManager alarmManager;
-	private PendingIntent pendingIntent;
+	SipEndPointTimerTask sipEndPointTimerTask;
 
 	// ////////////
 	//
@@ -80,14 +72,6 @@ public class SipEndPointImpl implements EndPoint {
 			int expires, UaImpl ua, EndPointListener handler,
 			KurentoUaTimer timer) throws ParseException,
 			ServerInternalErrorException {
-		this(userName, realm, password, expires, ua, handler, timer, true);
-
-	}
-
-	protected SipEndPointImpl(String userName, String realm, String password,
-			int expires, UaImpl ua, EndPointListener handler,
-			KurentoUaTimer timer, Boolean receiveCall) throws ParseException,
-			ServerInternalErrorException {
 		this.ua = ua;
 		this.listener = handler;
 		this.timer = timer;
@@ -97,29 +81,10 @@ public class SipEndPointImpl implements EndPoint {
 		this.password = password;
 		this.sipUriAddress = UaFactory.getAddressFactory().createAddress(
 				"sip:" + this.userName + "@" + this.realm);
-		this.receiveCall = receiveCall;
+		sipEndPointTimerTask = new SipEndPointTimerTask();
 
-		reconfigureEndPoint();
 		ua.registerEndpoint(this);
 
-	}
-
-	@Deprecated
-	protected SipEndPointImpl(String userName, String realm, String password,
-			int expires, UaImpl ua, EndPointListener handler, Context context)
-			throws ParseException, ServerInternalErrorException {
-		this.ua = ua;
-		this.listener = handler;
-		this.androidContext = context;
-		this.userName = userName;
-		this.realm = realm;
-		this.expires = expires;
-		this.password = password;
-		this.sipUriAddress = UaFactory.getAddressFactory().createAddress(
-				"sip:" + this.userName + "@" + this.realm);
-
-		reconfigureEndPoint();
-		ua.registerEndpoint(this);
 	}
 
 	protected void reconfigureEndPoint() throws ParseException,
@@ -130,29 +95,6 @@ public class SipEndPointImpl implements EndPoint {
 						+ ua.getPublicPort());
 		// The register will do the UA when it has connectivity
 		// register();
-	}
-
-	private void createRegisterManger() {
-		log.info("Creating register manager");
-		// SecondeService service = new SecondeService(this);
-		long period = (long) (getExpires() * 1000 * 0.8);
-		if (period == 0) {
-			log.info("Expires is 0");
-			return;
-		}
-		log.info("Register period set as " + period);
-		RegisterService.setEndpoint(this);
-		alarmManager = (AlarmManager) androidContext
-				.getSystemService(Context.ALARM_SERVICE);
-		Intent myIntent = new Intent(androidContext, RegisterService.class);
-		log.info("Intend is " + myIntent.toString());
-		pendingIntent = PendingIntent
-				.getService(androidContext, 0, myIntent, 0);
-		log.info("pendingIntent is " + pendingIntent.toString()
-				+ "period is : " + period);
-		alarmManager.setRepeating(AlarmManager.ELAPSED_REALTIME_WAKEUP, 0,
-				period, pendingIntent);
-		log.info("SipEndpoint initialized.");
 	}
 
 	// //////////
@@ -212,8 +154,9 @@ public class SipEndPointImpl implements EndPoint {
 			setIsRegister(true);
 		} else if (EndPointEvent.REGISTER_USER_FAIL.equals(eventType)
 				|| EndPointEvent.REGISTER_USER_NOT_FOUND.equals(eventType)) {
-			if (alarmManager != null)
-				alarmManager.cancel(pendingIntent);
+			if (timer != null)
+				timer.cancel(sipEndPointTimerTask);
+
 			setIsRegister(false);
 		}
 		if (listener != null) {
@@ -242,14 +185,16 @@ public class SipEndPointImpl implements EndPoint {
 	public void setExpiresAndRegister(int expires) {
 
 		// Cancel previous schedulers
-		if (alarmManager != null)
-			alarmManager.cancel(pendingIntent);
-		// Set new expire value and register
 		this.expires = expires;
-
-		if (this.expires != 0)
+		log.debug("Expires = " + expires);
+		timer.cancel(sipEndPointTimerTask);
+		if (this.expires != 0) {
 			// Set new Register schedule
-			createRegisterManger();
+			long period = (long) (getExpires() * 1000 * 0.8);
+			log.debug("Period = " + expires);
+
+			timer.schedule(sipEndPointTimerTask, period, period);
+		}
 		else
 			// Send register with expires=0
 			register();
@@ -257,24 +202,20 @@ public class SipEndPointImpl implements EndPoint {
 	}
 
 	public void register() {
-		if (receiveCall) {
-			// Create call ID to avoid IP addresses that can be mangled by
-			// routers
-			this.registrarCallId = getUa().getSipProvider().getNewCallId();
-			try {
-				this.registrarCallId.setCallId(getUa().getInstanceId()
-						.toString());
-			} catch (ParseException e1) {
-				log.warn("Unable to set REGISTER call ID", e1);
-			}
+		// Create call ID to avoid IP addresses that can be mangled by routers
+		this.registrarCallId = getUa().getSipProvider().getNewCallId();
+		try {
+			this.registrarCallId.setCallId(getUa().getInstanceId().toString());
+		} catch (ParseException e1) {
+			log.warn("Unable to set REGISTER call ID", e1);
+		}
 
-			try {
-				CRegister register;
-				register = new CRegister(this);
-				register.sendRequest(null);
-			} catch (ServerInternalErrorException e) {
-				log.error("REGISTER error", e);
-			}
+		try {
+			CRegister register;
+			register = new CRegister(this);
+			register.sendRequest(null);
+		} catch (ServerInternalErrorException e) {
+			log.error("REGISTER error", e);
 		}
 	}
 
@@ -338,6 +279,16 @@ public class SipEndPointImpl implements EndPoint {
 		} else {
 			throw new ServerInternalErrorException(
 					"Request connection to NULL remote party");
+		}
+
+	}
+
+	private class SipEndPointTimerTask extends KurentoUaTimerTask {
+
+		@Override
+		public void run() {
+			log.debug("sipEndpointTimerTask register");
+			register();
 		}
 
 	}
