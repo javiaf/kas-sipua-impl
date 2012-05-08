@@ -46,6 +46,7 @@ public class SipEndPointImpl implements EndPoint {
 	private final static Logger log = LoggerFactory
 			.getLogger(SipEndPointImpl.class);
 
+	private boolean receiveCall;
 	private int expires = 3600;
 	private boolean isRegister = false;
 
@@ -53,10 +54,10 @@ public class SipEndPointImpl implements EndPoint {
 	private String realm;
 	private Address sipUriAddress;
 	private Address contactAddress;
-	
+
 	private UaImpl ua;
 	private EndPointListener listener;
-	//private List<TimerTask> scheduledTasks = new ArrayList<TimerTask>();
+	// private List<TimerTask> scheduledTasks = new ArrayList<TimerTask>();
 
 	private CallIdHeader registrarCallId;
 	private static Random rnd = new Random(System.currentTimeMillis());
@@ -69,7 +70,6 @@ public class SipEndPointImpl implements EndPoint {
 	private AlarmManager alarmManager;
 	private PendingIntent pendingIntent;
 
-	
 	// ////////////
 	//
 	// CONSTRUCTOR
@@ -77,23 +77,33 @@ public class SipEndPointImpl implements EndPoint {
 	// ////////////
 
 	protected SipEndPointImpl(String userName, String realm, String password,
-			int expires, UaImpl ua, EndPointListener handler, KurentoUaTimer timer)
-			throws ParseException, ServerInternalErrorException {
+			int expires, UaImpl ua, EndPointListener handler,
+			KurentoUaTimer timer) throws ParseException,
+			ServerInternalErrorException {
+		this(userName, realm, password, expires, ua, handler, timer, true);
+
+	}
+
+	protected SipEndPointImpl(String userName, String realm, String password,
+			int expires, UaImpl ua, EndPointListener handler,
+			KurentoUaTimer timer, Boolean receiveCall) throws ParseException,
+			ServerInternalErrorException {
 		this.ua = ua;
 		this.listener = handler;
-		this.timer=timer;
+		this.timer = timer;
 		this.userName = userName;
 		this.realm = realm;
 		this.expires = expires;
 		this.password = password;
 		this.sipUriAddress = UaFactory.getAddressFactory().createAddress(
 				"sip:" + this.userName + "@" + this.realm);
-				
+		this.receiveCall = receiveCall;
+
 		reconfigureEndPoint();
 		ua.registerEndpoint(this);
-		
+
 	}
-	
+
 	@Deprecated
 	protected SipEndPointImpl(String userName, String realm, String password,
 			int expires, UaImpl ua, EndPointListener handler, Context context)
@@ -107,7 +117,7 @@ public class SipEndPointImpl implements EndPoint {
 		this.password = password;
 		this.sipUriAddress = UaFactory.getAddressFactory().createAddress(
 				"sip:" + this.userName + "@" + this.realm);
-				
+
 		reconfigureEndPoint();
 		ua.registerEndpoint(this);
 	}
@@ -124,7 +134,7 @@ public class SipEndPointImpl implements EndPoint {
 
 	private void createRegisterManger() {
 		log.info("Creating register manager");
-		//SecondeService service = new SecondeService(this);
+		// SecondeService service = new SecondeService(this);
 		long period = (long) (getExpires() * 1000 * 0.8);
 		if (period == 0) {
 			log.info("Expires is 0");
@@ -140,8 +150,8 @@ public class SipEndPointImpl implements EndPoint {
 				.getService(androidContext, 0, myIntent, 0);
 		log.info("pendingIntent is " + pendingIntent.toString()
 				+ "period is : " + period);
-		alarmManager.setRepeating(AlarmManager.ELAPSED_REALTIME_WAKEUP, 0, period,
-				pendingIntent);
+		alarmManager.setRepeating(AlarmManager.ELAPSED_REALTIME_WAKEUP, 0,
+				period, pendingIntent);
 		log.info("SipEndpoint initialized.");
 	}
 
@@ -230,13 +240,13 @@ public class SipEndPointImpl implements EndPoint {
 	}
 
 	public void setExpiresAndRegister(int expires) {
-		
+
 		// Cancel previous schedulers
 		if (alarmManager != null)
 			alarmManager.cancel(pendingIntent);
 		// Set new expire value and register
 		this.expires = expires;
-					
+
 		if (this.expires != 0)
 			// Set new Register schedule
 			createRegisterManger();
@@ -244,24 +254,27 @@ public class SipEndPointImpl implements EndPoint {
 			// Send register with expires=0
 			register();
 
-
 	}
 
 	public void register() {
-		// Create call ID to avoid IP addresses that can be mangled by routers
-		this.registrarCallId = getUa().getSipProvider().getNewCallId();
-		try {
-			this.registrarCallId.setCallId(getUa().getInstanceId().toString());
-		} catch (ParseException e1) {
-			log.warn("Unable to set REGISTER call ID",e1);
-		}
+		if (receiveCall) {
+			// Create call ID to avoid IP addresses that can be mangled by
+			// routers
+			this.registrarCallId = getUa().getSipProvider().getNewCallId();
+			try {
+				this.registrarCallId.setCallId(getUa().getInstanceId()
+						.toString());
+			} catch (ParseException e1) {
+				log.warn("Unable to set REGISTER call ID", e1);
+			}
 
-		try {
-			CRegister register;
-			register = new CRegister(this);
-			register.sendRequest(null);
-		} catch (ServerInternalErrorException e) {
-			log.error("REGISTER error",e);
+			try {
+				CRegister register;
+				register = new CRegister(this);
+				register.sendRequest(null);
+			} catch (ServerInternalErrorException e) {
+				log.error("REGISTER error", e);
+			}
 		}
 	}
 
@@ -277,31 +290,33 @@ public class SipEndPointImpl implements EndPoint {
 		return userName;
 	}
 
-//	protected void register(int expires) throws ServerInternalErrorException {
-//		log.info("Send REGISTER request: " + sipUriAddress + " > " + contactAddress);
-//		setExpiresAndRegister(expires);
-//	}
+	// protected void register(int expires) throws ServerInternalErrorException
+	// {
+	// log.info("Send REGISTER request: " + sipUriAddress + " > " +
+	// contactAddress);
+	// setExpiresAndRegister(expires);
+	// }
 
 	// TimerTask deprecated
-//	private class RegisterTask extends TimerTask {
-//
-//		private SipEndPointImpl user;
-//
-//		protected RegisterTask(SipEndPointImpl user) {
-//			this.user = user;
-//		}
-//
-//		@Override
-//		public void run() {
-//			try {
-//				register();
-//			} catch (ServerInternalErrorException e) {
-//				log.error("Unable to re-register user:" + user
-//						+ ". Deleting from list of users");
-//				user.notifyEvent(EndPointEvent.REGISTER_USER_FAIL);
-//			}
-//		}
-//	}
+	// private class RegisterTask extends TimerTask {
+	//
+	// private SipEndPointImpl user;
+	//
+	// protected RegisterTask(SipEndPointImpl user) {
+	// this.user = user;
+	// }
+	//
+	// @Override
+	// public void run() {
+	// try {
+	// register();
+	// } catch (ServerInternalErrorException e) {
+	// log.error("Unable to re-register user:" + user
+	// + ". Deleting from list of users");
+	// user.notifyEvent(EndPointEvent.REGISTER_USER_FAIL);
+	// }
+	// }
+	// }
 
 	@Override
 	public Call dial(String remoteParty, CallListener callController)
