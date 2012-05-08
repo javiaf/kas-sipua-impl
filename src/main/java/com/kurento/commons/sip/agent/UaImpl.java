@@ -60,6 +60,7 @@ import com.kurento.commons.sip.transaction.SAck;
 import com.kurento.commons.sip.transaction.SBye;
 import com.kurento.commons.sip.transaction.SCancel;
 import com.kurento.commons.sip.transaction.SInvite;
+import com.kurento.commons.sip.transaction.SRegister;
 import com.kurento.commons.sip.transaction.STransaction;
 import com.kurento.commons.sip.util.NatKeepAlive;
 import com.kurento.commons.sip.util.SipConfig;
@@ -510,47 +511,56 @@ public class UaImpl implements SipListener, UaStun {
 				serverTransaction = sipProvider
 						.getNewServerTransaction(requestEvent.getRequest());
 			}
-			// Get local party or give up
-			localParty = getLocalEndPoint(serverTransaction);
-
-			// Check if SipContext has to be created
-			if ((dialog = serverTransaction.getDialog()) != null) {
-				log.debug("Created IN dialog transaction:"
-						+ serverTransaction.getBranchId());
-				if ((dialog.getApplicationData()) == null) {
-					log.debug("New SipContext created for transaction: "
-							+ serverTransaction.getBranchId());
-					dialog.setApplicationData(new SipContext(localParty, dialog));
-				} else {
-					log.debug("Transaccion already has a SipContext associated");
-				}
+			if (reqMethod.equals(Request.REGISTER)) {
+				// Register requests addressed to the UA. No localparty
+				// required
+				log.info("Detected REGISTER request");
+				sTrns = new SRegister(serverTransaction);
 			} else {
-				log.debug("Created OUT dialog transaction: "
-						+ serverTransaction.getBranchId());
-			}
+				// Rest of requests: Get local party or give up
+				localParty = getLocalEndPoint(serverTransaction);
 
-			// Get Request method to create a proper transaction record
-			if ((sTrns = (STransaction) serverTransaction.getApplicationData()) == null) {
-
-				if (reqMethod.equals(Request.ACK)) {
-					log.info("Detected ACK request");
-					sTrns = new SAck(serverTransaction, localParty);
-				} else if (reqMethod.equals(Request.INVITE)) {
-					log.info("Detected INVITE request");
-					sTrns = new SInvite(serverTransaction, localParty);
-				} else if (reqMethod.equals(Request.BYE)) {
-					log.info("Detected BYE request");
-					sTrns = new SBye(serverTransaction, localParty);
-				} else if (reqMethod.equals(Request.CANCEL)) {
-					log.info("Detected Cancel request");
-					sTrns = new SCancel(serverTransaction, localParty);
+				// Check if SipContext has to be created
+				if ((dialog = serverTransaction.getDialog()) != null) {
+					log.debug("Created IN dialog transaction:"
+							+ serverTransaction.getBranchId());
+					if ((dialog.getApplicationData()) == null) {
+						log.debug("New SipContext created for transaction: "
+								+ serverTransaction.getBranchId());
+						dialog.setApplicationData(new SipContext(localParty,
+								dialog));
+					} else {
+						log.debug("Transaccion already has a SipContext associated");
+					}
 				} else {
-					log.error("Unsupported method on request: " + reqMethod);
-					sendStateless(Response.NOT_IMPLEMENTED,
-							requestEvent.getRequest());
+					log.debug("Created OUT dialog transaction: "
+							+ serverTransaction.getBranchId());
 				}
-				// Insert application data into server transaction
-				serverTransaction.setApplicationData(sTrns);
+
+				// Get Request method to create a proper transaction record
+				if ((sTrns = (STransaction) serverTransaction
+						.getApplicationData()) == null) {
+
+					if (reqMethod.equals(Request.ACK)) {
+						log.info("Detected ACK request");
+						sTrns = new SAck(serverTransaction, localParty);
+					} else if (reqMethod.equals(Request.INVITE)) {
+						log.info("Detected INVITE request");
+						sTrns = new SInvite(serverTransaction, localParty);
+					} else if (reqMethod.equals(Request.BYE)) {
+						log.info("Detected BYE request");
+						sTrns = new SBye(serverTransaction, localParty);
+					} else if (reqMethod.equals(Request.CANCEL)) {
+						log.info("Detected CANCEL request");
+						sTrns = new SCancel(serverTransaction, localParty);
+					} else {
+						log.error("Unsupported method on request: " + reqMethod);
+						sendStateless(Response.NOT_IMPLEMENTED,
+								requestEvent.getRequest());
+					}
+					// Insert application data into server transaction
+					serverTransaction.setApplicationData(sTrns);
+				}
 			}
 		} catch (Exception e) {
 			log.error("Unable to process server transaction", e);
