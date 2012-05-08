@@ -47,7 +47,7 @@ import com.kurento.commons.ua.exception.ServerInternalErrorException;
 
 public abstract class STransaction extends Transaction {
 
-	private static Logger log = LoggerFactory.getLogger(STransaction.class);
+	protected static Logger log = LoggerFactory.getLogger(STransaction.class);
 
 	protected ServerTransaction serverTransaction;
 
@@ -104,8 +104,10 @@ public abstract class STransaction extends Transaction {
 
 
 			// Set contact header
-			ContactHeader contactHeader = buildContactHeader();
-			response.setHeader(contactHeader);
+			if (localParty != null) {
+				ContactHeader contactHeader = buildContactHeader();
+				response.setHeader(contactHeader);
+			}
 
 			if (sdp != null) {
 				ContentTypeHeader contentTypeHeader = UaFactory.getHeaderFactory()
