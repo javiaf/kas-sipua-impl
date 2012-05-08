@@ -16,7 +16,7 @@ public class TestConfig {
 	public final static int WAIT_TIME = 60;
 	private static int counter;
 
-	public int getCounter() {
+	public static int getCounter() {
 		return counter++;
 	}
 
