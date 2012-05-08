@@ -72,6 +72,14 @@ public class SipEndPointImpl implements EndPoint {
 			int expires, UaImpl ua, EndPointListener handler,
 			KurentoUaTimer timer) throws ParseException,
 			ServerInternalErrorException {
+		this(userName, realm, password, expires, ua, handler, timer, true);
+
+	}
+
+	protected SipEndPointImpl(String userName, String realm, String password,
+			int expires, UaImpl ua, EndPointListener handler,
+			KurentoUaTimer timer, Boolean receiveCall) throws ParseException,
+			ServerInternalErrorException {
 		this.ua = ua;
 		this.listener = handler;
 		this.timer = timer;
@@ -81,7 +89,8 @@ public class SipEndPointImpl implements EndPoint {
 		this.password = password;
 		this.sipUriAddress = UaFactory.getAddressFactory().createAddress(
 				"sip:" + this.userName + "@" + this.realm);
-		sipEndPointTimerTask = new SipEndPointTimerTask();
+		this.receiveCall = receiveCall;
+		this.sipEndPointTimerTask = new SipEndPointTimerTask();
 
 		ua.registerEndpoint(this);
 
@@ -184,38 +193,44 @@ public class SipEndPointImpl implements EndPoint {
 
 	public void setExpiresAndRegister(int expires) {
 
-		// Cancel previous schedulers
-		this.expires = expires;
-		log.debug("Expires = " + expires);
-		timer.cancel(sipEndPointTimerTask);
-		if (this.expires != 0) {
-			// Set new Register schedule
-			long period = (long) (getExpires() * 1000 * 0.8);
-			log.debug("Period = " + expires);
+		if (receiveCall) {
+			// Cancel previous schedulers
+			this.expires = expires;
+			log.debug("Expires = " + expires);
+			timer.cancel(sipEndPointTimerTask);
+			if (this.expires != 0) {
+				// Set new Register schedule
+				long period = (long) (getExpires() * 1000 * 0.8);
+				log.debug("Period = " + expires);
 
-			timer.schedule(sipEndPointTimerTask, period, period);
+				timer.schedule(sipEndPointTimerTask, period, period);
+			} else {
+				// Send register with expires=0
+				register();
+			}
 		}
-		else
-			// Send register with expires=0
-			register();
 
 	}
 
 	public void register() {
-		// Create call ID to avoid IP addresses that can be mangled by routers
-		this.registrarCallId = getUa().getSipProvider().getNewCallId();
-		try {
-			this.registrarCallId.setCallId(getUa().getInstanceId().toString());
-		} catch (ParseException e1) {
-			log.warn("Unable to set REGISTER call ID", e1);
-		}
+		if (receiveCall) {
+			// Create call ID to avoid IP addresses that can be mangled by
+			// routers
+			this.registrarCallId = getUa().getSipProvider().getNewCallId();
+			try {
+				this.registrarCallId.setCallId(getUa().getInstanceId()
+						.toString());
+			} catch (ParseException e1) {
+				log.warn("Unable to set REGISTER call ID", e1);
+			}
 
-		try {
-			CRegister register;
-			register = new CRegister(this);
-			register.sendRequest(null);
-		} catch (ServerInternalErrorException e) {
-			log.error("REGISTER error", e);
+			try {
+				CRegister register;
+				register = new CRegister(this);
+				register.sendRequest(null);
+			} catch (ServerInternalErrorException e) {
+				log.error("REGISTER error", e);
+			}
 		}
 	}
 
