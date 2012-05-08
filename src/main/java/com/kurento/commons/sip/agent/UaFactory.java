@@ -29,8 +29,6 @@ import javax.sip.message.MessageFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import android.content.Context;
-
 import com.kurento.commons.mscontrol.MediaSession;
 import com.kurento.commons.sip.util.SipConfig;
 import com.kurento.commons.ua.UA;
@@ -192,13 +190,5 @@ public class UaFactory {
 	public static MediaSession getMediaSession() {
 		return mediaSession;
 	}
-	
-	private static Context context;
-	public static Context getAndroidContext() {
-		return UaFactory.context;
-	}
-	
-	public static void setAndroidContext(Context context){
-		UaFactory.context = context;
-	}
+
 }

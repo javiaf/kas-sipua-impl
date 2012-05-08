@@ -199,7 +199,7 @@ public class UaImpl implements SipListener, UaStun {
 				try {
 					// endpoint.terminate();
 					endpoint.reconfigureEndPoint();
-					endpoint.setExpiresAndRegister(3600);
+					endpoint.setExpiresAndRegister(endpoint.getExpires());
 				} catch (ServerInternalErrorException e) {
 					log.error("Error finishing endpoint " + endpoint);
 					log.info("Error finishing endpoint");
