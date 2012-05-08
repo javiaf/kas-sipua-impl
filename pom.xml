@@ -17,7 +17,7 @@
 		<kcUaVersion>1.2.6-SNAPSHOT</kcUaVersion>
 		<kcMediaSpecVersion>2.0.0</kcMediaSpecVersion>
 		<kcMediaSpecConversorVersion>1.0.0</kcMediaSpecConversorVersion>
-		<kcStunVersion>1.0.1</kcStunVersion>
+		<kcStunVersion>1.0.2-SNAPSHOT</kcStunVersion>
 	</properties>
 
 	<organization>
@@ -83,6 +83,7 @@
 			<groupId>javax.sip</groupId>
 			<artifactId>jain-sip-ri</artifactId>
 			<version>1.2.76</version>
+			<scope>provided</scope>
 		</dependency>
 		<dependency>
 			<groupId>com.google.android</groupId>
@@ -94,6 +95,19 @@
 			<groupId>junit</groupId>
 			<artifactId>junit</artifactId>
 			<version>4.10</version>
+			<scope>test</scope>
+		</dependency>
+
+		<dependency>
+			<groupId>log4j</groupId>
+			<artifactId>log4j</artifactId>
+			<version>1.2.14</version>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.slf4j</groupId>
+			<artifactId>slf4j-log4j12</artifactId>
+			<version>1.6.4</version>
 			<scope>test</scope>
 		</dependency>
 	</dependencies>
