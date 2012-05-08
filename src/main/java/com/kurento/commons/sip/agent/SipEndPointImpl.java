@@ -159,9 +159,12 @@ public class SipEndPointImpl implements EndPoint {
 
 	public void notifyEvent(EndpointEventEnum eventType) {
 		EndPointEvent event = new EndPointEvent(eventType, this);
-		if (EndPointEvent.REGISTER_USER_SUCESSFUL.equals(eventType)) {
+		if (EndPointEvent.REGISTER_USER_SUCESSFUL.equals(eventType)
+				&& expires != 0) {
 			setIsRegister(true);
-		} else if (EndPointEvent.REGISTER_USER_FAIL.equals(eventType)
+		} else if (EndPointEvent.REGISTER_USER_SUCESSFUL.equals(eventType)
+				&& expires == 0
+				|| EndPointEvent.REGISTER_USER_FAIL.equals(eventType)
 				|| EndPointEvent.REGISTER_USER_NOT_FOUND.equals(eventType)) {
 			if (timer != null)
 				timer.cancel(sipEndPointTimerTask);
@@ -203,7 +206,7 @@ public class SipEndPointImpl implements EndPoint {
 				long period = (long) (getExpires() * 1000 * 0.8);
 				log.debug("Period = " + expires);
 
-				timer.schedule(sipEndPointTimerTask, period, period);
+				timer.schedule(sipEndPointTimerTask, 0, period);
 			} else {
 				// Send register with expires=0
 				register();
