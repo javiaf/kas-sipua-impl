@@ -82,7 +82,7 @@ public class InviteTest {
 		serverEndPointController = new SipEndPointController(serverName);
 		serverTimer = new TestTimer();
 		// Create and register SIP EndPoint
-		serverEndPoint = EndPointFactory.getInstance(clientName, "kurento.com",
+		serverEndPoint = EndPointFactory.getInstance(serverName, "kurento.com",
 				"", 10, serverUa, serverEndPointController, serverTimer, false);
 		// Create SIP stack and activate SIP EndPoints
 		serverUa.reconfigure();
@@ -96,7 +96,7 @@ public class InviteTest {
 		clientUa = UaFactory.getInstance(sConfig);
 		clientEndPointController = new SipEndPointController("client");
 		serverTimer = new TestTimer();
-		clientEndPoint = EndPointFactory.getInstance("clien", "kurento.com",
+		clientEndPoint = EndPointFactory.getInstance(clientName, "kurento.com",
 				"", 10, clientUa, clientEndPointController, clientTimer, false);
 		// Create SIP stack and activate SIP EndPoints
 		clientUa.reconfigure();
@@ -111,8 +111,10 @@ public class InviteTest {
 
 	/**
 	 * C:---INVITE---------->:S<br>
-	 * C:<----------200 OK --:S<br>
+	 * C:<----------200 OK---:S<br>
 	 * C:---ACK------------->:S<br>
+	 * C:---BYE------------->:S<br>
+	 * C:<----------200 OK---:S<br>
 	 * 
 	 * @throws Exception
 	 */
@@ -167,24 +169,29 @@ public class InviteTest {
 		assertTrue("Bad message received in client UA",
 				CallEvent.CALL_SETUP.equals(callEvent.getEventType()));
 		log.info("OK");
-		//
-		// log.info(userClient + " hangup...");
-		// clientCall.hangup();
-		// log.info("OK");
-		//
-		// log.info(userB1 + " expects call hangup from " + userClient + "...");
-		// callEvent =
-		// callControllerB1.pollSipEndPointEvent(TestConfig.WAIT_TIME);
-		// assertNotNull(callEvent);
-		// assertEquals(CallEvent.CALL_TERMINATE, callEvent.getEventType());
-		// log.info("OK");
-		//
-		// log.info(userClient + " call terminate...");
-		// callEvent = callControllerClient
-		// .pollSipEndPointEvent(TestConfig.WAIT_TIME);
-		// assertNotNull(callEvent);
-		// assertEquals(CallEvent.CALL_TERMINATE, callEvent.getEventType());
-		// log.info("OK");
+
+		// C:---BYE------------->:S
+		log.info(clientName + " hangup...");
+		clientCall.hangup();
+		log.info("OK");
+
+		log.info(serverName + " expects call hangup from " + clientName + "...");
+		callEvent = callControllerServer
+				.pollSipEndPointEvent(TestConfig.WAIT_TIME);
+		assertTrue("No message received in server UA", callEvent != null);
+		assertTrue("Bad message received in server UA",
+				CallEvent.CALL_TERMINATE.equals(callEvent.getEventType()));
+		log.info("OK");
+
+		// C:<----------200 OK --:S
+		log.info(clientName + " call terminate...");
+		callEvent = callControllerClient
+				.pollSipEndPointEvent(TestConfig.WAIT_TIME);
+		assertTrue("No message received in client UA", callEvent != null);
+		assertTrue("Bad message received in client UA",
+				CallEvent.CALL_TERMINATE.equals(callEvent.getEventType()));
+
+		log.info("OK");
 
 		log.info(" -------------------- Test Call Setup and Drop from caller finished OK --------------------");
 	}
