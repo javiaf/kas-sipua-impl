@@ -13,7 +13,7 @@ GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>
-*/
+ */
 package com.kurento.commons.sip.util;
 
 /**
@@ -21,33 +21,59 @@ package com.kurento.commons.sip.util;
  * configuration when creating a new IP User Agent. Required configuration
  * includes
  * <ul>
- * <li> <b>Local Address</b>: Specifies the network interface where the SIP stack will be binded
- * <li> <b>Local Port</b>: Specifies the port number of the Local Address where the SIP stack is listening for new messages
- * <li> <b>Proxy Address</b>: Specifies a remote address where the SIP REGISTRAR and SIP PROXY listen for messages
- * <li> <b>Proxy Port</b>: Specifies port where the REGISTRAR and PROXY servers listen for messages
- * <li> <b>Transport</b>: use UDP or TCP, depending on transport protocol used for SIP
- * <li> <b>Max Forwards</b>: Maximun number of hops allowed for SIP messages reaching the User Agent
+ * <li><b>Local Address</b>: Specifies the network interface where the SIP stack
+ * will be binded
+ * <li><b>Local Port</b>: Specifies the port number of the Local Address where
+ * the SIP stack is listening for new messages
+ * <li><b>Proxy Address</b>: Specifies a remote address where the SIP REGISTRAR
+ * and SIP PROXY listen for messages
+ * <li><b>Proxy Port</b>: Specifies port where the REGISTRAR and PROXY servers
+ * listen for messages
+ * <li><b>Transport</b>: use UDP or TCP, depending on transport protocol used
+ * for SIP
+ * <li><b>Max Forwards</b>: Maximun number of hops allowed for SIP messages
+ * reaching the User Agent
  * </ul>
+ * 
  * @author Kurento
  * 
  */
 public class SipConfig {
 	private int localPort = 5070;
-	
-	private String stunAddress;
-	private int stunPort;
+	private String localAddress = "";
+
+	private String stunServerAddress;
+	private int stunServerPort;
 	private String proxyAddress = "127.0.0.1";
 	private int proxyPort = 5060;
 	private String transport = "UDP";
 	private int maxForards = 70;
-	
-	private boolean enableKeepAlive;
 
+	private boolean enableKeepAlive;
 
 	private long keepAlivePeriod = 5000;
 
-	public SipConfig() {
+	/**
+	 * Get the IP address or interface name where the SIP stack must be
+	 * attached. If this value is provided and no matching network interface is
+	 * found, the SIP stack will fail to initialize
+	 * 
+	 * @return localAddress
+	 */
+	public String getLocalAddress() {
+		return localAddress;
+	}
 
+	/**
+	 * Set the IP address or interface name pattern where the SIP stack will be
+	 * attached. If this value is set and no matching interface or IP is found,
+	 * the SIP stack will fail to initialize. If this value is not set the SIP
+	 * stack will attach to the first non local active interface found.
+	 * 
+	 * @param localAddress
+	 */
+	public void setLocalAddress(String localAddress) {
+		this.localAddress = localAddress;
 	}
 
 	/**
@@ -69,8 +95,9 @@ public class SipConfig {
 	}
 
 	/**
-	 * Returns the IP address where SIP messages will be sent. 
-	 * @return 
+	 * Returns the IP address where SIP messages will be sent.
+	 * 
+	 * @return
 	 */
 	public String getProxyAddress() {
 		return proxyAddress;
@@ -78,6 +105,7 @@ public class SipConfig {
 
 	/**
 	 * Sets the IP address where SIP messages will be send
+	 * 
 	 * @param proxyAddress
 	 */
 	public void setProxyAddress(String proxyAddress) {
@@ -86,6 +114,7 @@ public class SipConfig {
 
 	/**
 	 * Returns the port of the ProxyAddress where SIP messages will be sent
+	 * 
 	 * @return Port number where Proxy SIP stack will bind
 	 */
 	public int getProxyPort() {
@@ -94,6 +123,7 @@ public class SipConfig {
 
 	/**
 	 * Sets the port where the SIP proxy will be listening for SIP messages
+	 * 
 	 * @param proxyPort
 	 */
 	public void setProxyPort(int proxyPort) {
@@ -102,6 +132,7 @@ public class SipConfig {
 
 	/**
 	 * Gets the transport protocol used to relay SIP messages
+	 * 
 	 * @return UDP/TCP
 	 */
 	public String getTransport() {
@@ -109,7 +140,8 @@ public class SipConfig {
 	}
 
 	/**
-	 * Gets the transport protocol used to relay SIP messages	
+	 * Gets the transport protocol used to relay SIP messages
+	 * 
 	 * @param transport
 	 */
 	public void setTransport(String transport) {
@@ -118,6 +150,7 @@ public class SipConfig {
 
 	/**
 	 * Get the maximum number of hops for SIP messages allowed by the User Agent
+	 * 
 	 * @return
 	 */
 	public int getMaxForards() {
@@ -125,11 +158,88 @@ public class SipConfig {
 	}
 
 	/**
-	 * Sets the maximum number of hops for SIP messages allowed by the User Agent
+	 * Sets the maximum number of hops for SIP messages allowed by the User
+	 * Agent
+	 * 
 	 * @param maxForards
 	 */
 	public void setMaxForards(int maxForards) {
 		this.maxForards = maxForards;
+	}
+
+	/**
+	 * Get the STUN server IP address
+	 * 
+	 * @return
+	 */
+	public String getStunServerAddress() {
+		return stunServerAddress;
+	}
+
+	/**
+	 * Sets the STUN server IP address or hostname
+	 * 
+	 * @param stunServerAddress
+	 */
+	public void setStunServerAddress(String stunServerAddress) {
+		this.stunServerAddress = stunServerAddress;
+	}
+
+	/**
+	 * Get the STUN server port where request must be sent
+	 * 
+	 * @return
+	 */
+	public int getStunServerPort() {
+		return stunServerPort;
+	}
+
+	/**
+	 * Sets the STUN server port
+	 * 
+	 * @param stunServerPort
+	 */
+	public void setStunServerPort(int stunServerPort) {
+		this.stunServerPort = stunServerPort;
+	}
+
+	/**
+	 * Find out if SIP keep-alive packets are requested to be sent
+	 * 
+	 * @return
+	 */
+	public boolean isEnableKeepAlive() {
+		return enableKeepAlive;
+	}
+
+	/**
+	 * Set this parameter to true in order to request SIP keep-alive packages.
+	 * These are useful in NAT environments, where punch hole is required
+	 * 
+	 * @param enableKeepAlive
+	 */
+	public void setEnableKeepAlive(boolean enableKeepAlive) {
+		this.enableKeepAlive = enableKeepAlive;
+	}
+
+	/**
+	 * Get SIP keep-alive interval. Is the period between two consecutive SIP
+	 * keep-alive packets when keep-alive is enabled
+	 * 
+	 * @return
+	 */
+	public long getKeepAlivePeriod() {
+		return keepAlivePeriod;
+	}
+
+	/**
+	 * Configure SIP keep-alive interval. Is the period between two consecutive SIP
+	 * keep-alive packets when keep-alive is enabled
+	 * 
+	 * @return
+	 */
+	public void setKeepAlivePeriod(long keepAlivePeriod) {
+		this.keepAlivePeriod = keepAlivePeriod;
 	}
 
 	public String toString() {
@@ -138,38 +248,5 @@ public class SipConfig {
 				+ "Transport    : " + transport + "\n" + "Max Forwards : "
 				+ maxForards + "\n";
 	}
-	
-	public String getStunAddress() {
-		return stunAddress;
-	}
-
-	public void setStunAddress(String stunAddress) {
-		this.stunAddress = stunAddress;
-	}
-
-	public int getStunPort() {
-		return stunPort;
-	}
-
-	public void setStunPort(int stunPort) {
-		this.stunPort = stunPort;
-	}
-	
-	public boolean isEnableKeepAlive() {
-		return enableKeepAlive;
-	}
-
-	public void setEnableKeepAlive(boolean enableKeepAlive) {
-		this.enableKeepAlive = enableKeepAlive;
-	}
-
-	public long getKeepAlivePeriod() {
-		return keepAlivePeriod;
-	}
-
-	public void setKeepAlivePeriod(long keepAlivePeriod) {
-		this.keepAlivePeriod = keepAlivePeriod;
-	}
-
 
 }

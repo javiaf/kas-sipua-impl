@@ -111,10 +111,9 @@ public class UaFactory {
 	 * before this method is called
 	 */
 	public static UA getInstance(SipConfig config) throws Exception {
-		//TODO FIX context setting.
-		if (UaFactory.context == null) {
-			throw new Exception("Android context not setted.");
-		}
+//		if (UaFactory.context == null) {
+//			throw new Exception("Android context not setted.");
+//		}
 		UaImpl ua = new UaImpl(config);
 		return ua;
 	}

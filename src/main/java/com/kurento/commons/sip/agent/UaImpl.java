@@ -86,10 +86,10 @@ public class UaImpl implements SipListener, UaStun {
 	// private UserAgentHeader userAgent;
 
 	// Configuration parameters
-	private String localAddress = "127.0.0.1";
-	private int localPort = 5060;
-	private String publicAddress = "127.0.0.1";
-	private int publicPort = 5060;
+	private String localAddress = "";
+	private int localPort = 0;
+	private String publicAddress = "";
+	private int publicPort = 0;
 
 	private NatKeepAlive keepAlive;
 	// private TypeStun typeStun;
@@ -119,7 +119,7 @@ public class UaImpl implements SipListener, UaStun {
 
 		// instance-id: RFC5626
 		/*
-		 * According to RFC5626 instance-id must stay the same on UA rebbot or
+		 * According to RFC5626 instance-id must stay the same on UA reboot or
 		 * power cycle. This implementation assigns temporal UUID that stays the
 		 * same during UA's life cycle
 		 */
@@ -133,7 +133,8 @@ public class UaImpl implements SipListener, UaStun {
 	public void reconfigure() {
 		log.info("Reconfigure SIP UA network connection");
 
-		InetAddress localAddressNew = getAndroidLocalAddress();
+		InetAddress localAddressNew = getLocalInterface(config
+				.getLocalAddress());
 		if (localAddressNew != null
 				&& !localAddressNew.getHostAddress().equals(localAddress)) {
 			// Detected Network interface change
@@ -142,8 +143,8 @@ public class UaImpl implements SipListener, UaStun {
 
 			localAddress = localAddressNew.getHostAddress();
 			// Check if user has request STUN
-			if (config.getStunAddress() != null
-					&& !"".equals((config.getStunAddress()))) {
+			if (config.getStunServerAddress() != null
+					&& !"".equals((config.getStunServerAddress()))) {
 				// YES, Try for NUMBER_TRY
 				log.debug("STUN activated");
 				int trying = 0;
@@ -366,7 +367,7 @@ public class UaImpl implements SipListener, UaStun {
 		}
 	}
 
-	private InetAddress getAndroidLocalAddress() {
+	private InetAddress getLocalInterface(String pattern) {
 		try {
 			for (Enumeration<NetworkInterface> en = NetworkInterface
 					.getNetworkInterfaces(); en.hasMoreElements();) {
@@ -374,14 +375,28 @@ public class UaImpl implements SipListener, UaStun {
 				for (Enumeration<InetAddress> enumIpAddr = intf
 						.getInetAddresses(); enumIpAddr.hasMoreElements();) {
 					InetAddress inetAddress = enumIpAddr.nextElement();
-					if (!inetAddress.isLoopbackAddress()
-							&& (inetAddress instanceof Inet4Address)) {
-						return inetAddress;
+					log.debug("Found interface: IFNAME="
+							+ intf.getDisplayName() + "; ADDR="
+							+ inetAddress.getHostAddress());
+					if (inetAddress instanceof Inet4Address) {
+						if (!"".equals(pattern)) {
+							// Search for a given interface or IP address
+							if (intf.getDisplayName().equals(pattern)
+									|| inetAddress.getHostAddress().equals(
+											pattern)
+									|| new String(inetAddress.getAddress())
+											.equals(pattern)) {
+								return inetAddress;
+							}
+						} else if (!inetAddress.isLoopbackAddress()) {
+							// Search for first active interface
+							return inetAddress;
+						}
 					}
 				}
 			}
 		} catch (SocketException e) {
-			e.printStackTrace();
+			log.error("Error while attaching to the network interface", e);
 		}
 		return null;
 	}
@@ -737,7 +752,7 @@ public class UaImpl implements SipListener, UaStun {
 		log.debug("RunStunTest = " + localAddress + ":" + localPort);
 		InetAddress addr = InetAddress.getByName(localAddress);
 		DiscoveryTest test = new DiscoveryTest(addr, localPort,
-				config.getStunAddress(), config.getStunPort());
+				config.getStunServerAddress(), config.getStunServerPort());
 
 		info = test.test();
 
