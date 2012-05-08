@@ -17,16 +17,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>
 package com.kurento.commons.sip.junit;
 
 import static org.junit.Assert.assertTrue;
-
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import android.content.Context;
 
 import com.kurento.commons.sip.agent.EndPointFactory;
 import com.kurento.commons.sip.agent.UaFactory;
@@ -95,7 +90,7 @@ public class InviteTest {
 
 		clientUa = UaFactory.getInstance(sConfig);
 		clientEndPointController = new SipEndPointController("client");
-		serverTimer = new TestTimer();
+		clientTimer = new TestTimer();
 		clientEndPoint = EndPointFactory.getInstance(clientName, "kurento.com",
 				"", 10, clientUa, clientEndPointController, clientTimer, false);
 		// Create SIP stack and activate SIP EndPoints
