@@ -16,20 +16,27 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
 package com.kurento.commons.sip.junit;
 
+import static org.junit.Assert.assertTrue;
+
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
+import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.kurento.commons.sip.agent.EndPointFactory;
 import com.kurento.commons.sip.agent.UaFactory;
 import com.kurento.commons.sip.testutils.MediaSessionDummy;
+import com.kurento.commons.sip.testutils.SipCallController;
 import com.kurento.commons.sip.testutils.SipEndPointController;
 import com.kurento.commons.sip.testutils.TestConfig;
 import com.kurento.commons.sip.testutils.TestTimer;
 import com.kurento.commons.sip.util.SipConfig;
+import com.kurento.commons.ua.Call;
 import com.kurento.commons.ua.EndPoint;
 import com.kurento.commons.ua.UA;
+import com.kurento.commons.ua.event.CallEvent;
+import com.kurento.commons.ua.event.EndPointEvent;
 
 /**
  * RFC 3261 Chapter 9. Canceling a Request.
@@ -103,6 +110,63 @@ public class CancelTest {
 			serverUa.terminate();
 		if (clientUa != null)
 			clientUa.terminate();
+	}
+
+	/**
+	 * <pre>
+	 * C:-----INVITE-------------->:S
+	 * C:<----------- 100 Trying
+	 * C:<----------- 180 Ringing
+	 * C:----CANCEL -------------->:S
+	 * C:<----------- 487 Request Terminated
+	 * C:----ACK------------------>:S
+	 * C:<------------ 200 OK (CSeq: xxx CANCEL)
+	 * </pre>
+	 * 
+	 * @throws Exception
+	 */
+	@Test
+	public void testCancel() throws Exception {
+		log.info("-------------------- Test Cancel --------------------");
+
+		EndPointEvent endPointEvent;
+		CallEvent callEvent;
+
+		// C:-----INVITE-------------->:S
+		log.info(clientName + " dial to " + serverName + "...");
+		SipCallController callControllerA1 = new SipCallController(clientName);
+		Call initialCallA1 = clientEndPoint.dial(serverUri, callControllerA1);
+		log.info("OK");
+
+		log.info(serverName + " expects incoming call from " + clientName
+				+ "...");
+		endPointEvent = serverEndPointController
+				.pollSipEndPointEvent(TestConfig.WAIT_TIME);
+		assertTrue("No message received in server UA", endPointEvent != null);
+		assertTrue(
+				"Bad message received in server UA: "
+						+ endPointEvent.getEventType(),
+				EndPointEvent.INCOMING_CALL.equals(endPointEvent.getEventType()));
+
+		Call serverCall = endPointEvent.getCallSource();
+		SipCallController callControllerB1 = new SipCallController(serverName);
+		serverCall.addListener(callControllerB1);
+		log.info("OK");
+
+		// C:----CANCEL -------------->:S
+		log.info(clientName + " cancel call...");
+		initialCallA1.cancel();
+		log.info("OK");
+
+		log.info(serverName + " expects cancel from " + clientName + "...");
+		callEvent = callControllerB1.pollSipEndPointEvent(TestConfig.WAIT_TIME);
+		assertTrue("No message received in server UA", callEvent != null);
+		assertTrue("Bad message received in server UA",
+				CallEvent.CALL_CANCEL.equals(callEvent.getEventType()));
+		log.info("OK");
+
+		log.info(" -------------------- Test Cancel finished OK --------------------");
+
 	}
 
 }
