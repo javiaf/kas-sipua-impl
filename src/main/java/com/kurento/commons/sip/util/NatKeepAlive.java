@@ -8,6 +8,7 @@ import javax.sip.ListeningPoint;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.kurento.commons.ua.exception.ServerInternalErrorException;
 import com.kurento.commons.ua.timer.KurentoUaTimer;
 import com.kurento.commons.ua.timer.KurentoUaTimerTask;
 
@@ -22,24 +23,27 @@ public class NatKeepAlive {
 	KurentoUaTimer timer;
 	private long delay = 5000;
 
-	public NatKeepAlive(SipConfig config, ListeningPoint listeningPoint) {
+	public NatKeepAlive(SipConfig config, ListeningPoint listeningPoint) throws ServerInternalErrorException {
 		proxyAddr = config.getProxyAddress();
 		proxyPort = config.getProxyPort();
 		delay = config.getKeepAlivePeriod();
 		log.debug("Delay for  hole punching setted as " + delay);
 		listeningPointImpl = (ListeningPointExt) listeningPoint;
 		timer = config.getTimer();
+		if (timer == null)
+			throw new ServerInternalErrorException(
+					"A timer must be configured in SipConfig in order to activate SIP keep-alive there must be");
 	}
 
 	private KurentoUaTimerTask task = new KurentoUaTimerTask() {
 
 		@Override
 		public void run() {
+			log.debug("Sending keep alive");
 			try {
-				log.debug("Sending keep alive");
 				listeningPointImpl.sendHeartbeat(proxyAddr, proxyPort);
 			} catch (IOException e) {
-
+				log.error("Unable to send SIP keep-alive message", e);
 			}
 
 		}

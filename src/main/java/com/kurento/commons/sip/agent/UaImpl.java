@@ -256,11 +256,14 @@ public class UaImpl implements SipListener, UaStun {
 			sipProvider = sipStack.createSipProvider(listeningPoint);
 			sipProvider.addSipListener(this);
 
-			if (!publicAddress.equals(localAddress)
-					&& config.isEnableKeepAlive()) {
+			if (config.isEnableKeepAlive() ) {
 				log.debug("Creating keepalive for hole punching");
-				keepAlive = new NatKeepAlive(config, listeningPoint);
-				keepAlive.start();
+				try {
+					keepAlive = new NatKeepAlive(config, listeningPoint);
+					keepAlive.start();
+				} catch (ServerInternalErrorException e) {
+					log.error("Unable to activate SIP keep-alive", e);
+				}
 			}
 		} catch (PeerUnavailableException e) {
 			log.error(e.getLocalizedMessage());
@@ -646,8 +649,8 @@ public class UaImpl implements SipListener, UaStun {
 	public void setPublicPort(int publicPort) {
 		this.publicPort = publicPort;
 	}
-	
-	public KurentoUaTimer getTimer () {
+
+	public KurentoUaTimer getTimer() {
 		if (config != null) {
 			return config.getTimer();
 		} else {
