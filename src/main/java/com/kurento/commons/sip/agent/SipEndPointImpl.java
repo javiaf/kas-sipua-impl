@@ -69,20 +69,18 @@ public class SipEndPointImpl implements EndPoint {
 	// ////////////
 
 	protected SipEndPointImpl(String userName, String realm, String password,
-			int expires, UaImpl ua, EndPointListener handler,
-			KurentoUaTimer timer) throws ParseException,
+			int expires, UaImpl ua, EndPointListener handler) throws ParseException,
 			ServerInternalErrorException {
-		this(userName, realm, password, expires, ua, handler, timer, true);
+		this(userName, realm, password, expires, ua, handler, true);
 
 	}
 
 	protected SipEndPointImpl(String userName, String realm, String password,
-			int expires, UaImpl ua, EndPointListener handler,
-			KurentoUaTimer timer, Boolean receiveCall) throws ParseException,
+			int expires, UaImpl ua, EndPointListener handler, Boolean receiveCall) throws ParseException,
 			ServerInternalErrorException {
 		this.ua = ua;
 		this.listener = handler;
-		this.timer = timer;
+		this.timer = ua.getTimer();
 		this.userName = userName;
 		this.realm = realm;
 		this.expires = expires;
