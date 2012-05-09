@@ -67,6 +67,7 @@ import com.kurento.commons.sip.util.SipConfig;
 import com.kurento.commons.ua.EndPoint;
 import com.kurento.commons.ua.UaStun;
 import com.kurento.commons.ua.exception.ServerInternalErrorException;
+import com.kurento.commons.ua.timer.KurentoUaTimer;
 
 import de.javawi.jstun.attribute.MessageAttributeException;
 import de.javawi.jstun.attribute.MessageAttributeParsingException;
@@ -93,7 +94,6 @@ public class UaImpl implements SipListener, UaStun {
 	private int publicPort = 0;
 
 	private NatKeepAlive keepAlive;
-	// private TypeStun typeStun;
 
 	private SipConfig config;
 
@@ -645,6 +645,14 @@ public class UaImpl implements SipListener, UaStun {
 
 	public void setPublicPort(int publicPort) {
 		this.publicPort = publicPort;
+	}
+	
+	public KurentoUaTimer getTimer () {
+		if (config != null) {
+			return config.getTimer();
+		} else {
+			return null;
+		}
 	}
 
 	// ///////////
