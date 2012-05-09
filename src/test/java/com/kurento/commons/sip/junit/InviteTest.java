@@ -70,8 +70,8 @@ public class InviteTest {
 		else
 			localAddress = "lo";
 
-		
-		log.info("Initialice SIP UA Invite test on platform" + System.getProperty("os.name"));
+		log.info("Initialice SIP UA Invite test on platform"
+				+ System.getProperty("os.name"));
 
 		UaFactory.setMediaSession(new MediaSessionDummy());
 
@@ -115,11 +115,13 @@ public class InviteTest {
 	}
 
 	/**
-	 * C:---INVITE---------->:S<br>
-	 * C:<----------200 OK---:S<br>
-	 * C:---ACK------------->:S<br>
-	 * C:---BYE------------->:S<br>
-	 * C:<----------200 OK---:S<br>
+	 * <pre>
+	 * C:---INVITE---------->:S
+	 * C:<----------200 OK---:S
+	 * C:---ACK------------->:S
+	 * C:---BYE------------->:S
+	 * C:<----------200 OK---:S
+	 * </pre>
 	 * 
 	 * @throws Exception
 	 */
@@ -201,94 +203,90 @@ public class InviteTest {
 		log.info(" -------------------- Test Call Setup and Drop from caller finished OK --------------------");
 	}
 
-	// public void testCallSetupAndDropFromCalled() throws Exception {
-	// log.info("-------------------- Test Call Setup and Drop from called --------------------");
-	//
-	// EndPointEvent endPointEvent;
-	// CallEvent callEvent;
-	// int expires = 3600;
-	//
-	//
-	// EndPoint endpointA1;
-	// String userA1 = TestConfig.USER + testConfig.getCounter();
-	// SipEndPointController endPointControllerA1 = new
-	// SipEndPointController(userA1);
-	//
-	// log.info("Register user " + userA1 + "...");
-	// endpointA1 = userAgentA.registerEndPoint(userA1, TestConfig.DOMAIN,
-	// TestConfig.PASS, expires, endPointControllerA1);
-	// endPointEvent =
-	// endPointControllerA1.pollSipEndPointEvent(TestConfig.WAIT_TIME);
-	// assertNotNull(endPointEvent);
-	// assertEquals(EndPointEvent.REGISTER_USER_SUCESSFUL,
-	// endPointEvent.getEventType());
-	// log.info("OK");
-	//
-	//
-	// EndPoint endpointB1;
-	// String userB1 = TestConfig.USER + testConfig.getCounter();
-	// String userURIB1 = "sip:" + userB1 + "@" + TestConfig.DOMAIN;
-	// SipEndPointController endPointControllerB1 = new
-	// SipEndPointController(userB1);
-	//
-	// log.info("Register user " + userB1 + "...");
-	// endpointB1 = userAgentA.registerEndPoint(userB1, TestConfig.DOMAIN,
-	// TestConfig.PASS, expires, endPointControllerB1);
-	// endPointEvent =
-	// endPointControllerB1.pollSipEndPointEvent(TestConfig.WAIT_TIME);
-	// assertNotNull(endPointEvent);
-	// assertEquals(EndPointEvent.REGISTER_USER_SUCESSFUL,
-	// endPointEvent.getEventType());
-	// log.info("OK");
-	//
-	// log.info(userA1 + " dial to " + userB1 + "...");
-	// SipCallController callControllerA1 = new SipCallController(userA1);
-	// Call initialCallA1 = endpointA1.dial(userURIB1, callControllerA1);
-	// log.info("OK");
-	//
-	// log.info(userB1 + " expects incoming call from " + userA1 + "...");
-	// endPointEvent =
-	// endPointControllerB1.pollSipEndPointEvent(TestConfig.WAIT_TIME);
-	// assertNotNull(endPointEvent);
-	// assertEquals(EndPointEvent.INCOMING_CALL, endPointEvent.getEventType());
-	// Call receivedCallB1 = endPointEvent.getCallSource();
-	// log.info("OK");
-	//
-	// log.info(userB1 + " accepts call...");
-	// SipCallController callControllerB1 = new SipCallController(userB1);
-	// receivedCallB1.addListener(callControllerB1);
-	// receivedCallB1.accept();
-	// log.info("OK");
-	//
-	// log.info(userA1 + " expects accepted call from " + userB1 + "...");
-	// callEvent = callControllerA1.pollSipEndPointEvent(TestConfig.WAIT_TIME);
-	// assertNotNull(callEvent);
-	// assertEquals(CallEvent.CALL_SETUP, callEvent.getEventType());
-	// log.info("OK");
-	//
-	// log.info(userB1 + " expects ACK from " + userA1 + "...");
-	// callEvent = callControllerB1.pollSipEndPointEvent(TestConfig.WAIT_TIME);
-	// assertNotNull(callEvent);
-	// assertEquals(CallEvent.CALL_SETUP, callEvent.getEventType());
-	// log.info("OK");
-	//
-	// log.info(userB1 + " hangup...");
-	// receivedCallB1.hangup();
-	// log.info("OK");
-	//
-	// log.info(userA1 + " expects call hangup from " + userB1 + "...");
-	// callEvent = callControllerB1.pollSipEndPointEvent(TestConfig.WAIT_TIME);
-	// assertNotNull(callEvent);
-	// assertEquals(CallEvent.CALL_TERMINATE, callEvent.getEventType());
-	// log.info("OK");
-	//
-	// log.info(userB1 + " call terminate...");
-	// callEvent = callControllerA1.pollSipEndPointEvent(TestConfig.WAIT_TIME);
-	// assertNotNull(callEvent);
-	// assertEquals(CallEvent.CALL_TERMINATE, callEvent.getEventType());
-	// log.info("OK");
-	//
-	// log.info(" -------------------- Test Call Setup and Drop from called finished OK --------------------");
-	// }
+	/**
+	 * <pre>
+	 * C:---INVITE---------->:S
+	 * C:<----------200 OK---:S
+	 * C:---ACK------------->:S
+	 * C:<-------------BYE---:S
+	 * C:---200 OK---------->:S
+	 * </pre>
+	 * 
+	 * @throws Exception
+	 */
+
+	@Test
+	public void testCallSetupAndDropFromCalled() throws Exception {
+
+		log.info("-------------------- Test Call Setup and Drop from called --------------------");
+
+		EndPointEvent endPointEvent;
+		CallEvent callEvent;
+
+		// C:---INVITE---------->:S
+		log.info(clientName + " dial to " + serverName + "...");
+		SipCallController callControllerClient = new SipCallController(
+				clientName);
+		Call clientCall = clientEndPoint.dial(serverUri, callControllerClient);
+		log.info("OK");
+
+		log.info(serverName + " expects incoming call from " + clientName
+				+ "...");
+		endPointEvent = serverEndPointController
+				.pollSipEndPointEvent(TestConfig.WAIT_TIME);
+		assertTrue("No message received in server UA", endPointEvent != null);
+		assertTrue(
+				"Bad message received in server UA: "
+						+ endPointEvent.getEventType(),
+				EndPointEvent.INCOMING_CALL.equals(endPointEvent.getEventType()));
+		Call serverCall = endPointEvent.getCallSource();
+		log.info("OK");
+
+		// C:<----------200 OK --:S
+		log.info(serverName + " accepts call...");
+		SipCallController callControllerServer = new SipCallController(
+				serverName);
+		serverCall.addListener(callControllerServer);
+		serverCall.accept();
+		log.info("OK");
+
+		log.info(clientName + " expects accepted call from " + serverName
+				+ "...");
+		callEvent = callControllerClient
+				.pollSipEndPointEvent(TestConfig.WAIT_TIME);
+		assertTrue("No message received in client UA", callEvent != null);
+		assertTrue("Bad message received in client UA",
+				CallEvent.CALL_SETUP.equals(callEvent.getEventType()));
+		log.info("OK");
+
+		// C:---ACK------------->:S
+		log.info(serverName + " expects ACK from " + clientName + "...");
+		callEvent = callControllerServer
+				.pollSipEndPointEvent(TestConfig.WAIT_TIME);
+		assertTrue("No message received in client UA", callEvent != null);
+		assertTrue("Bad message received in client UA",
+				CallEvent.CALL_SETUP.equals(callEvent.getEventType()));
+		log.info("OK");
+
+		// C:<-------------BYE---:S
+		log.info(serverName + " hangup...");
+		serverCall.hangup();
+		callEvent = callControllerServer
+				.pollSipEndPointEvent(TestConfig.WAIT_TIME);
+		assertTrue("No message received in client UA", callEvent != null);
+		assertTrue("Bad message received in client UA",
+				CallEvent.CALL_TERMINATE.equals(callEvent.getEventType()));
+		log.info("OK");
+
+		log.info(clientName + " expects call hangup from " + serverName + "...");
+		callEvent = callControllerClient
+				.pollSipEndPointEvent(TestConfig.WAIT_TIME);
+		assertTrue("No message received in client UA", callEvent != null);
+		assertTrue("Bad message received in client UA",
+				CallEvent.CALL_TERMINATE.equals(callEvent.getEventType()));
+		log.info("OK");
+
+		log.info(" -------------------- Test Call Setup and Drop from called finished OK --------------------");
+	}
 
 }
