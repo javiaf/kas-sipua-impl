@@ -21,29 +21,23 @@ import javax.sip.ServerTransaction;
 import javax.sip.message.Request;
 import javax.sip.message.Response;
 
-import com.kurento.commons.sip.agent.UaFactory;
 import com.kurento.commons.sip.exception.SipTransactionException;
 import com.kurento.commons.ua.exception.ServerInternalErrorException;
 
 public class SRegister extends STransaction {
 
-	public SRegister(ServerTransaction serverTransaction) throws ServerInternalErrorException,
-			SipTransactionException {
+	public SRegister(ServerTransaction serverTransaction)
+			throws ServerInternalErrorException, SipTransactionException {
 		super(Request.REGISTER, serverTransaction, null);
-		
-		sendResponse(Response.OK, null);
 
-//		// TODO:This service is intended for 3rd Party registration. it will
-//		// require a register interface to store register requests
-//
-//		// By now lets accept all requests
-//		Response response;
-//		try {
-//			response = UaFactory.getMessageFactory().createResponse(Response.OK,
-//					serverTransaction.getRequest());
-//			serverTransaction.sendResponse(response);
-//		} catch (Exception e) {
-//			log.error("Parse exception receiving REGISTER request",e);
-//		}
+
+		// // TODO: In order to support 3rd Party registration. it will required
+		// an interface to notify incoming register requests. It will be
+		// necessary to implement a UaListener interface and UaEvent classes
+		// UA will not store contacts, but it will progress register requests to
+		// application level
+
+		// By now lets accept all requests
+		sendResponse(Response.OK, null);
 	}
 }
