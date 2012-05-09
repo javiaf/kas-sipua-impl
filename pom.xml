@@ -56,6 +56,7 @@
 			<artifactId>kc-ua</artifactId>
 			<version>${kcUaVersion}</version>
 		</dependency>
+		
 		<dependency>
 			<groupId>com.kurento.commons</groupId>
 			<artifactId>kc-stun</artifactId>
@@ -85,13 +86,6 @@
 			<groupId>javax.sip</groupId>
 			<artifactId>jain-sip-ri</artifactId>
 			<version>1.2.76</version>
-			<scope>provided</scope>
-		</dependency>
-		
-		<dependency>
-			<groupId>com.google.android</groupId>
-			<artifactId>android</artifactId>
-			<version>1.5_r4</version>
 			<scope>provided</scope>
 		</dependency>
 		
