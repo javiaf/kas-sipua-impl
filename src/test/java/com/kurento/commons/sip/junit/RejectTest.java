@@ -1,5 +1,6 @@
 package com.kurento.commons.sip.junit;
 
+import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -79,6 +80,12 @@ public class RejectTest {
 
 		log.info("	ClientUa created");
 
+	}
+
+	@AfterClass
+	public static void tearDown() {
+		serverUa.terminate();
+		clientUa.terminate();
 	}
 
 }
