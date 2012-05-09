@@ -34,6 +34,7 @@ public class RejectTest {
 	private static String serverUri = "sip:" + serverName + "@" + domain;
 	private static String clientUri = "sip:" + clientName + "@" + domain;
 	private static int expires = 1000;
+	private static String localAddress;
 
 	private static EndPoint serverEndPoint;
 	private static EndPoint clientEndPoint;
@@ -41,7 +42,13 @@ public class RejectTest {
 	@BeforeClass
 	public static void initTest() throws Exception {
 
-		log.info("Initialice SIP UA to RejectTest");
+		if (System.getProperty("os.name").startsWith("Mac"))
+			localAddress = "lo0";
+		else
+			localAddress = "lo";
+
+		log.info("Initialice SIP UA for register tests in platform:"
+				+ System.getProperty("os.name"));
 
 		UaFactory.setMediaSession(new MediaSessionDummy());
 
