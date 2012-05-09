@@ -16,6 +16,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
 package com.kurento.commons.sip.junit;
 
+import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -57,7 +58,6 @@ public class CancelTest {
 	private static EndPoint serverEndPoint;
 	private static EndPoint clientEndPoint;
 
-
 	@BeforeClass
 	public static void initTest() throws Exception {
 
@@ -95,6 +95,14 @@ public class CancelTest {
 		// Create SIP stack and activate SIP EndPoints
 		clientUa.reconfigure();
 
+	}
+
+	@AfterClass
+	public static void tearDown() {
+		if (serverUa != null)
+			serverUa.terminate();
+		if (clientUa != null)
+			clientUa.terminate();
 	}
 
 }
