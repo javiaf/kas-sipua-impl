@@ -1,19 +1,26 @@
 package com.kurento.commons.sip.junit;
 
+import static org.junit.Assert.assertTrue;
+
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
+import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.kurento.commons.sip.agent.EndPointFactory;
 import com.kurento.commons.sip.agent.UaFactory;
 import com.kurento.commons.sip.testutils.MediaSessionDummy;
+import com.kurento.commons.sip.testutils.SipCallController;
 import com.kurento.commons.sip.testutils.SipEndPointController;
 import com.kurento.commons.sip.testutils.TestConfig;
 import com.kurento.commons.sip.testutils.TestTimer;
 import com.kurento.commons.sip.util.SipConfig;
+import com.kurento.commons.ua.Call;
 import com.kurento.commons.ua.EndPoint;
 import com.kurento.commons.ua.UA;
+import com.kurento.commons.ua.event.CallEvent;
+import com.kurento.commons.ua.event.EndPointEvent;
 
 public class RejectTest {
 
@@ -95,4 +102,56 @@ public class RejectTest {
 		clientUa.terminate();
 	}
 
+	/**
+	 * <pre>
+	 * C:---INVITE---------->:S
+	 * C:<------REJECT-------:S
+	 * </pre>
+	 * 
+	 * @throws Exception
+	 */
+	@Test
+	public void testRejectCall() throws Exception {
+		log.info("-------------------- Test C sends Invite and S sends Reject  --------------------");
+
+		EndPointEvent endPointEvent;
+		CallEvent callEvent;
+
+		// C:---INVITE---------->:S
+		log.info(clientName + " dial to " + serverName + "...");
+		SipCallController callControllerA1 = new SipCallController(clientName);
+		clientEndPoint.dial(serverUri, callControllerA1);
+		log.info("OK");
+
+		log.info(serverName + " expects incoming call from " + clientName
+				+ "...");
+		endPointEvent = serverEndPointController
+				.pollSipEndPointEvent(TestConfig.WAIT_TIME);
+		assertTrue("No message received in server UA", endPointEvent != null);
+		assertTrue(
+				"Bad message received in server UA: "
+						+ endPointEvent.getEventType(),
+				EndPointEvent.INCOMING_CALL.equals(endPointEvent.getEventType()));
+
+		Call receivedCallB1 = endPointEvent.getCallSource();
+		log.info("OK");
+
+		// C:<------REJECT-------:S
+		log.info(serverName + " rejects call...");
+		SipCallController callControllerB1 = new SipCallController(serverName);
+		receivedCallB1.addListener(callControllerB1);
+		receivedCallB1.reject();
+		log.info("OK");
+
+		log.info(clientName + " expects call rejected from " + serverName
+				+ "...");
+		callEvent = callControllerA1.pollSipEndPointEvent(TestConfig.WAIT_TIME);
+		assertTrue("No message received in server UA", callEvent != null);
+		assertTrue("Bad message received in server UA",
+				CallEvent.CALL_REJECT.equals(callEvent.getEventType()));
+		log.info("OK");
+
+		log.info("-------------------- Test C sends Invite and S sends Reject finished OK --------------------");
+
+	}
 }
