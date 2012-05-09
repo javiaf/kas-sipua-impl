@@ -249,34 +249,6 @@ public class SipEndPointImpl implements EndPoint {
 		return userName;
 	}
 
-	// protected void register(int expires) throws ServerInternalErrorException
-	// {
-	// log.info("Send REGISTER request: " + sipUriAddress + " > " +
-	// contactAddress);
-	// setExpiresAndRegister(expires);
-	// }
-
-	// TimerTask deprecated
-	// private class RegisterTask extends TimerTask {
-	//
-	// private SipEndPointImpl user;
-	//
-	// protected RegisterTask(SipEndPointImpl user) {
-	// this.user = user;
-	// }
-	//
-	// @Override
-	// public void run() {
-	// try {
-	// register();
-	// } catch (ServerInternalErrorException e) {
-	// log.error("Unable to re-register user:" + user
-	// + ". Deleting from list of users");
-	// user.notifyEvent(EndPointEvent.REGISTER_USER_FAIL);
-	// }
-	// }
-	// }
-
 	@Override
 	public Call dial(String remoteParty, CallListener callController)
 			throws ServerInternalErrorException {
