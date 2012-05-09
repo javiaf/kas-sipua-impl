@@ -37,7 +37,7 @@ public class EventListener {
 
 	// Listener Interface
 	public <T extends EventObject> void onEvent(T event) {
-		log.info("TEST FACILITY received an event:" + event);
+		log.info(id + " - TEST FACILITY received an event:" + event);
 		try {
 			eventFifo.put(event);
 		} catch (InterruptedException e) {

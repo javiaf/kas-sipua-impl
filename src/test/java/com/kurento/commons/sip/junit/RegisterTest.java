@@ -49,8 +49,7 @@ public class RegisterTest {
 	private static SipEndPointController serverEndPointController;
 	private static SipEndPointController clientEndPointController;
 
-	private static TestTimer serverTimer;
-	private static TestTimer clientTimer;
+	private static TestTimer timer;
 
 	private static String domain = "kurento.com";
 	private static String serverName = "server";
@@ -71,44 +70,51 @@ public class RegisterTest {
 		else
 			localAddress = "lo";
 
-		log.info("Initialice SIP UA for register tests in platform:"
+		log.info("Initialice SIP UA for register tests in platform: "
 				+ System.getProperty("os.name"));
 
 		UaFactory.setMediaSession(new MediaSessionDummy());
+
+		timer = new TestTimer();
 
 		SipConfig sConfig = new SipConfig();
 		sConfig.setProxyAddress(TestConfig.PROXY_IP);
 		sConfig.setProxyPort(TestConfig.PROXY_PORT);
 		sConfig.setLocalPort(TestConfig.CLIENT_PORT);
 		sConfig.setLocalAddress(localAddress);
+		sConfig.setTimer(timer);
 
 		serverUa = UaFactory.getInstance(sConfig);
 		serverEndPointController = new SipEndPointController(serverName);
-		serverTimer = new TestTimer();
 		// Create and register SIP EndPoint
 		serverEndPoint = EndPointFactory.getInstance(serverName, "kurento.com",
-				"", expires, serverUa, serverEndPointController, serverTimer,
-				false);
+				"", expires, serverUa, serverEndPointController, false);
 		// Create SIP stack and activate SIP EndPoints
 		serverUa.reconfigure();
 
 	}
 
+	@AfterClass
+	public static void tearDown() {
+		serverUa.terminate();
+	}
+
 	/**
 	 * <pre>
-	 * C:---REGISTER-------->:S
-	 * C:<----------200 OK---:S
-	 * C:---REGISTER(exp=0)->:S
-	 * C:<----------200 OK-->:S
-	 * C:sipEndPoint.terminate()
-	 * C:---REGISTER---x     :S : Verify no REGISTER request is sent (EP is already un-register)
+	 *  1 - C:---REGISTER----------->:S
+	 *      C:<-------------200 OK---:S
+	 *  2 - C:sipEndPoint.terminate()
+	 *      C:---REGISTER(exp=0)---->:S
+	 *      C:<-------------200 OK---:S
+	 *  3 - C:sipEndPoint.terminate()
+	 *      C:---REGISTER---x        :S : Verify no REGISTER request is sent (EP is already un-register)
 	 * </pre>
 	 * 
 	 * @throws Exception
 	 */
 	@Test
-	public void testRegisterSuccesfull() throws Exception {
-		log.info("-------------------- Test Register Succesfull --------------------");
+	public void testRegisterAndUnregister() throws Exception {
+		log.info("-------------------- Test Register and Un-register --------------------");
 
 		// C:---REGISTER-------->:S
 		log.info("Register user " + clientName + "...");
@@ -118,13 +124,12 @@ public class RegisterTest {
 		cConfig.setProxyPort(TestConfig.CLIENT_PORT);
 		cConfig.setLocalPort(TestConfig.PROXY_PORT);
 		cConfig.setLocalAddress(localAddress);
+		cConfig.setTimer(timer);
 
 		clientUa = UaFactory.getInstance(cConfig);
 		clientEndPointController = new SipEndPointController("client");
-		clientTimer = new TestTimer();
 		clientEndPoint = EndPointFactory.getInstance(clientName, "kurento.com",
-				"", expires, clientUa, clientEndPointController, clientTimer,
-				true);
+				"", expires, clientUa, clientEndPointController, true);
 		// Create SIP stack and activate SIP EndPoints
 		clientUa.reconfigure();
 
@@ -142,8 +147,11 @@ public class RegisterTest {
 						.getEventType()));
 		log.info("OK");
 
-		log.info("Deregister user " + clientName + "...");
+		// C:---REGISTER(exp=0)->:S
+		log.info("Implicit un-reregister of user " + clientName + "...");
 		clientEndPoint.terminate();
+
+		// C:<----------200 OK---:S
 		endPointEvent = clientEndPointController
 				.pollSipEndPointEvent(TestConfig.WAIT_TIME);
 		assertTrue("No message received in client UA", endPointEvent != null);
@@ -154,7 +162,7 @@ public class RegisterTest {
 						.getEventType()));
 		log.info("OK");
 
-		// Check no further unregister messages are sent
+		// C:---REGISTER(exp=0)->:S (second time)
 		log.info("Terminate user " + clientName
 				+ "... Verify no register request is sent");
 		clientEndPoint.terminate();
@@ -162,9 +170,14 @@ public class RegisterTest {
 				.pollSipEndPointEvent(TestConfig.WAIT_TIME);
 		assertTrue("Client UA sent unregister twice", endPointEvent == null);
 
+		// Check no register is sent when UA terminates
 		clientUa.terminate();
+		endPointEvent = clientEndPointController
+				.pollSipEndPointEvent(TestConfig.WAIT_TIME);
+		assertTrue("Client UA sent unregister twice", endPointEvent == null);
 
-		log.info(" -------------------- Test Register Succesfull finished OK --------------------");
+		log.info(" -------------------- Test Register and Un-register finished OK --------------------");
+
 	}
 
 	// TODO: This test will require an event sent by the SRegister transaction
@@ -224,13 +237,12 @@ public class RegisterTest {
 		cConfig.setProxyPort(TestConfig.CLIENT_PORT);
 		cConfig.setLocalPort(TestConfig.PROXY_PORT);
 		cConfig.setLocalAddress(localAddress);
+		cConfig.setTimer(timer);
 
 		clientUa = UaFactory.getInstance(cConfig);
 		clientEndPointController = new SipEndPointController("client");
-		clientTimer = new TestTimer();
 		clientEndPoint = EndPointFactory.getInstance(clientName, "kurento.com",
-				"", expires, clientUa, clientEndPointController, clientTimer,
-				true);
+				"", expires, clientUa, clientEndPointController, true);
 		// Create SIP stack and activate SIP EndPoints
 		clientUa.reconfigure();
 		long tStart = System.currentTimeMillis();
@@ -254,7 +266,8 @@ public class RegisterTest {
 		// ...
 		int i;
 		for (i = 0; i < 5; i++) {
-			log.info("Wait for register keep alive of user " + clientName + "...");
+			log.info("Wait for register keep alive of user " + clientName
+					+ "...");
 			endPointEvent = clientEndPointController
 					.pollSipEndPointEvent(expires);
 			assertTrue("No message received in client UA",
@@ -289,6 +302,10 @@ public class RegisterTest {
 		clientUa.terminate();
 
 		log.info(" -------------------- Test Register KeepAlive finished OK --------------------");
+	}
+
+	public void testSipKeepAlive() {
+
 	}
 
 }

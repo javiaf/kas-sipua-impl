@@ -69,20 +69,18 @@ public class SipEndPointImpl implements EndPoint {
 	// ////////////
 
 	protected SipEndPointImpl(String userName, String realm, String password,
-			int expires, UaImpl ua, EndPointListener handler,
-			KurentoUaTimer timer) throws ParseException,
+			int expires, UaImpl ua, EndPointListener handler) throws ParseException,
 			ServerInternalErrorException {
-		this(userName, realm, password, expires, ua, handler, timer, true);
+		this(userName, realm, password, expires, ua, handler, true);
 
 	}
 
 	protected SipEndPointImpl(String userName, String realm, String password,
-			int expires, UaImpl ua, EndPointListener handler,
-			KurentoUaTimer timer, Boolean receiveCall) throws ParseException,
+			int expires, UaImpl ua, EndPointListener handler, Boolean receiveCall) throws ParseException,
 			ServerInternalErrorException {
 		this.ua = ua;
 		this.listener = handler;
-		this.timer = timer;
+		this.timer = ua.getTimer();
 		this.userName = userName;
 		this.realm = realm;
 		this.expires = expires;
@@ -90,7 +88,7 @@ public class SipEndPointImpl implements EndPoint {
 		this.sipUriAddress = UaFactory.getAddressFactory().createAddress(
 				"sip:" + this.userName + "@" + this.realm);
 		this.receiveCall = receiveCall;
-		this.sipEndPointTimerTask = new SipEndPointTimerTask();
+		this.sipEndPointTimerTask = new SipEndPointTimerTask(this);
 
 		ua.registerEndpoint(this);
 
@@ -249,34 +247,6 @@ public class SipEndPointImpl implements EndPoint {
 		return userName;
 	}
 
-	// protected void register(int expires) throws ServerInternalErrorException
-	// {
-	// log.info("Send REGISTER request: " + sipUriAddress + " > " +
-	// contactAddress);
-	// setExpiresAndRegister(expires);
-	// }
-
-	// TimerTask deprecated
-	// private class RegisterTask extends TimerTask {
-	//
-	// private SipEndPointImpl user;
-	//
-	// protected RegisterTask(SipEndPointImpl user) {
-	// this.user = user;
-	// }
-	//
-	// @Override
-	// public void run() {
-	// try {
-	// register();
-	// } catch (ServerInternalErrorException e) {
-	// log.error("Unable to re-register user:" + user
-	// + ". Deleting from list of users");
-	// user.notifyEvent(EndPointEvent.REGISTER_USER_FAIL);
-	// }
-	// }
-	// }
-
 	@Override
 	public Call dial(String remoteParty, CallListener callController)
 			throws ServerInternalErrorException {
@@ -302,11 +272,17 @@ public class SipEndPointImpl implements EndPoint {
 	}
 
 	private class SipEndPointTimerTask extends KurentoUaTimerTask {
+		
+		private SipEndPointImpl ep;
+		
+		public SipEndPointTimerTask(SipEndPointImpl ep) {
+			this.ep=ep;
+		}
 
 		@Override
 		public void run() {
 			log.debug("sipEndpointTimerTask register");
-			register();
+			ep.register();
 		}
 
 	}

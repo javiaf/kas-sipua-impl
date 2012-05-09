@@ -16,6 +16,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
 package com.kurento.commons.sip.util;
 
+import com.kurento.commons.ua.timer.KurentoUaTimer;
+
 /**
  * The SipConfig class is the mechanism used by KAS-SIPUA to easily provide SIP
  * configuration when creating a new IP User Agent. Required configuration
@@ -50,8 +52,9 @@ public class SipConfig {
 	private int maxForards = 70;
 
 	private boolean enableKeepAlive;
-
 	private long keepAlivePeriod = 5000;
+
+	private KurentoUaTimer timer;
 
 	/**
 	 * Get the IP address or interface name where the SIP stack must be
@@ -233,13 +236,34 @@ public class SipConfig {
 	}
 
 	/**
-	 * Configure SIP keep-alive interval. Is the period between two consecutive SIP
-	 * keep-alive packets when keep-alive is enabled
+	 * Configure SIP keep-alive interval. Is the period between two consecutive
+	 * SIP keep-alive packets when keep-alive is enabled
 	 * 
 	 * @return
 	 */
 	public void setKeepAlivePeriod(long keepAlivePeriod) {
 		this.keepAlivePeriod = keepAlivePeriod;
+	}
+
+	/**
+	 * Configure Timer to be used by the SIP User Agent to schedule task
+	 * execution
+	 * 
+	 * @param timer
+	 *            Timer infrastructure allowing SIP User Agent to schedule task
+	 *            execution
+	 */
+	public void setTimer(KurentoUaTimer timer) {
+		this.timer = timer;
+	}
+
+	/**
+	 * Return timer
+	 * 
+	 * @return Timer
+	 */
+	public KurentoUaTimer getTimer() {
+		return this.timer;
 	}
 
 	public String toString() {

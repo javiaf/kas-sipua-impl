@@ -36,6 +36,7 @@ import com.kurento.commons.ua.EndPoint;
 import com.kurento.commons.ua.UA;
 import com.kurento.commons.ua.event.CallEvent;
 import com.kurento.commons.ua.event.EndPointEvent;
+import com.kurento.commons.ua.timer.KurentoUaTimer;
 
 public class InviteTest {
 
@@ -48,14 +49,15 @@ public class InviteTest {
 	private static SipEndPointController serverEndPointController;
 	private static SipEndPointController clientEndPointController;
 
-	private static TestTimer serverTimer;
-	private static TestTimer clientTimer;
+	private static KurentoUaTimer timer;
 
 	private static String domain = "kurento.com";
 	private static String serverName = "server";
 	private static String clientName = "client";
 	private static String serverUri = "sip:" + serverName + "@" + domain;
 	private static String clientUri = "sip:" + clientName + "@" + domain;
+	private static int expires = 6;
+	private static String localAddress;
 
 	private static EndPoint serverEndPoint;
 	private static EndPoint clientEndPoint;
@@ -63,22 +65,30 @@ public class InviteTest {
 	@BeforeClass
 	public static void initTest() throws Exception {
 
-		log.info("Initialice SIP UA test");
+		if (System.getProperty("os.name").startsWith("Mac"))
+			localAddress = "lo0";
+		else
+			localAddress = "lo";
+
+		
+		log.info("Initialice SIP UA Invite test on platform" + System.getProperty("os.name"));
 
 		UaFactory.setMediaSession(new MediaSessionDummy());
+
+		timer = new TestTimer();
 
 		SipConfig cConfig = new SipConfig();
 		cConfig.setProxyAddress(TestConfig.PROXY_IP);
 		cConfig.setProxyPort(TestConfig.PROXY_PORT);
 		cConfig.setLocalPort(TestConfig.CLIENT_PORT);
-		cConfig.setLocalAddress("lo0");
+		cConfig.setLocalAddress(localAddress);
+		cConfig.setTimer(timer);
 
 		serverUa = UaFactory.getInstance(cConfig);
 		serverEndPointController = new SipEndPointController(serverName);
-		serverTimer = new TestTimer();
 		// Create and register SIP EndPoint
 		serverEndPoint = EndPointFactory.getInstance(serverName, "kurento.com",
-				"", 10, serverUa, serverEndPointController, serverTimer, false);
+				"", expires, serverUa, serverEndPointController, false);
 		// Create SIP stack and activate SIP EndPoints
 		serverUa.reconfigure();
 
@@ -86,13 +96,13 @@ public class InviteTest {
 		sConfig.setProxyAddress(TestConfig.CLIENT_IP);
 		sConfig.setProxyPort(TestConfig.CLIENT_PORT);
 		sConfig.setLocalPort(TestConfig.PROXY_PORT);
-		sConfig.setLocalAddress("lo0");
+		sConfig.setLocalAddress(localAddress);
+		sConfig.setTimer(timer);
 
 		clientUa = UaFactory.getInstance(sConfig);
-		clientEndPointController = new SipEndPointController("client");
-		clientTimer = new TestTimer();
+		clientEndPointController = new SipEndPointController(clientName);
 		clientEndPoint = EndPointFactory.getInstance(clientName, "kurento.com",
-				"", 10, clientUa, clientEndPointController, clientTimer, false);
+				"", expires, clientUa, clientEndPointController, false);
 		// Create SIP stack and activate SIP EndPoints
 		clientUa.reconfigure();
 

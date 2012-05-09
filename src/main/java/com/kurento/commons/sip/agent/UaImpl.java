@@ -67,6 +67,7 @@ import com.kurento.commons.sip.util.SipConfig;
 import com.kurento.commons.ua.EndPoint;
 import com.kurento.commons.ua.UaStun;
 import com.kurento.commons.ua.exception.ServerInternalErrorException;
+import com.kurento.commons.ua.timer.KurentoUaTimer;
 
 import de.javawi.jstun.attribute.MessageAttributeException;
 import de.javawi.jstun.attribute.MessageAttributeParsingException;
@@ -93,7 +94,6 @@ public class UaImpl implements SipListener, UaStun {
 	private int publicPort = 0;
 
 	private NatKeepAlive keepAlive;
-	// private TypeStun typeStun;
 
 	private SipConfig config;
 
@@ -212,97 +212,6 @@ public class UaImpl implements SipListener, UaStun {
 		}
 	}
 
-	// private BroadcastReceiver mReceiver = new BroadcastReceiver() {
-	//
-	// @Override
-	// public void onReceive(Context context, Intent intent) {
-	// String action = intent.getAction();
-	// log.debug("Received ACTION: " + action );
-	//
-	// if (ConnectivityManager.CONNECTIVITY_ACTION.equals(action)) {
-	// NetworkInfo ni = intent.getExtras()
-	// .getParcelable("networkInfo");
-	// if (ni.getState().equals(NetworkInfo.State.CONNECTED)) {
-	// InetAddress localAddressNew = getAndroidLocalAddress();
-	// if (localAddressNew != null
-	// && !localAddressNew.getHostAddress().equals(localAddress)) {
-	//
-	// log.debug("Found network interface change: "
-	// + localAddressNew.getHostAddress() + " <== " + localAddress);
-	//
-	// localAddress = localAddressNew.getHostAddress();
-	// // Check if user has request STUN
-	// if (config.getStunAddress() != null
-	// && !"".equals((config.getStunAddress()))) {
-	// //YES, Try for NUMBER_TRY
-	// log.debug("STUN activated");
-	// int trying = 0;
-	// while (trying < NUMBER_TRY) {
-	// // STUN error => give up
-	// // IOError = socket already in use => try again and find a free socket
-	// try{
-	// try {
-	// runStunTest();
-	// } catch (MessageAttributeParsingException e) {
-	// log.error("STUN test failed",e);
-	// } catch (MessageHeaderParsingException e) {
-	// log.error("STUN test failed",e);
-	// } catch (UtilityException e) {
-	// log.error("STUN test failed",e);
-	// } catch (MessageAttributeException e) {
-	// log.error("STUN test failed",e);
-	// }
-	// break;
-	// } catch (IOException e) {
-	// log.info("Address already in use:"+ localAddress +":" + localPort);
-	// localPort++;
-	// }
-	// }
-	// } else {
-	// log.debug("STUN NOT activated");
-	// info = new DiscoveryInfo(localAddressNew);
-	// info.setPublicIP(localAddressNew);
-	// info.setPublicPort(publicPort);
-	// info.setLocalPort(localPort);
-	// }
-	//
-	// // Verify if NAT must be supported
-	// if (isNatSupported()) {
-	// log.debug("Activate NAT support");
-	// InetAddress publicInet = info.getPublicIP();
-	// publicAddress = publicInet.getHostAddress();
-	// publicPort = info.getPublicPort();
-	// localAddress = info.getLocalIP().getHostAddress();
-	// localPort = info.getLocalPort();
-	// }
-	// else {
-	// log.debug("De-Activate NAT support");
-	// publicAddress = localAddress;
-	// publicPort = localPort;
-	// }
-	//
-	// configureSipStack();
-	//
-	// for (SipEndPointImpl endpoint : endPoints.values()) {
-	// try {
-	// //endpoint.terminate();
-	// endpoint.reconfigureEndPoint();
-	// endpoint.setExpiresAndRegister(3600);
-	// } catch (ServerInternalErrorException e) {
-	// log.error("Error finishing endpoint "
-	// + endpoint);
-	// log.info("Error finishing endpoint");
-	// } catch (ParseException e) {
-	// log.error("Error Parse endpoint");
-	// e.printStackTrace();
-	// }
-	// }
-	// }
-	// }
-	// }
-	// }
-	// };
-
 	private void configureSipStack() {
 		try {
 			terminateSipStack();
@@ -347,11 +256,14 @@ public class UaImpl implements SipListener, UaStun {
 			sipProvider = sipStack.createSipProvider(listeningPoint);
 			sipProvider.addSipListener(this);
 
-			if (!publicAddress.equals(localAddress)
-					&& config.isEnableKeepAlive()) {
+			if (config.isEnableKeepAlive() ) {
 				log.debug("Creating keepalive for hole punching");
-				keepAlive = new NatKeepAlive(config, listeningPoint);
-				keepAlive.start();
+				try {
+					keepAlive = new NatKeepAlive(config, listeningPoint);
+					keepAlive.start();
+				} catch (ServerInternalErrorException e) {
+					log.error("Unable to activate SIP keep-alive", e);
+				}
 			}
 		} catch (PeerUnavailableException e) {
 			log.error(e.getLocalizedMessage());
@@ -736,6 +648,14 @@ public class UaImpl implements SipListener, UaStun {
 
 	public void setPublicPort(int publicPort) {
 		this.publicPort = publicPort;
+	}
+
+	public KurentoUaTimer getTimer() {
+		if (config != null) {
+			return config.getTimer();
+		} else {
+			return null;
+		}
 	}
 
 	// ///////////
