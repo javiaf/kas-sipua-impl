@@ -90,7 +90,7 @@ public class SipEndPointImpl implements EndPoint {
 		this.sipUriAddress = UaFactory.getAddressFactory().createAddress(
 				"sip:" + this.userName + "@" + this.realm);
 		this.receiveCall = receiveCall;
-		this.sipEndPointTimerTask = new SipEndPointTimerTask();
+		this.sipEndPointTimerTask = new SipEndPointTimerTask(this);
 
 		ua.registerEndpoint(this);
 
@@ -302,11 +302,17 @@ public class SipEndPointImpl implements EndPoint {
 	}
 
 	private class SipEndPointTimerTask extends KurentoUaTimerTask {
+		
+		private SipEndPointImpl ep;
+		
+		public SipEndPointTimerTask(SipEndPointImpl ep) {
+			this.ep=ep;
+		}
 
 		@Override
 		public void run() {
 			log.debug("sipEndpointTimerTask register");
-			register();
+			ep.register();
 		}
 
 	}
