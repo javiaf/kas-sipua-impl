@@ -169,4 +169,76 @@ public class CancelTest {
 
 	}
 
+	/**
+	 * <pre>
+	 * C:----INVITE-------------------------->:S
+	 * C:<------------------------ 100 Trying
+	 * C:<------------------------ 180 Ringing
+	 * C:<------ 200 OK (CSeq: xxx INVITE)----:S
+	 * C:----CANCEL-------------------------->:S
+	 * C:----ACK ---------------------------->:S
+	 * C:----BYE ---------------------------->:S
+	 * C:<------ 200 OK (CSeq: xxx BYE)-------:S
+	 * </pre>
+	 * 
+	 * @throws Exception
+	 */
+	// TODO Add BYE after SETUP and manage the exception that launch it when
+	// send cancel.
+	@Test
+	public void testCancelAfterAccept() throws Exception {
+		log.info("-------------------- Test Cancel After Accept --------------------");
+
+		EndPointEvent endPointEvent;
+		CallEvent callEvent;
+
+		// C:-----INVITE-------------->:S
+		log.info(clientName + " dial to " + serverName + "...");
+		SipCallController callControllerA1 = new SipCallController(clientName);
+		Call initialCallA1 = clientEndPoint.dial(serverUri, callControllerA1);
+		log.info("OK");
+
+		log.info(serverName + " expects incoming call from " + clientName
+				+ "...");
+		endPointEvent = serverEndPointController
+				.pollSipEndPointEvent(TestConfig.WAIT_TIME);
+		assertTrue("No message received in server UA", endPointEvent != null);
+		assertTrue(
+				"Bad message received in server UA: "
+						+ endPointEvent.getEventType(),
+				EndPointEvent.INCOMING_CALL.equals(endPointEvent.getEventType()));
+
+		Call serverCall = endPointEvent.getCallSource();
+		SipCallController callControllerB1 = new SipCallController(serverName);
+		serverCall.addListener(callControllerB1);
+		log.info("OK");
+
+		log.info(serverName + " accepts call...");
+		serverCall.accept();
+		log.info("OK");
+
+		Thread.sleep(1000);
+
+		// TODO Manage this exception. Launch a exception but it's correct.
+		log.info(clientName + " cancel call...");
+		initialCallA1.cancel();
+		log.info("OK");
+
+		log.info(clientName + " expects call setup...");
+		callEvent = callControllerA1.pollSipEndPointEvent(TestConfig.WAIT_TIME);
+		assertTrue("No message received in server UA", callEvent != null);
+		assertTrue("Bad message received in server UA",
+				CallEvent.CALL_SETUP.equals(callEvent.getEventType()));
+		log.info("OK");
+
+		log.info(serverName + " expects call setup...");
+		callEvent = callControllerB1.pollSipEndPointEvent(TestConfig.WAIT_TIME);
+		assertTrue("No message received in server UA", callEvent != null);
+		assertTrue("Bad message received in server UA",
+				CallEvent.CALL_SETUP.equals(callEvent.getEventType()));
+		log.info("OK");
+
+		log.info(" -------------------- Test Cancel After Accept finished OK --------------------");
+	}
+
 }
