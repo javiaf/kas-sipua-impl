@@ -74,6 +74,7 @@ public class BugTest {
 		cConfig.setProxyAddress(TestConfig.PROXY_IP);
 		cConfig.setProxyPort(TestConfig.PROXY_PORT);
 		cConfig.setLocalPort(TestConfig.CLIENT_PORT);
+		cConfig.setTimer(serverTimer);
 		cConfig.setLocalAddress("lo0");
 
 		serverUa = UaFactory.getInstance(cConfig);
@@ -81,8 +82,7 @@ public class BugTest {
 		serverTimer = new TestTimer();
 		// Create and register SIP EndPoint
 		serverEndPoint = EndPointFactory.getInstance(serverName, "kurento.com",
-				"", expires, serverUa, serverEndPointController, serverTimer,
-				false);
+				"", expires, serverUa, serverEndPointController, false);
 		// Create SIP stack and activate SIP EndPoints
 		serverUa.reconfigure();
 
@@ -90,14 +90,14 @@ public class BugTest {
 		sConfig.setProxyAddress(TestConfig.CLIENT_IP);
 		sConfig.setProxyPort(TestConfig.CLIENT_PORT);
 		sConfig.setLocalPort(TestConfig.PROXY_PORT);
+		sConfig.setTimer(clientTimer);
 		sConfig.setLocalAddress("lo0");
 
 		clientUa = UaFactory.getInstance(sConfig);
 		clientEndPointController = new SipEndPointController("client");
 		clientTimer = new TestTimer();
 		clientEndPoint = EndPointFactory.getInstance(clientName, "kurento.com",
-				"", expires, clientUa, clientEndPointController, clientTimer,
-				false);
+				"", expires, clientUa, clientEndPointController, false);
 		// Create SIP stack and activate SIP EndPoints
 		clientUa.reconfigure();
 
