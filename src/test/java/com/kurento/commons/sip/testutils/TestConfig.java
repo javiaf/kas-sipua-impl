@@ -13,7 +13,7 @@ public class TestConfig {
 	public final static String PROXY_IP= "127.0.0.1";
 	public final static int PROXY_PORT = 5060;
 
-	public final static int WAIT_TIME = 10;
+	public final static int WAIT_TIME = 6;
 	private static int counter;
 
 	public static int getCounter() {
