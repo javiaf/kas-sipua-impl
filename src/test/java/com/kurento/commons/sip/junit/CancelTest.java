@@ -183,8 +183,6 @@ public class CancelTest {
 	 * 
 	 * @throws Exception
 	 */
-	// TODO Add BYE after SETUP and manage the exception that launch it when
-	// send cancel.
 	@Test
 	public void testCancelAfterAccept() throws Exception {
 		log.info("-------------------- Test Cancel After Accept --------------------");
@@ -219,7 +217,6 @@ public class CancelTest {
 
 		Thread.sleep(1000);
 
-		// TODO Manage this exception. Launch a exception but it's correct.
 		log.info(clientName + " cancel call...");
 		initialCallA1.cancel();
 		log.info("OK");
