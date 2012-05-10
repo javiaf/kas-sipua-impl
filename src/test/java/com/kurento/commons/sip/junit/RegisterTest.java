@@ -25,10 +25,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.kurento.commons.sip.agent.EndPointFactory;
-import com.kurento.commons.sip.agent.SipEndPointImpl;
 import com.kurento.commons.sip.agent.UaFactory;
+import com.kurento.commons.sip.agent.UaImpl;
 import com.kurento.commons.sip.testutils.MediaSessionDummy;
-import com.kurento.commons.sip.testutils.SipCallController;
 import com.kurento.commons.sip.testutils.SipEndPointController;
 import com.kurento.commons.sip.testutils.TestConfig;
 import com.kurento.commons.sip.testutils.TestTimer;
@@ -36,7 +35,6 @@ import com.kurento.commons.sip.util.SipConfig;
 import com.kurento.commons.ua.EndPoint;
 import com.kurento.commons.ua.UA;
 import com.kurento.commons.ua.event.EndPointEvent;
-import com.kurento.commons.ua.exception.ServerInternalErrorException;
 
 public class RegisterTest {
 
@@ -78,9 +76,9 @@ public class RegisterTest {
 		timer = new TestTimer();
 
 		SipConfig sConfig = new SipConfig();
-		sConfig.setProxyAddress(TestConfig.PROXY_IP);
-		sConfig.setProxyPort(TestConfig.PROXY_PORT);
-		sConfig.setLocalPort(TestConfig.CLIENT_PORT);
+		sConfig.setProxyAddress(TestConfig.CLIENT_IP);
+		sConfig.setProxyPort(TestConfig.CLIENT_PORT);
+		sConfig.setLocalPort(TestConfig.PROXY_PORT);
 		sConfig.setLocalAddress(localAddress);
 		sConfig.setTimer(timer);
 
@@ -100,6 +98,9 @@ public class RegisterTest {
 	}
 
 	/**
+	 * Verify the EndPoint is able to register a contact for a given SIPURI and
+	 * it manages its register/non-register status
+	 * 
 	 * <pre>
 	 *  1 - C:---REGISTER----------->:S
 	 *      C:<-------------200 OK---:S
@@ -120,14 +121,14 @@ public class RegisterTest {
 		log.info("Register user " + clientName + "...");
 
 		SipConfig cConfig = new SipConfig();
-		cConfig.setProxyAddress(TestConfig.CLIENT_IP);
-		cConfig.setProxyPort(TestConfig.CLIENT_PORT);
-		cConfig.setLocalPort(TestConfig.PROXY_PORT);
+		cConfig.setProxyAddress(TestConfig.PROXY_IP);
+		cConfig.setProxyPort(TestConfig.PROXY_PORT);
+		cConfig.setLocalPort(TestConfig.CLIENT_PORT);
 		cConfig.setLocalAddress(localAddress);
 		cConfig.setTimer(timer);
 
 		clientUa = UaFactory.getInstance(cConfig);
-		clientEndPointController = new SipEndPointController("client");
+		clientEndPointController = new SipEndPointController(clientName);
 		clientEndPoint = EndPointFactory.getInstance(clientName, "kurento.com",
 				"", expires, clientUa, clientEndPointController, true);
 		// Create SIP stack and activate SIP EndPoints
@@ -208,6 +209,10 @@ public class RegisterTest {
 	//
 
 	/**
+	 * Verify the UA sends REGISTER request before expiration time, while the
+	 * SIPURI contact is registered. After a message with expires set to 0
+	 * REGISTER messages must stop
+	 * 
 	 * <pre>
 	 * C:---REGISTER-------->:S
 	 * C:<----------200 OK---:S
@@ -233,14 +238,14 @@ public class RegisterTest {
 		log.info("Register user " + clientName + "...");
 
 		SipConfig cConfig = new SipConfig();
-		cConfig.setProxyAddress(TestConfig.CLIENT_IP);
-		cConfig.setProxyPort(TestConfig.CLIENT_PORT);
-		cConfig.setLocalPort(TestConfig.PROXY_PORT);
+		cConfig.setProxyAddress(TestConfig.PROXY_IP);
+		cConfig.setProxyPort(TestConfig.PROXY_PORT);
+		cConfig.setLocalPort(TestConfig.CLIENT_PORT);
 		cConfig.setLocalAddress(localAddress);
 		cConfig.setTimer(timer);
 
 		clientUa = UaFactory.getInstance(cConfig);
-		clientEndPointController = new SipEndPointController("client");
+		clientEndPointController = new SipEndPointController(clientName);
 		clientEndPoint = EndPointFactory.getInstance(clientName, "kurento.com",
 				"", expires, clientUa, clientEndPointController, true);
 		// Create SIP stack and activate SIP EndPoints
@@ -304,7 +309,127 @@ public class RegisterTest {
 		log.info(" -------------------- Test Register KeepAlive finished OK --------------------");
 	}
 
-	public void testSipKeepAlive() {
+	/**
+	 * Verify the EndPoint handles REGISTER timeouts due to connection problems
+	 * 
+	 * <pre>
+	 * C:---REGISTER-------->:S
+	 * C:   x------TIMEOUT---:S
+	 * </pre>
+	 * 
+	 * @throws Exception
+	 */
+	@Test
+	public void testRegisterTimeOut() throws Exception {
+		log.info("-------------------- Test Register Timeout --------------------");
+
+		// C:---REGISTER-------->:S
+		log.info("Register user " + clientName + "...");
+
+		SipConfig cConfig = new SipConfig();
+		cConfig.setProxyAddress(TestConfig.PROXY_IP);
+		cConfig.setProxyPort(TestConfig.PROXY_PORT + 1);
+		cConfig.setLocalPort(TestConfig.CLIENT_PORT);
+		cConfig.setLocalAddress(localAddress);
+		cConfig.setTimer(timer);
+
+		clientUa = UaFactory.getInstance(cConfig);
+		clientEndPointController = new SipEndPointController("client");
+		clientEndPoint = EndPointFactory.getInstance(clientName, "kurento.com",
+				"", expires, clientUa, clientEndPointController, true);
+		// Create SIP stack and activate SIP EndPoints
+		clientUa.reconfigure();
+
+		// C: x------TIMEOUT---:S
+		EndPointEvent endPointEvent = clientEndPointController
+				.pollSipEndPointEvent(TestConfig.WAIT_TIME * 10);
+		assertTrue("No message received in client UA", endPointEvent != null);
+		assertTrue(
+				"Bad message received in client UA: "
+						+ endPointEvent.getEventType(),
+				EndPointEvent.REGISTER_USER_FAIL.equals(endPointEvent
+						.getEventType()));
+		log.info("OK");
+
+	}
+
+	/**
+	 * Verify the User Agent properly handles call and sip protocol after lost
+	 * of network connection
+	 * 
+	 * <pre>
+	 * C:---REGISTER-------->:S
+	 * C:<----------200 OK---:S
+	 * ...
+	 * C:Network Interface change
+	 * ...
+	 * C:---REGISTER(exp=0)->:S - Un-register old contact
+	 * C:<----------200 OK-->:S
+	 * C:---REGISTER-------->:S - Register new contact
+	 * C:<----------200 OK---:S
+	 * </pre>
+	 * @throws Exception 
+	 */
+	@Test
+	public void testRegisterAfterNetworkInterfaceChange() throws Exception {
+
+		log.info("-------------------- Test Register after network interface change --------------------");
+
+		// C:---REGISTER-------->:S
+		log.info("Register user " + clientName + "...");
+
+		SipConfig cConfig = new SipConfig();
+		cConfig.setProxyAddress(TestConfig.PROXY_IP);
+		cConfig.setProxyPort(TestConfig.PROXY_PORT);
+		cConfig.setLocalPort(TestConfig.CLIENT_PORT);
+		cConfig.setLocalAddress(localAddress);
+		cConfig.setTimer(timer);
+
+		clientUa = UaFactory.getInstance(cConfig);
+		((UaImpl) clientUa).setTestMode(true);
+		clientEndPointController = new SipEndPointController("client");
+		clientEndPoint = EndPointFactory.getInstance(clientName, "kurento.com",
+				"", expires, clientUa, clientEndPointController, true);
+		// Create SIP stack and activate SIP EndPoints
+		clientUa.reconfigure();
+		
+		// Check register is successfully completed
+		EndPointEvent endPointEvent = clientEndPointController
+				.pollSipEndPointEvent(TestConfig.WAIT_TIME);
+		assertTrue("No message received in client UA", endPointEvent != null);
+		assertTrue(
+				"Bad message received in client UA: "
+						+ endPointEvent.getEventType(),
+				EndPointEvent.REGISTER_USER_SUCESSFUL.equals(endPointEvent
+						.getEventType()));
+		log.info("OK");
+		
+		// Emulate network change with the UA reconfiguration 
+		log.info(clientName + " has changed network interface" );
+		clientUa.reconfigure();
+		
+		// Check un-register is successfully completed
+		// TODO: add special event to signal unregister
+		endPointEvent = clientEndPointController
+				.pollSipEndPointEvent(TestConfig.WAIT_TIME);
+		assertTrue("No message received in client UA", endPointEvent != null);
+		assertTrue(
+				"Bad message received in client UA: "
+						+ endPointEvent.getEventType(),
+				EndPointEvent.REGISTER_USER_SUCESSFUL.equals(endPointEvent
+						.getEventType()));
+		log.info("OK");
+
+		// Check un-register is successfully completed
+		endPointEvent = clientEndPointController
+				.pollSipEndPointEvent(TestConfig.WAIT_TIME);
+		assertTrue("No message received in client UA", endPointEvent != null);
+		assertTrue(
+				"Bad message received in client UA: "
+						+ endPointEvent.getEventType(),
+				EndPointEvent.REGISTER_USER_SUCESSFUL.equals(endPointEvent
+						.getEventType()));
+		log.info("OK");
 
 	}
 

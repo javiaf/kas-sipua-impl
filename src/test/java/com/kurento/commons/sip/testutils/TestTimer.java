@@ -25,6 +25,7 @@ public class TestTimer implements KurentoUaTimer {
 		TestTask task;
 		if ((task = taskTable.get(kurentoTask)) != null) {
 			task.cancel();
+			taskTable.remove(kurentoTask);
 		}
 		
 	}
@@ -48,7 +49,9 @@ public class TestTimer implements KurentoUaTimer {
 		if ((task = taskTable.get(kurentoTask)) == null) {
 			task = new TestTask(kurentoTask);
 			taskTable.put(kurentoTask, task);
-		}
+		} 
+		
+		// Will throw exception if alrady scheluded
 		timer.schedule(task, delay, period);
 
 	}

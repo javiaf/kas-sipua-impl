@@ -112,7 +112,8 @@ public class UaImpl implements SipListener, UaStun {
 
 	// Sip event listeners
 	private List<UaMessageListener> sipEventListeners = new ArrayList<UaMessageListener>();
-	// Test mode: delay response 300 miliseconds
+
+	// Indicate to UA is running in test mode 
 	private boolean testMode=false;
 
 	// /////////////////////////
@@ -144,8 +145,10 @@ public class UaImpl implements SipListener, UaStun {
 		InetAddress localAddressNew = getLocalInterface(config
 				.getLocalAddress());
 		if (localAddressNew != null
-				&& !localAddressNew.getHostAddress().equals(localAddress)) {
-			// Detected Network interface change
+				&& !localAddressNew.getHostAddress().equals(localAddress)
+				|| testMode) {
+			// With test mode reconfigure always
+ 			// Detected Network interface change
 			log.debug("Found network interface change: "
 					+ localAddressNew.getHostAddress() + " <== " + localAddress);
 
@@ -715,6 +718,12 @@ public class UaImpl implements SipListener, UaStun {
 	public void removeUaSipListener(UaMessageListener listener) {
 		sipEventListeners.add(listener);
 	}
+	
+	public void setTestMode (boolean mode) {
+		this.testMode = mode;
+	}
+	
+	///////////////////////
 	
 	private void sendStateless(int code, Request request) {
 		try {
