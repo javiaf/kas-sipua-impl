@@ -191,7 +191,7 @@ public class SipEndPointImpl implements EndPoint {
 	public UaImpl getUa() {
 		return this.ua;
 	}
-
+	
 	public void setExpiresAndRegister(int expires) {
 
 		if (receiveCall) {

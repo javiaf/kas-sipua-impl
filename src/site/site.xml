@@ -9,10 +9,12 @@
 		<href>http://www.kurento.com</href>
 	</bannerLeft>
 	<body>
-		<menu name="Kurento SIP library">
-			<item name="Test configuration" href="./testhelp.html" />
+		<menu name="Documentation">
+<!-- 			<item name="Test configuration" href="./testhelp.html" /> -->
+			<item name="Test plan" href="./test-plan.html"/>
 		</menu>
 		<menu ref="modules" />
 		<menu ref="reports" />
+		
 	</body>
 </project>

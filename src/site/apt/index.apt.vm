@@ -3,7 +3,7 @@ Kurento Android SIP User Agent
 
 * Introduction
 
-	This project is an Android implementation of interface {{{../../kas-sipua/${kasSipUaVersion}}KAS-SIPUA}}.
+	This project is an Android implementation of interface {{{../../kas-sipua/${kasSipUaVersion}KAS-SIPUA}}.
 	Provides an embeddable library enabling SIP call management for Android applications.
 	
 * Quick start

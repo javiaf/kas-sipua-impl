@@ -371,18 +371,20 @@ public abstract class CTransaction extends Transaction {
 		}
 	}
 
-	public void sendCancel() throws ServerInternalErrorException {
-		if (request != null) {
-			try {
-				clientTransaction.sendRequest();
-			} catch (SipException e) {
-				log.error(e.getLocalizedMessage());
-				e.printStackTrace();
-				throw new ServerInternalErrorException(
-						"Sip Exception sending CANCEL request", e);
-			}
-		}
-	}
+//	public void sendCancel() throws ServerInternalErrorException {
+//		if (request != null) {
+//			try {
+//				log.info("SIP send request\n"
+//						+ ">>>>>>>>>> SIP send request >>>>>>>>>>\n"
+//						+ clientTransaction.getRequest().toString()
+//						+ ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
+//				clientTransaction.sendRequest();
+//			} catch (SipException e) {
+//				throw new ServerInternalErrorException(
+//						"Sip Exception sending CANCEL request", e);
+//			}
+//		}
+//	}
 
 	public abstract void processResponse(ResponseEvent event)
 			throws ServerInternalErrorException;
