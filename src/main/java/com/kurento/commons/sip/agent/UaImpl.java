@@ -252,6 +252,11 @@ public class UaImpl implements SipListener, UaStun {
 			// traces.
 			// Your code will limp at 32 but it is best for debugging.
 			// jainProps.setProperty("gov.nist.javax.sip.TRACE_LEVEL", "16");
+			
+			if (testMode) {
+				//jainProps.setProperty("gov.nist.javax.sip.EARLY_DIALOG_TIMEOUT_SECONDS", "10");
+				jainProps.setProperty("gov.nist.javax.sip.MAX_TX_LIFETIME_INVITE", "10");
+			}
 
 			log.info("Stack properties: " + jainProps);
 

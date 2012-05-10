@@ -95,6 +95,7 @@ public class RegisterTest {
 	@AfterClass
 	public static void tearDown() {
 		serverUa.terminate();
+		clientUa.terminate();
 	}
 
 	/**
@@ -350,6 +351,9 @@ public class RegisterTest {
 				EndPointEvent.REGISTER_USER_FAIL.equals(endPointEvent
 						.getEventType()));
 		log.info("OK");
+		
+		clientUa.terminate();
+		log.info("-------------------- Test Register Timeout finished OK --------------------");
 
 	}
 

@@ -25,6 +25,7 @@ import org.slf4j.LoggerFactory;
 
 import com.kurento.commons.sip.agent.EndPointFactory;
 import com.kurento.commons.sip.agent.UaFactory;
+import com.kurento.commons.sip.agent.UaImpl;
 import com.kurento.commons.sip.testutils.MediaSessionDummy;
 import com.kurento.commons.sip.testutils.SipCallController;
 import com.kurento.commons.sip.testutils.SipEndPointController;
@@ -36,6 +37,7 @@ import com.kurento.commons.ua.EndPoint;
 import com.kurento.commons.ua.UA;
 import com.kurento.commons.ua.event.CallEvent;
 import com.kurento.commons.ua.event.EndPointEvent;
+import com.kurento.commons.ua.exception.ServerInternalErrorException;
 import com.kurento.commons.ua.timer.KurentoUaTimer;
 
 public class InviteTest {
@@ -100,6 +102,7 @@ public class InviteTest {
 		sConfig.setTimer(timer);
 
 		clientUa = UaFactory.getInstance(sConfig);
+		((UaImpl) clientUa).setTestMode(true);
 		clientEndPointController = new SipEndPointController(clientName);
 		clientEndPoint = EndPointFactory.getInstance(clientName, "kurento.com",
 				"", expires, clientUa, clientEndPointController, false);
@@ -204,6 +207,9 @@ public class InviteTest {
 	}
 
 	/**
+	 * Verify the SIP User Agent can set up calls and accepts teardowns from the
+	 * called party
+	 * 
 	 * <pre>
 	 * C:---INVITE---------->:S
 	 * C:<----------200 OK---:S
@@ -287,6 +293,75 @@ public class InviteTest {
 		log.info("OK");
 
 		log.info(" -------------------- Test Call Setup and Drop from called finished OK --------------------");
+	}
+
+	/**
+	 * <bold>Test to be done at application layer. Protocol transaction recovery
+	 * is part of SipStack functions</bold><br>
+	 * Verify the SIP User Agent is able to handle call and protocol recovery
+	 * after a network change during a call setup procedure
+	 * 
+	 * 
+	 * 
+	 * <pre>
+	 * C:---INVITE---------->:S
+	 * C:-----X        X-----:S (Network change. Emulated by )
+	 * C:   x-------200 OK---:S
+	 * C:---???
+	 * 
+	 * C:---INVITE---------->:S
+	 * C:<----------200 OK---:S
+	 * C:-----X        X-----:S (Network change. Emulated by )
+	 * C:---ACK--------x     :S (?????)
+	 * </pre>
+	 * 
+	 * TODO: Test SIP User Agent call recovery when remote peer gets
+	 * disconnected after successful call setup. This test will require a
+	 * keep-alive mechanism with remote peer like SIP outbound defined by
+	 * RFC5626
+	 * 
+	 * @throws Exception
+	 */
+	//@Test
+	public void testServerUnavailableDuringCallSetup() throws Exception {
+		log.info("-------------------- Test Call Setup and Drop from called --------------------");
+
+		EndPointEvent endPointEvent;
+		CallEvent callEvent;
+
+		// C:---INVITE---------->:S
+		log.info(clientName + " dial to " + serverName + "...");
+		SipCallController callControllerClient = new SipCallController(
+				clientName);
+		Call clientCall = clientEndPoint.dial(serverUri, callControllerClient);
+		log.info("OK");
+
+		log.info(serverName + " expects incoming call from " + clientName
+				+ "...");
+		endPointEvent = serverEndPointController
+				.pollSipEndPointEvent(TestConfig.WAIT_TIME);
+		assertTrue("No message received in server UA", endPointEvent != null);
+		assertTrue(
+				"Bad message received in server UA: "
+						+ endPointEvent.getEventType(),
+				EndPointEvent.INCOMING_CALL.equals(endPointEvent.getEventType()));
+		log.info("OK");
+
+		// Emulate remote peer unavailability by terminating serverUA
+		log.info(serverName + " User Agent goes down");
+		serverUa.terminate();
+
+		// C: x-------200 OK---:S
+		// C:---???
+		log.info(clientName + " expects response from " + serverName + "...");
+		// Wait forever until timeout is received
+		endPointEvent = clientEndPointController.pollSipEndPointEvent(100000);
+		assertTrue("No message received in server UA", endPointEvent != null);
+		// assertTrue(
+		// "Bad message received in client UA: "
+		// + endPointEvent.getEventType(),
+		// EndPointEvent.INCOMING_CALL.equals(endPointEvent.getEventType()));
+		log.info("OK");
 	}
 
 }
