@@ -4,7 +4,9 @@
 	------
 	Date
 	------
-	
+
+	Deprecated: Since version 1.1.2 No external proxy is required to test SIP STACK
+		
 Kurento SIP library Test bed
 
 	In order to test Kurento SIP User Agent � is required an {{{http://www.opensips.org}OpenSips}}

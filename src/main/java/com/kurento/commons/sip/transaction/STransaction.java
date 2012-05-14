@@ -121,6 +121,7 @@ public abstract class STransaction extends Transaction {
 					+ response.getStatusCode() + "\n" + response.toString()
 					+ "\n" 
 					+ ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
+			
 			serverTransaction.sendResponse(response);
 			log.info("Transaction goes to state: " + serverTransaction.getState());
 

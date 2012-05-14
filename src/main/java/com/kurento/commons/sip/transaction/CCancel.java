@@ -28,7 +28,8 @@ public class CCancel extends CTransaction {
 			throws ServerInternalErrorException {
 		super(Request.CANCEL, cancelRequest, sipContext.getEndPoint(),
 				sipContext.getRemoteParty());
-		this.sendCancel();
+		//this.sendCancel();
+		sendRequest(null);
 	}
 
 	@Override

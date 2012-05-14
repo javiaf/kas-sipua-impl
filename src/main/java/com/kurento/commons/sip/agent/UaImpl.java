@@ -22,8 +22,10 @@ import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.net.SocketException;
 import java.text.ParseException;
+import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Properties;
 import java.util.TooManyListenersException;
 import java.util.UUID;
@@ -54,6 +56,8 @@ import javax.sip.message.Response;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.kurento.commons.sip.event.SipEvent;
+import com.kurento.commons.sip.event.SipEventEnum;
 import com.kurento.commons.sip.exception.SipTransactionException;
 import com.kurento.commons.sip.transaction.CTransaction;
 import com.kurento.commons.sip.transaction.SAck;
@@ -102,11 +106,15 @@ public class UaImpl implements SipListener, UaStun {
 	// User List
 	private HashMap<String, SipEndPointImpl> endPoints = new HashMap<String, SipEndPointImpl>();
 
-	// private int contWifi = 0;
-
 	// Register control
 	private UUID instanceId;
 	private int regId;
+
+	// Sip event listeners
+	private List<UaMessageListener> sipEventListeners = new ArrayList<UaMessageListener>();
+
+	// Indicate to UA is running in test mode 
+	private boolean testMode=false;
 
 	// /////////////////////////
 	//
@@ -137,8 +145,10 @@ public class UaImpl implements SipListener, UaStun {
 		InetAddress localAddressNew = getLocalInterface(config
 				.getLocalAddress());
 		if (localAddressNew != null
-				&& !localAddressNew.getHostAddress().equals(localAddress)) {
-			// Detected Network interface change
+				&& !localAddressNew.getHostAddress().equals(localAddress)
+				|| testMode) {
+			// With test mode reconfigure always
+ 			// Detected Network interface change
 			log.debug("Found network interface change: "
 					+ localAddressNew.getHostAddress() + " <== " + localAddress);
 
@@ -243,6 +253,11 @@ public class UaImpl implements SipListener, UaStun {
 			// traces.
 			// Your code will limp at 32 but it is best for debugging.
 			// jainProps.setProperty("gov.nist.javax.sip.TRACE_LEVEL", "16");
+			
+			if (testMode) {
+				//jainProps.setProperty("gov.nist.javax.sip.EARLY_DIALOG_TIMEOUT_SECONDS", "10");
+				jainProps.setProperty("gov.nist.javax.sip.MAX_TX_LIFETIME_INVITE", "10");
+			}
 
 			log.info("Stack properties: " + jainProps);
 
@@ -257,7 +272,7 @@ public class UaImpl implements SipListener, UaStun {
 			sipProvider = sipStack.createSipProvider(listeningPoint);
 			sipProvider.addSipListener(this);
 
-			if (config.isEnableKeepAlive() ) {
+			if (config.isEnableKeepAlive()) {
 				log.debug("Creating keepalive for hole punching");
 				try {
 					keepAlive = new NatKeepAlive(config, listeningPoint);
@@ -380,6 +395,36 @@ public class UaImpl implements SipListener, UaStun {
 		}
 	}
 
+	@Override
+	public void registerEndpoint(EndPoint endpoint) {
+		if (!(endpoint instanceof SipEndPointImpl))
+			return;
+		endPoints.put(((SipEndPointImpl) endpoint).getAddress().toString(),
+				(SipEndPointImpl) endpoint);
+	}
+
+	@Override
+	public void unregisterEndpoint(EndPoint endpoint) {
+		if (!(endpoint instanceof SipEndPointImpl))
+			return;
+		endPoints.remove(((SipEndPointImpl) endpoint).getAddress().toString());
+	}
+
+	@Override
+	public DiscoveryInfo getConnectionType() throws Exception {
+		if (info == null)
+			throw new Exception("info is null");
+		return info;
+	}
+
+	public UUID getInstanceId() {
+		return instanceId;
+	}
+
+	public int getRegId() {
+		return regId;
+	}
+
 	// /////////////////////////
 	//
 	// SIP LISTENER
@@ -424,6 +469,13 @@ public class UaImpl implements SipListener, UaStun {
 				serverTransaction = sipProvider
 						.getNewServerTransaction(requestEvent.getRequest());
 			}
+
+			// Mainly for test purposes. Notify incoming transactions
+			for (UaMessageListener l : sipEventListeners) {
+				l.onEvent(new SipEvent(this,requestEvent.getRequest().getMethod(),
+						serverTransaction.getBranchId()));
+			}
+
 			if (reqMethod.equals(Request.REGISTER)) {
 				// Register requests addressed to the UA. No localparty
 				// required
@@ -498,6 +550,12 @@ public class UaImpl implements SipListener, UaStun {
 			// RFC3261 18.1.2
 			log.error("Unable to find a proper transaction matching response");
 			return;
+		}
+		
+		// Mainly for test purposes. Notify incoming responses
+		for (UaMessageListener l : sipEventListeners) {
+			l.onEvent(new SipEvent(this, responseEvent.getResponse().getStatusCode(),
+					clientTransaction.getBranchId()));
 		}
 
 		// Get the transaction application record and process response.
@@ -659,12 +717,20 @@ public class UaImpl implements SipListener, UaStun {
 		}
 	}
 
-	// ///////////
-	//
-	// User manager interface
-	//
-	// ///////////
+	public void addUaSipListener(UaMessageListener listener) {
+		sipEventListeners.add(listener);
+	}
 
+	public void removeUaSipListener(UaMessageListener listener) {
+		sipEventListeners.add(listener);
+	}
+	
+	public void setTestMode (boolean mode) {
+		this.testMode = mode;
+	}
+	
+	///////////////////////
+	
 	private void sendStateless(int code, Request request) {
 		try {
 			sipProvider.sendResponse(UaFactory.getMessageFactory()
@@ -692,33 +758,4 @@ public class UaImpl implements SipListener, UaStun {
 				+ info.getPublicPort());
 	}
 
-	@Override
-	public void registerEndpoint(EndPoint endpoint) {
-		if (!(endpoint instanceof SipEndPointImpl))
-			return;
-		endPoints.put(((SipEndPointImpl) endpoint).getAddress().toString(),
-				(SipEndPointImpl) endpoint);
-	}
-
-	@Override
-	public void unregisterEndpoint(EndPoint endpoint) {
-		if (!(endpoint instanceof SipEndPointImpl))
-			return;
-		endPoints.remove(((SipEndPointImpl) endpoint).getAddress().toString());
-	}
-
-	@Override
-	public DiscoveryInfo getConnectionType() throws Exception {
-		if (info == null)
-			throw new Exception("info is null");
-		return info;
-	}
-
-	public UUID getInstanceId() {
-		return instanceId;
-	}
-
-	public int getRegId() {
-		return regId;
-	}
 }

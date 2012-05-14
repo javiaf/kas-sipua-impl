@@ -62,6 +62,7 @@ public class CInvite extends CTransaction {
 		int statusCode = response.getStatusCode();
 		log.info("processResponse: " + statusCode + " dialog: " + this.dialog
 				+ ", state: " + dialog.getState());
+		
 		// Processing response
 		if (statusCode == Response.TRYING) {
 			log.info("<<<<<<< 100 TRYING: dialog: " + this.dialog + ", state: "
@@ -78,10 +79,12 @@ public class CInvite extends CTransaction {
 		} else if (statusCode < 200) {
 			log.info("<<<<<<< " + statusCode + " 1xx: dialog: " + this.dialog
 					+ ", state: " + dialog.getState());
+			
 		} else if (statusCode == Response.REQUEST_TERMINATED) {
 			log.info("<<<<<<< " + statusCode + " TERMINATED: dialog: "
-					+ this.dialog + ", state: " + dialog.getState());
-			sendAck();
+					+ this.dialog.getDialogId() + ", state: "
+					+ dialog.getState());
+			// sendAck();   // ACK is automatically sent by the SIP Stack
 			release();
 		} else if (statusCode == Response.TEMPORARILY_UNAVAILABLE
 				|| statusCode == Response.NOT_ACCEPTABLE_HERE
@@ -92,14 +95,14 @@ public class CInvite extends CTransaction {
 			log.info("<<<<<<< " + statusCode + " REJECT: dialog: "
 					+ this.dialog + ", state: " + dialog.getState());
 			sipContext.rejectedCall();
-			sendAck();
+			//sendAck();  // ACK is automatically sent by the SIP Stack
 			release();
 
 		} else if (statusCode == Response.OK) {
 			// 200 OK
-			log.info("<<<<<<< 200 OK: dialog: " + this.dialog + ", state: "
-					+ dialog.getState());
-			if (sipContext.hasPendingTransaction()) {
+			log.info("<<<<<<< 200 OK: dialog: " + this.dialog.getDialogId()
+					+ ", state: " + dialog.getState());
+			if (sipContext.isCancelled()) {
 				sendAck();
 				new CBye(sipContext);
 			} else {
@@ -126,7 +129,8 @@ public class CInvite extends CTransaction {
 	}
 
 	private void sendAck() throws ServerInternalErrorException {
-		log.info("dialog.getState(): " + dialog.getState());
+		// Non 2XX responses will cause the SIP Stack to send the ACK message
+		// automatically
 		if (!DialogState.CONFIRMED.equals(dialog.getState()))
 			return;
 		try {
@@ -141,12 +145,12 @@ public class CInvite extends CTransaction {
 			release();
 			throw new ServerInternalErrorException(
 					"Invalid Argument Exception while sending ACK for transaction: "
-							+ this.dialog, e);
+							+ this.dialog.getDialogId(), e);
 		} catch (SipException e) {
 			release();
 			throw new ServerInternalErrorException(
 					"Sip Exception while sending ACK for transaction: "
-							+ this.dialog, e);
+							+ this.dialog.getDialogId(), e);
 		}
 	}
 

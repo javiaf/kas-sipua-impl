@@ -31,9 +31,12 @@ public class SCancel extends STransaction {
 			SipTransactionException {
 		super(Request.CANCEL, serverTransaction, localParty);
 
+		// RFC 3261 - 9.2
 		if (sipContext == null)
+			// No matching transaction ==> null SipContext & 481 response code
 			sendResponse(Response.CALL_OR_TRANSACTION_DOES_NOT_EXIST, null);
 		else {
+			// Matching transaction found ==> send 200 code regardless of dialog status
 			sendResponse(Response.OK, null);
 			sipContext.cancelCall();
 		}

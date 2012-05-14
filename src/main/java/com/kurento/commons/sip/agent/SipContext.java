@@ -161,14 +161,11 @@ public class SipContext implements Call {
 	public void cancel() throws ServerInternalErrorException {
 		log.info("Request to cancel callId: " + dialog.getCallId());
 		if (cancelRequest == null)
-			throw new ServerInternalErrorException("No request for cancel.");
+			throw new ServerInternalErrorException("Cancel request is null");
+		
+		new CCancel(cancelRequest, this);
+		outgoingRequestCancelled = true;
 
-		try {
-			new CCancel(cancelRequest, this);
-			outgoingRequestCancelled = true;
-		} catch (ServerInternalErrorException e) {
-			log.warn("Unable to send CANCEL request", e);
-		}
 		if (networkConnection != null) {
 			networkConnection.release();
 			networkConnection = null;
@@ -353,7 +350,7 @@ public class SipContext implements Call {
 		
 	}
 	
-	public boolean hasPendingTransaction() {
+	public boolean isCancelled() {
 		return outgoingRequestCancelled;
 	}
 
