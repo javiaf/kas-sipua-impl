@@ -171,6 +171,7 @@ public class UaImpl implements SipListener, UaStun {
 								+ localPort);
 						localPort++;
 					}
+					trying++;
 				}
 			} else {
 				log.debug("STUN NOT activated");
