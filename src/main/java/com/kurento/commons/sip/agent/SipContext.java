@@ -272,6 +272,11 @@ public class SipContext implements Call {
 		terminatedCall();
 	}
 
+	public void userNotFound() {
+		notifySipCallEvent(CallEvent.USER_NOT_FOUND);
+		terminatedCall();
+	}
+
 	public void terminatedCall() {
 		notifySipCallEvent(CallEvent.CALL_TERMINATE);
 		if (networkConnection != null) {

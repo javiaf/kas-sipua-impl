@@ -62,7 +62,7 @@ public class CInvite extends CTransaction {
 		int statusCode = response.getStatusCode();
 		log.info("processResponse: " + statusCode + " dialog: " + this.dialog
 				+ ", state: " + dialog.getState());
-		
+
 		// Processing response
 		if (statusCode == Response.TRYING) {
 			log.info("<<<<<<< 100 TRYING: dialog: " + this.dialog + ", state: "
@@ -79,12 +79,12 @@ public class CInvite extends CTransaction {
 		} else if (statusCode < 200) {
 			log.info("<<<<<<< " + statusCode + " 1xx: dialog: " + this.dialog
 					+ ", state: " + dialog.getState());
-			
+
 		} else if (statusCode == Response.REQUEST_TERMINATED) {
 			log.info("<<<<<<< " + statusCode + " TERMINATED: dialog: "
 					+ this.dialog.getDialogId() + ", state: "
 					+ dialog.getState());
-			// sendAck();   // ACK is automatically sent by the SIP Stack
+			// sendAck(); // ACK is automatically sent by the SIP Stack
 			release();
 		} else if (statusCode == Response.TEMPORARILY_UNAVAILABLE
 				|| statusCode == Response.NOT_ACCEPTABLE_HERE
@@ -95,7 +95,7 @@ public class CInvite extends CTransaction {
 			log.info("<<<<<<< " + statusCode + " REJECT: dialog: "
 					+ this.dialog + ", state: " + dialog.getState());
 			sipContext.rejectedCall();
-			//sendAck();  // ACK is automatically sent by the SIP Stack
+			// sendAck(); // ACK is automatically sent by the SIP Stack
 			release();
 
 		} else if (statusCode == Response.OK) {
@@ -120,9 +120,18 @@ public class CInvite extends CTransaction {
 				}
 			}
 		} else if (statusCode == Response.UNSUPPORTED_MEDIA_TYPE) {
-			log.info("<<<<<<< " + statusCode + " FAIL: dialog: " + this.dialog
+			log.info("<<<<<<< " + statusCode
+					+ " UNSUPPORTED_MEDIA_TYPE: dialog: " + this.dialog
 					+ ", state: " + dialog.getState());
 			sipContext.unsupportedMediaType();
+			release();
+		} else if (statusCode == 476 || statusCode == Response.NOT_FOUND) {
+			// USER_NOT_FOUND. SIP/2.0 476
+			// Unresolvable destination
+			log.info("<<<<<<< " + statusCode + " USER_NOT_FOUND: dialog: "
+					+ this.dialog
+					+ ", state: " + dialog.getState());
+			sipContext.userNotFound();
 			release();
 		} else {
 			log.info("<<<<<<< " + statusCode + " FAIL: dialog: " + this.dialog
