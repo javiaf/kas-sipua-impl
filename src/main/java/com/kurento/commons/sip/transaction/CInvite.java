@@ -190,6 +190,8 @@ public class CInvite extends CTransaction {
 							event.getMediaServerSdp()).getBytes());
 				} catch (SdpException e) {
 					log.warn("Unable to get local SDP", e);
+					sipContext.unsupportedMediaType();
+					release();
 				}
 			} else if (SdpPortManagerEvent.ANSWER_PROCESSED.equals(eventType)) {
 				// Notify call set up
