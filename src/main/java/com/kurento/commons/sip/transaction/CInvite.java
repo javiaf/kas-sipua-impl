@@ -119,6 +119,11 @@ public class CInvite extends CTransaction {
 					new CBye(sipContext);
 				}
 			}
+		} else if (statusCode == Response.UNSUPPORTED_MEDIA_TYPE) {
+			log.info("<<<<<<< " + statusCode + " FAIL: dialog: " + this.dialog
+					+ ", state: " + dialog.getState());
+			sipContext.unsupportedMediaType();
+			release();
 		} else {
 			log.info("<<<<<<< " + statusCode + " FAIL: dialog: " + this.dialog
 					+ ", state: " + dialog.getState());

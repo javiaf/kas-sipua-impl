@@ -267,6 +267,11 @@ public class SipContext implements Call {
 		terminatedCall();
 	}
 
+	public void unsupportedMediaType() {
+		notifySipCallEvent(CallEvent.MEDIA_NOT_SUPPORTED);
+		terminatedCall();
+	}
+
 	public void terminatedCall() {
 		notifySipCallEvent(CallEvent.CALL_TERMINATE);
 		if (networkConnection != null) {
