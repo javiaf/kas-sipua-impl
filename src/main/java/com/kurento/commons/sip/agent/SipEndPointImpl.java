@@ -19,6 +19,7 @@ package com.kurento.commons.sip.agent;
 import java.text.ParseException;
 import java.util.Random;
 
+import javax.sip.SipProvider;
 import javax.sip.address.Address;
 import javax.sip.header.CallIdHeader;
 
@@ -69,14 +70,15 @@ public class SipEndPointImpl implements EndPoint {
 	// ////////////
 
 	protected SipEndPointImpl(String userName, String realm, String password,
-			int expires, UaImpl ua, EndPointListener handler) throws ParseException,
-			ServerInternalErrorException {
+			int expires, UaImpl ua, EndPointListener handler)
+			throws ParseException, ServerInternalErrorException {
 		this(userName, realm, password, expires, ua, handler, true);
 
 	}
 
 	protected SipEndPointImpl(String userName, String realm, String password,
-			int expires, UaImpl ua, EndPointListener handler, Boolean receiveCall) throws ParseException,
+			int expires, UaImpl ua, EndPointListener handler,
+			Boolean receiveCall) throws ParseException,
 			ServerInternalErrorException {
 		this.ua = ua;
 		this.listener = handler;
@@ -191,7 +193,7 @@ public class SipEndPointImpl implements EndPoint {
 	public UaImpl getUa() {
 		return this.ua;
 	}
-	
+
 	public void setExpiresAndRegister(int expires) {
 
 		if (receiveCall) {
@@ -207,30 +209,41 @@ public class SipEndPointImpl implements EndPoint {
 				timer.schedule(sipEndPointTimerTask, 0, period);
 			} else {
 				// Send register with expires=0
-				register();
+				try {
+					register();
+				} catch (ServerInternalErrorException e) {
+					timer.cancel(sipEndPointTimerTask);
+				}
 			}
 		}
 
 	}
 
-	public void register() {
+	public void register() throws ServerInternalErrorException {
 		if (receiveCall) {
 			// Create call ID to avoid IP addresses that can be mangled by
 			// routers
-			this.registrarCallId = getUa().getSipProvider().getNewCallId();
 			try {
+				SipProvider sipProvider = getUa().getSipProvider();
+
+				if (sipProvider == null)
+					throw new ServerInternalErrorException(
+							"SipProvider is null");
+
+				this.registrarCallId = sipProvider.getNewCallId();
+
 				this.registrarCallId.setCallId(getUa().getInstanceId()
 						.toString());
-			} catch (ParseException e1) {
-				log.warn("Unable to set REGISTER call ID", e1);
-			}
 
-			try {
 				CRegister register;
 				register = new CRegister(this);
 				register.sendRequest(null);
 			} catch (ServerInternalErrorException e) {
 				log.error("REGISTER error", e);
+				throw new ServerInternalErrorException(
+						"Problem with the register. " + e);
+			} catch (ParseException e) {
+				log.error("REGISTER error" + e);
 			}
 		}
 	}
@@ -272,17 +285,21 @@ public class SipEndPointImpl implements EndPoint {
 	}
 
 	private class SipEndPointTimerTask extends KurentoUaTimerTask {
-		
+
 		private SipEndPointImpl ep;
-		
+
 		public SipEndPointTimerTask(SipEndPointImpl ep) {
-			this.ep=ep;
+			this.ep = ep;
 		}
 
 		@Override
 		public void run() {
 			log.debug("sipEndpointTimerTask register");
-			ep.register();
+			try {
+				ep.register();
+			} catch (ServerInternalErrorException e) {
+				log.error("Timer SipEndPointTimerTask exception: " + e);
+			}
 		}
 
 	}
