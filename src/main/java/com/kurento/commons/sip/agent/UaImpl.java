@@ -57,7 +57,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.kurento.commons.sip.event.SipEvent;
-import com.kurento.commons.sip.event.SipEventEnum;
 import com.kurento.commons.sip.exception.SipTransactionException;
 import com.kurento.commons.sip.transaction.CTransaction;
 import com.kurento.commons.sip.transaction.SAck;
@@ -113,8 +112,8 @@ public class UaImpl implements SipListener, UaStun {
 	// Sip event listeners
 	private List<UaMessageListener> sipEventListeners = new ArrayList<UaMessageListener>();
 
-	// Indicate to UA is running in test mode 
-	private boolean testMode=false;
+	// Indicate to UA is running in test mode
+	private boolean testMode = false;
 
 	// /////////////////////////
 	//
@@ -148,7 +147,7 @@ public class UaImpl implements SipListener, UaStun {
 				&& !localAddressNew.getHostAddress().equals(localAddress)
 				|| testMode) {
 			// With test mode reconfigure always
- 			// Detected Network interface change
+			// Detected Network interface change
 			log.debug("Found network interface change: "
 					+ localAddressNew.getHostAddress() + " <== " + localAddress);
 
@@ -253,10 +252,12 @@ public class UaImpl implements SipListener, UaStun {
 			// traces.
 			// Your code will limp at 32 but it is best for debugging.
 			// jainProps.setProperty("gov.nist.javax.sip.TRACE_LEVEL", "16");
-			
+
 			if (testMode) {
-				//jainProps.setProperty("gov.nist.javax.sip.EARLY_DIALOG_TIMEOUT_SECONDS", "10");
-				jainProps.setProperty("gov.nist.javax.sip.MAX_TX_LIFETIME_INVITE", "10");
+				// jainProps.setProperty("gov.nist.javax.sip.EARLY_DIALOG_TIMEOUT_SECONDS",
+				// "10");
+				jainProps.setProperty(
+						"gov.nist.javax.sip.MAX_TX_LIFETIME_INVITE", "10");
 			}
 
 			log.info("Stack properties: " + jainProps);
@@ -472,8 +473,8 @@ public class UaImpl implements SipListener, UaStun {
 
 			// Mainly for test purposes. Notify incoming transactions
 			for (UaMessageListener l : sipEventListeners) {
-				l.onEvent(new SipEvent(this,requestEvent.getRequest().getMethod(),
-						serverTransaction.getBranchId()));
+				l.onEvent(new SipEvent(this, requestEvent.getRequest()
+						.getMethod(), serverTransaction.getBranchId()));
 			}
 
 			if (reqMethod.equals(Request.REGISTER)) {
@@ -485,6 +486,13 @@ public class UaImpl implements SipListener, UaStun {
 				// Rest of requests: Get local party or give up
 				localParty = getLocalEndPoint(serverTransaction);
 
+				if (localParty == null) {
+					Response response = UaFactory.getMessageFactory()
+							.createResponse(Response.NOT_FOUND,
+									serverTransaction.getRequest());
+					serverTransaction.sendResponse(response);
+					return;
+				}
 				// Check if SipContext has to be created
 				if ((dialog = serverTransaction.getDialog()) != null) {
 					log.debug("Created IN dialog transaction:"
@@ -551,11 +559,11 @@ public class UaImpl implements SipListener, UaStun {
 			log.error("Unable to find a proper transaction matching response");
 			return;
 		}
-		
+
 		// Mainly for test purposes. Notify incoming responses
 		for (UaMessageListener l : sipEventListeners) {
-			l.onEvent(new SipEvent(this, responseEvent.getResponse().getStatusCode(),
-					clientTransaction.getBranchId()));
+			l.onEvent(new SipEvent(this, responseEvent.getResponse()
+					.getStatusCode(), clientTransaction.getBranchId()));
 		}
 
 		// Get the transaction application record and process response.
@@ -630,15 +638,14 @@ public class UaImpl implements SipListener, UaStun {
 		}
 
 		SipEndPointImpl epImpl;
-		if ((epImpl = endPoints.get("sip:" + sipUri.getUser() + "@"
-				+ sipUri.getHost())) != null) {
-			return epImpl;
-		} else {
-			String msg = "End point not registered with this UA:"
-					+ sipUri.toString();
-			log.warn(msg);
-			throw new SipTransactionException(msg);
-		}
+		epImpl = endPoints.get("sip:" + sipUri.getUser() + "@"
+				+ sipUri.getHost());
+		if (epImpl == null)
+			log.warn("End point not registered with this UA:"
+					+ sipUri.toString());
+
+		return epImpl;
+
 	}
 
 	// //////////////
@@ -724,13 +731,13 @@ public class UaImpl implements SipListener, UaStun {
 	public void removeUaSipListener(UaMessageListener listener) {
 		sipEventListeners.add(listener);
 	}
-	
-	public void setTestMode (boolean mode) {
+
+	public void setTestMode(boolean mode) {
 		this.testMode = mode;
 	}
-	
-	///////////////////////
-	
+
+	// /////////////////////
+
 	private void sendStateless(int code, Request request) {
 		try {
 			sipProvider.sendResponse(UaFactory.getMessageFactory()
