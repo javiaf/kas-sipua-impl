@@ -13,7 +13,7 @@ GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>
-*/
+ */
 package com.kurento.commons.sip.agent;
 
 import java.util.HashMap;
@@ -33,6 +33,7 @@ import com.kurento.commons.media.format.MediaSpec;
 import com.kurento.commons.media.format.SessionSpec;
 import com.kurento.commons.media.format.enums.MediaType;
 import com.kurento.commons.media.format.enums.Mode;
+import com.kurento.commons.media.format.exceptions.ArgumentNotSetException;
 import com.kurento.commons.mscontrol.MsControlException;
 import com.kurento.commons.mscontrol.join.Joinable;
 import com.kurento.commons.mscontrol.join.JoinableStream.StreamType;
@@ -52,7 +53,8 @@ import com.kurento.commons.ua.exception.ServerInternalErrorException;
 
 public class SipContext implements Call {
 
-	protected static final Logger log = LoggerFactory.getLogger(SipContext.class);
+	protected static final Logger log = LoggerFactory
+			.getLogger(SipContext.class);
 
 	private Dialog dialog;
 	private Request cancelRequest;
@@ -68,6 +70,7 @@ public class SipContext implements Call {
 
 	private CallListener callListener;
 	private boolean outgoingRequestCancelled;
+
 	// private boolean isComplete = false;
 
 	// ////////////////////
@@ -132,7 +135,7 @@ public class SipContext implements Call {
 			throw new ServerInternalErrorException(
 					"Bad reject. There isn't a pending request to be accepted");
 		}
-		
+
 		if (networkConnection != null) {
 			networkConnection.release();
 			networkConnection = null;
@@ -162,7 +165,7 @@ public class SipContext implements Call {
 		log.info("Request to cancel callId: " + dialog.getCallId());
 		if (cancelRequest == null)
 			throw new ServerInternalErrorException("Cancel request is null");
-		
+
 		new CCancel(cancelRequest, this);
 		outgoingRequestCancelled = true;
 
@@ -250,7 +253,7 @@ public class SipContext implements Call {
 		this.remoteParty = this.incomingPendingRequest.getServerTransaction()
 				.getDialog().getRemoteParty();
 		this.mediaTypesModes = getModesOfMediaTypes(session);
-		this.networkConnection=incomingPendingRequest.getNetworkConnection();
+		this.networkConnection = incomingPendingRequest.getNetworkConnection();
 
 		// Notify the incoming call to EndPoint controllers
 		log.info("Notify incoming call to EndPoint listener");
@@ -301,12 +304,12 @@ public class SipContext implements Call {
 	private void completedCall(Transaction transaction) {
 		boolean hangup = false;
 
-//		if (networkConnection != null) {
-//			// Release previous connection
-//			log.debug("Release old network connection");
-//			networkConnection.release();
-//			networkConnection = null;
-//		}
+		// if (networkConnection != null) {
+		// // Release previous connection
+		// log.debug("Release old network connection");
+		// networkConnection.release();
+		// networkConnection = null;
+		// }
 
 		// Get active networkConnection
 		log.debug("Get network connection");
@@ -337,8 +340,8 @@ public class SipContext implements Call {
 		// Notify call events when dialog are not complete
 		if (callListener != null) {
 			CallEvent event = new CallEvent(eventType, this);
-			try  {
-			callListener.onEvent(event);
+			try {
+				callListener.onEvent(event);
 			} catch (Exception e) {
 				log.error("Exception throwed on listener.", e);
 			}
@@ -348,7 +351,8 @@ public class SipContext implements Call {
 	public void cancelCall() throws ServerInternalErrorException {
 		log.info("Cancel Call");
 		if (incomingPendingRequest != null) {
-			incomingPendingRequest.sendResponse(Response.REQUEST_TERMINATED, null);
+			incomingPendingRequest.sendResponse(Response.REQUEST_TERMINATED,
+					null);
 			// pendingRequest.cancel();
 			incomingPendingRequest = null;
 			if (networkConnection != null) {
@@ -356,10 +360,12 @@ public class SipContext implements Call {
 				networkConnection = null;
 			}
 			notifySipCallEvent(CallEvent.CALL_CANCEL);
-		} else  throw new ServerInternalErrorException("Cancel call error, there are not pending request");
-		
+		} else
+			throw new ServerInternalErrorException(
+					"Cancel call error, there are not pending request");
+
 	}
-	
+
 	public boolean isCancelled() {
 		return outgoingRequestCancelled;
 	}
@@ -382,12 +388,26 @@ public class SipContext implements Call {
 	private static Map<MediaType, Mode> getModesOfMediaTypes(SessionSpec session) {
 		Map<MediaType, Mode> map = new HashMap<MediaType, Mode>();
 		for (MediaSpec m : session.getMediaSpecs()) {
-			Set<MediaType> mediaTypes = m.getTypes();
-			if (mediaTypes.size() != 1)
-				continue;
-			for (MediaType t : mediaTypes) {
-				map.put(t, m.getMode());
-				break;
+			try {
+				// Only it is to check that there is a rtp transport
+				m.getTransport().getRtp();
+
+				// Check that Mode is Inactive
+				if (m.getMode() == Mode.INACTIVE)
+					continue;
+
+				Set<MediaType> mediaTypes = m.getTypes();
+
+				if (mediaTypes.size() != 1)
+					continue;
+
+				for (MediaType t : mediaTypes) {
+					map.put(t, m.getMode());
+					break;
+				}
+
+			} catch (ArgumentNotSetException e) {
+
 			}
 		}
 		return map;
