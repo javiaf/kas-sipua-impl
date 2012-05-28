@@ -78,8 +78,7 @@ public class SipEndPointImpl implements EndPoint {
 
 	protected SipEndPointImpl(String userName, String realm, String password,
 			int expires, UaImpl ua, EndPointListener handler,
-			Boolean receiveCall) throws ParseException,
-			ServerInternalErrorException {
+			Boolean receiveCall) throws ServerInternalErrorException {
 		this.ua = ua;
 		this.listener = handler;
 		this.timer = ua.getTimer();
@@ -87,12 +86,15 @@ public class SipEndPointImpl implements EndPoint {
 		this.realm = realm;
 		this.expires = expires;
 		this.password = password;
-		this.sipUriAddress = UaFactory.getAddressFactory().createAddress(
-				"sip:" + this.userName + "@" + this.realm);
+		try {
+			this.sipUriAddress = UaFactory.getAddressFactory().createAddress(
+					"sip:" + this.userName + "@" + this.realm);
+		} catch (ParseException e) {
+			throw new ServerInternalErrorException("Bad SipUri: sip:"
+					+ this.userName + "@" + this.realm, e);
+		}
 		this.receiveCall = receiveCall;
 		this.sipEndPointTimerTask = new SipEndPointTimerTask(this);
-
-		ua.registerEndpoint(this);
 
 	}
 
@@ -300,6 +302,21 @@ public class SipEndPointImpl implements EndPoint {
 			} catch (ServerInternalErrorException e) {
 				log.error("Timer SipEndPointTimerTask exception: " + e);
 			}
+		}
+
+	}
+
+	// TODO: Change to setListener as only one listener is allowed
+	@Override
+	public void addListener(EndPointListener listener) {
+		this.listener = listener;
+
+	}
+
+	@Override
+	public void removeListener(EndPointListener listener) {
+		if (listener == this.listener) {
+			listener = null;
 		}
 
 	}

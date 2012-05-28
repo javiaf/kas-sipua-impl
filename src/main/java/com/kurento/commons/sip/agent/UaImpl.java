@@ -26,6 +26,7 @@ import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 import java.util.TooManyListenersException;
 import java.util.UUID;
@@ -68,6 +69,7 @@ import com.kurento.commons.sip.transaction.STransaction;
 import com.kurento.commons.sip.util.NatKeepAlive;
 import com.kurento.commons.sip.util.SipConfig;
 import com.kurento.commons.ua.EndPoint;
+import com.kurento.commons.ua.EndPointListener;
 import com.kurento.commons.ua.UaStun;
 import com.kurento.commons.ua.exception.ServerInternalErrorException;
 import com.kurento.commons.ua.timer.KurentoUaTimer;
@@ -79,6 +81,12 @@ import de.javawi.jstun.test.DiscoveryInfo;
 import de.javawi.jstun.test.DiscoveryTest;
 import de.javawi.jstun.util.UtilityException;
 
+/**
+ * This class provides a SIP UA implementation of UA interface
+ * 
+ * @author fjlopez
+ * 
+ */
 public class UaImpl implements SipListener, UaStun {
 
 	private static final Logger log = LoggerFactory.getLogger(UaImpl.class);
@@ -396,12 +404,47 @@ public class UaImpl implements SipListener, UaStun {
 		}
 	}
 
+	// @Override
+	// public void registerEndpoint(EndPoint endpoint) {
+	// if (!(endpoint instanceof SipEndPointImpl))
+	// return;
+	// endPoints.put(((SipEndPointImpl) endpoint).getAddress().toString(),
+	// (SipEndPointImpl) endpoint);
+	// }
+	/**
+	 * Allows the application to register an Endpoint to the SIP domain. it
+	 * requires a set of SIP specific extra params
+	 * <ul>
+	 * <li><b>SIP_PASSWORD</b>: String. Provides the authentication
+	 * password for user@domain
+	 * <li><b>SIP_EXPIRES</b>: Integer. SIP REGISTER expiration time
+	 * <li><b>SIP_RECEIVE_CALL</b>: Boolean. Enable or disable incoming
+	 * call reception
+	 * </ul>
+	 */
 	@Override
-	public void registerEndpoint(EndPoint endpoint) {
-		if (!(endpoint instanceof SipEndPointImpl))
-			return;
-		endPoints.put(((SipEndPointImpl) endpoint).getAddress().toString(),
-				(SipEndPointImpl) endpoint);
+	public EndPoint registerEndpoint(String user, String domain,
+			EndPointListener listener, Map<String, Object> extra)
+			throws ServerInternalErrorException {
+
+		String password="";
+		if (extra.get("SIP_PASWORD") instanceof String){
+			password = (String) extra.get("SIP_PASWORD");
+		}
+		
+		Integer expires=3600;
+		if (extra.get("SIP_EXPIRES") instanceof Integer){
+			expires = (Integer) extra.get("SIP_EXPIRES");
+		}
+		
+		Boolean receiveCall=true;
+		if (extra.get("SIP_RECEIVE_CALL") instanceof Boolean){
+			receiveCall = (Boolean) extra.get("SIP_RECEIVE_CALL");
+		}
+		
+		return new SipEndPointImpl(user, domain, password, expires, this,
+				listener, receiveCall);
+
 	}
 
 	@Override
