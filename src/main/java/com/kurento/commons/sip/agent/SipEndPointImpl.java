@@ -226,8 +226,7 @@ public class SipEndPointImpl implements EndPoint {
 				SipProvider sipProvider = getUa().getSipProvider();
 
 				if (sipProvider == null)
-					throw new ServerInternalErrorException(
-							"SipProvider is null");
+					throw new ServerInternalErrorException("SipProvider is null");
 
 				this.registrarCallId = sipProvider.getNewCallId();
 
