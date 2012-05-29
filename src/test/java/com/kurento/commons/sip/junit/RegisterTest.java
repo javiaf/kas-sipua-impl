@@ -107,7 +107,6 @@ public class RegisterTest {
 	@AfterClass
 	public static void tearDown() {
 		serverUa.terminate();
-		clientUa.terminate();
 	}
 
 	/**
@@ -253,53 +252,35 @@ public class RegisterTest {
 
 		log.info("-------------------- Test Register KeepAlive --------------------");
 
-		// C:---REGISTER-------->:S
-		log.info("Register user " + clientName + "...");
+		try {
+			// C:---REGISTER-------->:S
+			log.info("Register user " + clientName + "...");
 
-		SipConfig cConfig = new SipConfig();
-		cConfig.setProxyAddress(TestConfig.PROXY_IP);
-		cConfig.setProxyPort(TestConfig.PROXY_PORT);
-		cConfig.setLocalPort(TestConfig.CLIENT_PORT);
-		cConfig.setLocalAddress(localAddress);
-		cConfig.setTimer(timer);
+			SipConfig cConfig = new SipConfig();
+			cConfig.setProxyAddress(TestConfig.PROXY_IP);
+			cConfig.setProxyPort(TestConfig.PROXY_PORT);
+			cConfig.setLocalPort(TestConfig.CLIENT_PORT);
+			cConfig.setLocalAddress(localAddress);
+			cConfig.setTimer(timer);
 
-		clientUa = UaFactory.getInstance(cConfig);
-		clientEndPointController = new SipEndPointController(clientName);
-		Map<String, Object> cEpConfig = new HashMap<String, Object>();
-		cEpConfig.put("SIP_EXPIRES", expires);
-		cEpConfig.put("SIP_RECEIVE_CALL", true);
-		clientEndPoint = clientUa.registerEndpoint(clientName, "kurento.com",
-				clientEndPointController, cEpConfig);
-		// clientEndPoint = EndPointFactory.getInstance(clientName,
-		// "kurento.com",
-		// "", expires, clientUa, clientEndPointController, true);
-		// Create SIP stack and activate SIP EndPoints
-		clientUa.reconfigure();
-		long tStart = System.currentTimeMillis();
+			clientUa = UaFactory.getInstance(cConfig);
+			clientEndPointController = new SipEndPointController(clientName);
+			Map<String, Object> cEpConfig = new HashMap<String, Object>();
+			cEpConfig.put("SIP_EXPIRES", expires);
+			cEpConfig.put("SIP_RECEIVE_CALL", true);
+			clientEndPoint = clientUa.registerEndpoint(clientName,
+					"kurento.com", clientEndPointController, cEpConfig);
+			// clientEndPoint = EndPointFactory.getInstance(clientName,
+			// "kurento.com",
+			// "", expires, clientUa, clientEndPointController, true);
+			// Create SIP stack and activate SIP EndPoints
+			clientUa.reconfigure();
+			long tStart = System.currentTimeMillis();
 
-		// TODO: Unable to monitor message reception on server side
+			// TODO: Unable to monitor message reception on server side
 
-		EndPointEvent endPointEvent = clientEndPointController
-				.pollSipEndPointEvent(TestConfig.WAIT_TIME);
-		assertTrue("No message received in client UA", endPointEvent != null);
-		assertTrue(
-				"Bad message received in client UA: "
-						+ endPointEvent.getEventType(),
-				EndPointEvent.REGISTER_USER_SUCESSFUL.equals(endPointEvent
-						.getEventType()));
-		log.info("OK");
-
-		// C:---REGISTER-------->:S (Before expires)
-		// C:<----------200 OK---:S
-		// C:---REGISTER-------->:S (Before expires)
-		// C:<----------200 OK---:S
-		// ...
-		int i;
-		for (i = 0; i < 5; i++) {
-			log.info("Wait for register keep alive of user " + clientName
-					+ "...");
-			endPointEvent = clientEndPointController
-					.pollSipEndPointEvent(expires);
+			EndPointEvent endPointEvent = clientEndPointController
+					.pollSipEndPointEvent(TestConfig.WAIT_TIME);
 			assertTrue("No message received in client UA",
 					endPointEvent != null);
 			assertTrue(
@@ -307,31 +288,55 @@ public class RegisterTest {
 							+ endPointEvent.getEventType(),
 					EndPointEvent.REGISTER_USER_SUCESSFUL.equals(endPointEvent
 							.getEventType()));
-			log.info("----> Register keep-alive: " + i + " after "
-					+ (System.currentTimeMillis() - tStart) + " ms");
+			log.info("OK");
+
+			// C:---REGISTER-------->:S (Before expires)
+			// C:<----------200 OK---:S
+			// C:---REGISTER-------->:S (Before expires)
+			// C:<----------200 OK---:S
+			// ...
+			int i;
+			for (i = 0; i < 5; i++) {
+				log.info("Wait for register keep alive of user " + clientName
+						+ "...");
+				endPointEvent = clientEndPointController
+						.pollSipEndPointEvent(expires);
+				assertTrue("No message received in client UA",
+						endPointEvent != null);
+				assertTrue("Bad message received in client UA: "
+						+ endPointEvent.getEventType(),
+						EndPointEvent.REGISTER_USER_SUCESSFUL
+								.equals(endPointEvent.getEventType()));
+				log.info("----> Register keep-alive: " + i + " after "
+						+ (System.currentTimeMillis() - tStart) + " ms");
+			}
+
+			log.info("Deregister user " + clientName + "...");
+			clientEndPoint.terminate();
+			endPointEvent = clientEndPointController
+					.pollSipEndPointEvent(TestConfig.WAIT_TIME);
+			assertTrue("No message received in client UA",
+					endPointEvent != null);
+			assertTrue(
+					"Bad message received in client UA: "
+							+ endPointEvent.getEventType(),
+					EndPointEvent.REGISTER_USER_SUCESSFUL.equals(endPointEvent
+							.getEventType()));
+
+			log.info("OK");
+
+			endPointEvent = clientEndPointController
+					.pollSipEndPointEvent(TestConfig.WAIT_TIME);
+			assertTrue("No message received in client UA",
+					endPointEvent == null);
+			log.info("REGISTER keep-alive sent after EP termination");
+
+			log.info(" -------------------- Test Register KeepAlive finished OK --------------------");
+
+		} finally {
+			clientUa.terminate();
 		}
 
-		log.info("Deregister user " + clientName + "...");
-		clientEndPoint.terminate();
-		endPointEvent = clientEndPointController
-				.pollSipEndPointEvent(TestConfig.WAIT_TIME);
-		assertTrue("No message received in client UA", endPointEvent != null);
-		assertTrue(
-				"Bad message received in client UA: "
-						+ endPointEvent.getEventType(),
-				EndPointEvent.REGISTER_USER_SUCESSFUL.equals(endPointEvent
-						.getEventType()));
-
-		log.info("OK");
-
-		endPointEvent = clientEndPointController
-				.pollSipEndPointEvent(TestConfig.WAIT_TIME);
-		assertTrue("No message received in client UA", endPointEvent == null);
-		log.info("REGISTER keep-alive sent after EP termination");
-
-		clientUa.terminate();
-
-		log.info(" -------------------- Test Register KeepAlive finished OK --------------------");
 	}
 
 	/**
@@ -348,42 +353,46 @@ public class RegisterTest {
 	public void testRegisterTimeOut() throws Exception {
 		log.info("-------------------- Test Register Timeout --------------------");
 
-		// C:---REGISTER-------->:S
-		log.info("Register user " + clientName + "...");
+		try {
+			// C:---REGISTER-------->:S
+			log.info("Register user " + clientName + "...");
 
-		SipConfig cConfig = new SipConfig();
-		cConfig.setProxyAddress(TestConfig.PROXY_IP);
-		cConfig.setProxyPort(TestConfig.PROXY_PORT + 1);
-		cConfig.setLocalPort(TestConfig.CLIENT_PORT);
-		cConfig.setLocalAddress(localAddress);
-		cConfig.setTimer(timer);
+			SipConfig cConfig = new SipConfig();
+			cConfig.setProxyAddress(TestConfig.PROXY_IP);
+			cConfig.setProxyPort(TestConfig.PROXY_PORT + 1);
+			cConfig.setLocalPort(TestConfig.CLIENT_PORT);
+			cConfig.setLocalAddress(localAddress);
+			cConfig.setTimer(timer);
 
-		clientUa = UaFactory.getInstance(cConfig);
-		clientEndPointController = new SipEndPointController(clientName);
-		Map<String, Object> cEpConfig = new HashMap<String, Object>();
-		cEpConfig.put("SIP_EXPIRES", expires);
-		cEpConfig.put("SIP_RECEIVE_CALL", true);
-		clientEndPoint = clientUa.registerEndpoint(clientName, "kurento.com",
-				clientEndPointController, cEpConfig);
-		// clientEndPoint = EndPointFactory.getInstance(clientName,
-		// "kurento.com",
-		// "", expires, clientUa, clientEndPointController, true);
-		// Create SIP stack and activate SIP EndPoints
-		clientUa.reconfigure();
+			clientUa = UaFactory.getInstance(cConfig);
+			clientEndPointController = new SipEndPointController(clientName);
+			Map<String, Object> cEpConfig = new HashMap<String, Object>();
+			cEpConfig.put("SIP_EXPIRES", expires);
+			cEpConfig.put("SIP_RECEIVE_CALL", true);
+			clientEndPoint = clientUa.registerEndpoint(clientName,
+					"kurento.com", clientEndPointController, cEpConfig);
+			// clientEndPoint = EndPointFactory.getInstance(clientName,
+			// "kurento.com",
+			// "", expires, clientUa, clientEndPointController, true);
+			// Create SIP stack and activate SIP EndPoints
+			clientUa.reconfigure();
 
-		// C: x------TIMEOUT---:S
-		EndPointEvent endPointEvent = clientEndPointController
-				.pollSipEndPointEvent(TestConfig.WAIT_TIME * 10);
-		assertTrue("No message received in client UA", endPointEvent != null);
-		assertTrue(
-				"Bad message received in client UA: "
-						+ endPointEvent.getEventType(),
-				EndPointEvent.REGISTER_USER_FAIL.equals(endPointEvent
-						.getEventType()));
-		log.info("OK");
+			// C: x------TIMEOUT---:S
+			EndPointEvent endPointEvent = clientEndPointController
+					.pollSipEndPointEvent(TestConfig.WAIT_TIME * 10);
+			assertTrue("No message received in client UA",
+					endPointEvent != null);
+			assertTrue(
+					"Bad message received in client UA: "
+							+ endPointEvent.getEventType(),
+					EndPointEvent.REGISTER_USER_FAIL.equals(endPointEvent
+							.getEventType()));
+			log.info("OK");
 
-		clientUa.terminate();
-		log.info("-------------------- Test Register Timeout finished OK --------------------");
+			log.info("-------------------- Test Register Timeout finished OK --------------------");
+		} finally {
+			clientUa.terminate();
+		}
 
 	}
 
@@ -406,7 +415,7 @@ public class RegisterTest {
 	 * @throws Exception
 	 */
 	@Test
-	public void testRegisterAfterNetworkInterfaceChange() throws Exception{
+	public void testRegisterAfterNetworkInterfaceChange() throws Exception {
 
 		try {
 			log.info("-------------------- Test Register after network interface change --------------------");
@@ -481,8 +490,8 @@ public class RegisterTest {
 	}
 
 	/**
-	 * Verify the User Agent properly handles call and sip protocol after lost
-	 * of network connection
+	 * Verify the User Agent properly handles register requests after SIP stack
+	 * initialization failure
 	 * 
 	 * <pre>
 	 * C:Bad initialization
@@ -544,7 +553,6 @@ public class RegisterTest {
 					"Failure while registering on a wrong initialized SIP stack",
 					e);
 		}
-
 	}
 
 }

@@ -132,7 +132,7 @@ public class UaTest {
 	 * C:---SIP MSG----X	 :S 
 	 * </pre>
 	 * 
-	 * Associated to case: #256
+	 * Associated to case: #256, #308
 	 * 
 	 * @throws Exception 
 	 */
