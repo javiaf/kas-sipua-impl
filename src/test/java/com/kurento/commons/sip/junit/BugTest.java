@@ -189,14 +189,4 @@ public class BugTest {
 		// TODO Fixed at CancelTest
 	}
 
-	/**
-	 * Ticket #203
-	 * 
-	 * @throws Exception
-	 */
-	@Test
-	public void testSendInviteAndCancelCrossAccept() throws Exception {
-		// TODO Fixed at CancelTest
-	}
-
 }

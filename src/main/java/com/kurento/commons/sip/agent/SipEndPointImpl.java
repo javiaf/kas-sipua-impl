@@ -96,8 +96,7 @@ public class SipEndPointImpl implements EndPoint {
 
 	}
 
-	protected void reconfigureEndPoint() throws ParseException,
-			ServerInternalErrorException {
+	protected void reconfigureEndPoint() throws ParseException {
 
 		this.contactAddress = UaFactory.getAddressFactory().createAddress(
 				"sip:" + userName + "@" + ua.getPublicAddress() + ":"

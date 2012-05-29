@@ -108,7 +108,7 @@ public class UaFactory {
 	 * media information stored into the MediaSession object, that must be set
 	 * before this method is called
 	 */
-	public static UA getInstance(SipConfig config) throws Exception {
+	public static UA getInstance(SipConfig config) {
 //		if (UaFactory.context == null) {
 //			throw new Exception("Android context not setted.");
 //		}

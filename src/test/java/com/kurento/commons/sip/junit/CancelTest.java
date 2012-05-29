@@ -316,12 +316,13 @@ public class CancelTest {
 	 * 
 	 * <pre>
 	 * C:INVITE-------------------------------------------->:S
-	 * C:<----------- 100 Trying
-	 * C:<----------- 180 Ringing
+	 * C:<----------------------------------- 100 Trying ---:S
+	 * C:<---------------------------------- 180 Ringing ---:S
 	 * C:CANCEL-----> X <------ 200 OK (CSeq: xxx INVITE)---:S
 	 * C:ACK ---------------------------------------------->:S
 	 * </pre>
 	 * 
+	 * Associated to case #203
 	 * @throws Exception
 	 */
 	@Test
