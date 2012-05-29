@@ -103,6 +103,7 @@ public class CInvite extends CTransaction {
 			log.info("<<<<<<< 200 OK: dialog: " + this.dialog.getDialogId()
 					+ ", state: " + dialog.getState());
 			if (sipContext.isCancelled()) {
+				// This happens if TU requested a context cancellation
 				sendAck();
 				new CBye(sipContext);
 			} else {
