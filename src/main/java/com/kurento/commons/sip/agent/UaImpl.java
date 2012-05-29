@@ -129,7 +129,7 @@ public class UaImpl implements SipListener, UaStun {
 	//
 	// /////////////////////////
 
-	protected UaImpl(SipConfig config) throws Exception {
+	protected UaImpl(SipConfig config) {
 		this.config = config;
 		this.localPort = config.getLocalPort();
 
@@ -146,11 +146,14 @@ public class UaImpl implements SipListener, UaStun {
 
 	// //////////
 
-	public void reconfigure() {
+	public void reconfigure() throws ServerInternalErrorException {
 		log.info("Reconfigure SIP UA network connection");
 
+		// Get the address where the SIP stack will get binded
 		InetAddress localAddressNew = getLocalInterface(config
 				.getLocalAddress());
+
+		// Find out if there is a change in the interface
 		if (localAddressNew != null
 				&& !localAddressNew.getHostAddress().equals(localAddress)
 				|| testMode) {
@@ -215,22 +218,20 @@ public class UaImpl implements SipListener, UaStun {
 			configureSipStack();
 
 			for (SipEndPointImpl endpoint : endPoints.values()) {
+				// endpoint.terminate();
 				try {
-					// endpoint.terminate();
 					endpoint.reconfigureEndPoint();
-					endpoint.setExpiresAndRegister(endpoint.getExpires());
-				} catch (ServerInternalErrorException e) {
-					log.error("Error finishing endpoint " + endpoint);
-					log.info("Error finishing endpoint");
 				} catch (ParseException e) {
-					log.error("Error Parse endpoint");
-					e.printStackTrace();
+					throw new ServerInternalErrorException(
+							"Unable to reconfigure Endpoint:"
+									+ endpoint.getUserName());
 				}
+				endpoint.setExpiresAndRegister(endpoint.getExpires());
 			}
 		}
 	}
 
-	private void configureSipStack() {
+	private void configureSipStack() throws ServerInternalErrorException {
 		try {
 			terminateSipStack();
 
@@ -291,21 +292,28 @@ public class UaImpl implements SipListener, UaStun {
 				}
 			}
 		} catch (PeerUnavailableException e) {
-			log.error(e.getLocalizedMessage());
+			throw new ServerInternalErrorException(
+					"Unable to instantiate a new SIP stack", e);
 		} catch (TransportNotSupportedException e) {
-			log.error(e.getLocalizedMessage());
+			throw new ServerInternalErrorException(
+					"Unable to create SIP listening point", e);
 		} catch (InvalidArgumentException e) {
-			log.error(e.getLocalizedMessage());
+			throw new ServerInternalErrorException(
+					"Unable to create SIP listening point", e);
 		} catch (ParseException e) {
-			log.error(e.getLocalizedMessage());
+			throw new ServerInternalErrorException("Bad sent-by address: "
+					+ publicAddress + ":" + publicPort, e);
 		} catch (ObjectInUseException e) {
-			log.error(e.getLocalizedMessage());
+			throw new ServerInternalErrorException(
+					"Unable to create a SIP provider", e);
 		} catch (TooManyListenersException e) {
-			log.error(e.getLocalizedMessage());
+			throw new ServerInternalErrorException("Error adding SIP listener",
+					e);
 		}
 	}
 
-	private InetAddress getLocalInterface(String pattern) {
+	private InetAddress getLocalInterface(String pattern)
+			throws ServerInternalErrorException {
 		try {
 			for (Enumeration<NetworkInterface> en = NetworkInterface
 					.getNetworkInterfaces(); en.hasMoreElements();) {
@@ -333,10 +341,13 @@ public class UaImpl implements SipListener, UaStun {
 					}
 				}
 			}
+			// It is mandatory to return a non null network interface
+			throw new ServerInternalErrorException(
+					"Unable to find a suitable network interface where the SIP stack can get binded");
 		} catch (SocketException e) {
-			log.error("Error while attaching to the network interface", e);
+			throw new ServerInternalErrorException(
+					"Error while attaching to the network interface", e);
 		}
-		return null;
 	}
 
 	private boolean isNatSupported() {
@@ -415,11 +426,11 @@ public class UaImpl implements SipListener, UaStun {
 	 * Allows the application to register an Endpoint to the SIP domain. it
 	 * requires a set of SIP specific extra params
 	 * <ul>
-	 * <li><b>SIP_PASSWORD</b>: String. Provides the authentication
-	 * password for user@domain
+	 * <li><b>SIP_PASSWORD</b>: String. Provides the authentication password for
+	 * user@domain
 	 * <li><b>SIP_EXPIRES</b>: Integer. SIP REGISTER expiration time
-	 * <li><b>SIP_RECEIVE_CALL</b>: Boolean. Enable or disable incoming
-	 * call reception
+	 * <li><b>SIP_RECEIVE_CALL</b>: Boolean. Enable or disable incoming call
+	 * reception
 	 * </ul>
 	 */
 	@Override
@@ -427,26 +438,26 @@ public class UaImpl implements SipListener, UaStun {
 			EndPointListener listener, Map<String, Object> extra)
 			throws ServerInternalErrorException {
 
-		String password="";
-		if (extra.get("SIP_PASWORD") instanceof String){
+		String password = "";
+		if (extra.get("SIP_PASWORD") instanceof String) {
 			password = (String) extra.get("SIP_PASWORD");
 		}
-		
-		Integer expires=3600;
-		if (extra.get("SIP_EXPIRES") instanceof Integer){
+
+		Integer expires = 3600;
+		if (extra.get("SIP_EXPIRES") instanceof Integer) {
 			expires = (Integer) extra.get("SIP_EXPIRES");
 		}
-		
-		Boolean receiveCall=true;
-		if (extra.get("SIP_RECEIVE_CALL") instanceof Boolean){
+
+		Boolean receiveCall = true;
+		if (extra.get("SIP_RECEIVE_CALL") instanceof Boolean) {
 			receiveCall = (Boolean) extra.get("SIP_RECEIVE_CALL");
 		}
-		
-		SipEndPointImpl endpoint =  new SipEndPointImpl(user, domain, password, expires, this,
-				listener, receiveCall);
 
-		 endPoints.put( endpoint.getAddress().toString(),endpoint);
-		 return endpoint;
+		SipEndPointImpl endpoint = new SipEndPointImpl(user, domain, password,
+				expires, this, listener, receiveCall);
+
+		endPoints.put(endpoint.getAddress().toString(), endpoint);
+		return endpoint;
 	}
 
 	@Override
