@@ -92,6 +92,10 @@ public class UaImpl implements SipListener, UaStun {
 	private static final Logger log = LoggerFactory.getLogger(UaImpl.class);
 	private final int NUMBER_TRY = 20;
 
+	public static final String SIP_PASWORD = "SIP_PASWORD";
+	public static final String SIP_EXPIRES = "SIP_EXPIRES";
+	public static final String SIP_RECEIVE_CALL = "SIP_RECEIVE_CALL";
+
 	// Sip Stack
 	private SipProvider sipProvider;
 	private SipStack sipStack;
@@ -428,18 +432,18 @@ public class UaImpl implements SipListener, UaStun {
 			throws ServerInternalErrorException {
 
 		String password="";
-		if (extra.get("SIP_PASWORD") instanceof String){
-			password = (String) extra.get("SIP_PASWORD");
+		if (extra.get(SIP_PASWORD) instanceof String) {
+			password = (String) extra.get(SIP_PASWORD);
 		}
 		
 		Integer expires=3600;
-		if (extra.get("SIP_EXPIRES") instanceof Integer){
-			expires = (Integer) extra.get("SIP_EXPIRES");
+		if (extra.get(SIP_EXPIRES) instanceof Integer) {
+			expires = (Integer) extra.get(SIP_EXPIRES);
 		}
 		
 		Boolean receiveCall=true;
-		if (extra.get("SIP_RECEIVE_CALL") instanceof Boolean){
-			receiveCall = (Boolean) extra.get("SIP_RECEIVE_CALL");
+		if (extra.get(SIP_RECEIVE_CALL) instanceof Boolean) {
+			receiveCall = (Boolean) extra.get(SIP_RECEIVE_CALL);
 		}
 		
 		SipEndPointImpl endpoint =  new SipEndPointImpl(user, domain, password, expires, this,
