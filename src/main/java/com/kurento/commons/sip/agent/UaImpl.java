@@ -442,9 +442,11 @@ public class UaImpl implements SipListener, UaStun {
 			receiveCall = (Boolean) extra.get("SIP_RECEIVE_CALL");
 		}
 		
-		return new SipEndPointImpl(user, domain, password, expires, this,
+		SipEndPointImpl endpoint =  new SipEndPointImpl(user, domain, password, expires, this,
 				listener, receiveCall);
 
+		 endPoints.put( endpoint.getAddress().toString(),endpoint);
+		 return endpoint;
 	}
 
 	@Override

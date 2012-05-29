@@ -217,7 +217,6 @@ public abstract class CTransaction extends Transaction {
 			}
 			return callIdHeader;
 		} catch (Exception e) {
-			log.error("Error building call id hearder." + e.getMessage(), e);
 			throw new ServerInternalErrorException("Error building hearder.", e);
 		}
 	}

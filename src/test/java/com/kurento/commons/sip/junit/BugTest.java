@@ -16,13 +16,16 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
 package com.kurento.commons.sip.junit;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.kurento.commons.sip.agent.EndPointFactory;
+//import com.kurento.commons.sip.agent.EndPointFactory;
 import com.kurento.commons.sip.agent.UaFactory;
 import com.kurento.commons.sip.testutils.MediaSessionDummy;
 import com.kurento.commons.sip.testutils.SipEndPointController;
@@ -81,8 +84,13 @@ public class BugTest {
 		serverEndPointController = new SipEndPointController(serverName);
 		serverTimer = new TestTimer();
 		// Create and register SIP EndPoint
-		serverEndPoint = EndPointFactory.getInstance(serverName, "kurento.com",
-				"", expires, serverUa, serverEndPointController, false);
+		Map<String,Object> sEpConfig = new HashMap<String, Object>();
+		sEpConfig.put("SIP_RECEIVE_CALL", false);
+		serverEndPoint = serverUa.registerEndpoint(serverName, "kurento.com",
+				serverEndPointController,sEpConfig);
+		// serverEndPoint = EndPointFactory.getInstance(serverName,
+		// "kurento.com",
+		// "", expires, serverUa, serverEndPointController, false);
 		// Create SIP stack and activate SIP EndPoints
 		serverUa.reconfigure();
 
@@ -96,8 +104,13 @@ public class BugTest {
 		clientUa = UaFactory.getInstance(sConfig);
 		clientEndPointController = new SipEndPointController("client");
 		clientTimer = new TestTimer();
-		clientEndPoint = EndPointFactory.getInstance(clientName, "kurento.com",
-				"", expires, clientUa, clientEndPointController, false);
+		Map<String,Object> cEpConfig = new HashMap<String, Object>();
+		cEpConfig.put("SIP_RECEIVE_CALL", false);
+		clientEndPoint = clientUa.registerEndpoint(clientName, "kurento.com",
+				clientEndPointController, cEpConfig);
+		// clientEndPoint = EndPointFactory.getInstance(clientName,
+		// "kurento.com",
+		// "", expires, clientUa, clientEndPointController, false);
 		// Create SIP stack and activate SIP EndPoints
 		clientUa.reconfigure();
 

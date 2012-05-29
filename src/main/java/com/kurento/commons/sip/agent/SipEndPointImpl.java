@@ -70,13 +70,6 @@ public class SipEndPointImpl implements EndPoint {
 	// ////////////
 
 	protected SipEndPointImpl(String userName, String realm, String password,
-			int expires, UaImpl ua, EndPointListener handler)
-			throws ParseException, ServerInternalErrorException {
-		this(userName, realm, password, expires, ua, handler, true);
-
-	}
-
-	protected SipEndPointImpl(String userName, String realm, String password,
 			int expires, UaImpl ua, EndPointListener handler,
 			Boolean receiveCall) throws ServerInternalErrorException {
 		this.ua = ua;
@@ -95,6 +88,11 @@ public class SipEndPointImpl implements EndPoint {
 		}
 		this.receiveCall = receiveCall;
 		this.sipEndPointTimerTask = new SipEndPointTimerTask(this);
+
+		// Verifications
+		if (receiveCall && timer == null)
+			throw new ServerInternalErrorException(
+					"UA must provide a timer in order to enable Endpoint registration. Initializa a timer within the UA");
 
 	}
 

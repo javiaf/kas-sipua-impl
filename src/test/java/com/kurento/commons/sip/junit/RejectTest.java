@@ -18,13 +18,15 @@ package com.kurento.commons.sip.junit;
 
 import static org.junit.Assert.assertTrue;
 
+import java.util.HashMap;
+
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.kurento.commons.sip.agent.EndPointFactory;
+//import com.kurento.commons.sip.agent.EndPointFactory;
 import com.kurento.commons.sip.agent.UaFactory;
 import com.kurento.commons.sip.testutils.MediaSessionDummy;
 import com.kurento.commons.sip.testutils.SipCallController;
@@ -86,8 +88,11 @@ public class RejectTest {
 		serverUa = UaFactory.getInstance(sConfig);
 		serverEndPointController = new SipEndPointController(serverName);
 		// Create and register SIP EndPoint
-		serverEndPoint = EndPointFactory.getInstance(serverName, "kurento.com",
-				"", expires, serverUa, serverEndPointController, false);
+		serverEndPoint = serverUa.registerEndpoint(serverName, "kurento.com",
+				serverEndPointController, new HashMap<String, Object>());
+
+//		serverEndPoint = EndPointFactory.getInstance(serverName, "kurento.com",
+//				"", expires, serverUa, serverEndPointController, false);
 		// Create SIP stack and activate SIP EndPoints
 		serverUa.reconfigure();
 
@@ -102,8 +107,10 @@ public class RejectTest {
 
 		clientUa = UaFactory.getInstance(cConfig);
 		clientEndPointController = new SipEndPointController(clientName);
-		clientEndPoint = EndPointFactory.getInstance(clientName, "kurento.com",
-				"", expires, clientUa, clientEndPointController, false);
+		clientEndPoint = clientUa.registerEndpoint(clientName, "kurento.com",
+				clientEndPointController, new HashMap<String, Object>());
+//		clientEndPoint = EndPointFactory.getInstance(clientName, "kurento.com",
+//				"", expires, clientUa, clientEndPointController, false);
 		// Create SIP stack and activate SIP EndPoints
 		clientUa.reconfigure();
 

@@ -35,9 +35,14 @@ import com.kurento.commons.mscontrol.networkconnection.SdpPortManagerException;
 public class SdpPortManagerDummy implements SdpPortManager {
 	
 	private static Logger log = LoggerFactory.getLogger(SdpPortManagerDummy.class);
+	private int sleepTime;
 	
 	MediaEventListener<SdpPortManagerEvent> listener;
-
+	
+	public void setSleepTime (int sleepTime) {
+		this.sleepTime = sleepTime;
+	}
+	
 	@Override
 	public NetworkConnection getContainer() {
 		// TODO Auto-generated method stub
@@ -58,7 +63,8 @@ public class SdpPortManagerDummy implements SdpPortManager {
 
 	@Override
 	public void generateSdpOffer() throws SdpPortManagerException {
-		SdpPortManagerEvent event = new  SdpPortManagerEventDummy(SdpPortManagerEvent.OFFER_GENERATED, this); 
+		SdpPortManagerEvent event = new  SdpPortManagerEventDummy(SdpPortManagerEvent.OFFER_GENERATED, this);
+		eventSleep();
 		listener.onEvent(event);
 	}
 
@@ -79,23 +85,35 @@ public class SdpPortManagerDummy implements SdpPortManager {
 	public void processSdpAnswer(SessionSpec arg0) throws SdpPortManagerException {
 		//SpecTools.intersectSessionSpec(answerer, offerer);
 		SdpPortManagerEvent event = new  SdpPortManagerEventDummy(SdpPortManagerEvent.ANSWER_PROCESSED, this); 
+		eventSleep();
 		listener.onEvent(event);
 	}
 
 	@Override
 	public void processSdpOffer(SessionSpec arg0) throws SdpPortManagerException {
 		SdpPortManagerEvent event = new  SdpPortManagerEventDummy(SdpPortManagerEvent.ANSWER_GENERATED, this); 
+		eventSleep();
 		listener.onEvent(event);
-
+		
 	}
 
 	@Override
 	public void rejectSdpOffer() throws SdpPortManagerException {
 		SdpPortManagerEvent event = new  SdpPortManagerEventDummy(SdpPortManagerEvent.ANSWER_GENERATED, this); 
+		eventSleep();
 		listener.onEvent(event);
 
 	}
 	
+	private void eventSleep(){
+		if (sleepTime > 0){
+			try {
+				Thread.sleep(sleepTime);
+			} catch (InterruptedException e) {
+				log.error("Error while waiting to send SDP event");
+			}
+		}
+	}
 	private static SessionSpec getSdp()   {
 		String sdpString =  "v=0 \no=test 2808844564 2808844564 IN IP4 193.147.51.20 " +
 		"\ns= \nc=IN IP4 193.147.51.20 " +
