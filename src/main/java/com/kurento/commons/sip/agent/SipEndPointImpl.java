@@ -226,7 +226,9 @@ public class SipEndPointImpl implements EndPoint {
 				SipProvider sipProvider = getUa().getSipProvider();
 
 				if (sipProvider == null)
-					throw new ServerInternalErrorException("SipProvider is null");
+					throw new ServerInternalErrorException(
+							"SipProvider is null when trying to register Endpoint: "
+									+ userName + "@" + realm);
 
 				this.registrarCallId = sipProvider.getNewCallId();
 
@@ -236,12 +238,10 @@ public class SipEndPointImpl implements EndPoint {
 				CRegister register;
 				register = new CRegister(this);
 				register.sendRequest(null);
-			} catch (ServerInternalErrorException e) {
-				log.error("REGISTER error", e);
-				throw new ServerInternalErrorException(
-						"Problem with the register. " + e);
 			} catch (ParseException e) {
-				log.error("REGISTER error" + e);
+				throw new ServerInternalErrorException(
+						"Register failure due to bad call id:" + getUa().getInstanceId()
+						.toString() + e);
 			}
 		}
 	}

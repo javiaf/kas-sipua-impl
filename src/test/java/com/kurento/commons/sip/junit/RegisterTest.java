@@ -28,16 +28,19 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 //import com.kurento.commons.sip.agent.EndPointFactory;
+import com.kurento.commons.sip.agent.SipEndPointImpl;
 import com.kurento.commons.sip.agent.UaFactory;
 import com.kurento.commons.sip.agent.UaImpl;
 import com.kurento.commons.sip.testutils.MediaSessionDummy;
 import com.kurento.commons.sip.testutils.SipEndPointController;
 import com.kurento.commons.sip.testutils.TestConfig;
+import com.kurento.commons.sip.testutils.TestErrorException;
 import com.kurento.commons.sip.testutils.TestTimer;
 import com.kurento.commons.sip.util.SipConfig;
 import com.kurento.commons.ua.EndPoint;
 import com.kurento.commons.ua.UA;
 import com.kurento.commons.ua.event.EndPointEvent;
+import com.kurento.commons.ua.exception.ServerInternalErrorException;
 
 public class RegisterTest {
 
@@ -88,13 +91,14 @@ public class RegisterTest {
 		serverUa = UaFactory.getInstance(sConfig);
 		serverEndPointController = new SipEndPointController(serverName);
 		// Create and register SIP EndPoint
-		Map<String, Object> sEpConfig =  new HashMap<String, Object>();
+		Map<String, Object> sEpConfig = new HashMap<String, Object>();
 		sEpConfig.put("SIP_RECEIVE_CALL", false);
 		serverEndPoint = serverUa.registerEndpoint(serverName, "kurento.com",
 				serverEndPointController, sEpConfig);
 
-//		serverEndPoint = EndPointFactory.getInstance(serverName, "kurento.com",
-//				"", expires, serverUa, serverEndPointController, false);
+		// serverEndPoint = EndPointFactory.getInstance(serverName,
+		// "kurento.com",
+		// "", expires, serverUa, serverEndPointController, false);
 		// Create SIP stack and activate SIP EndPoints
 		serverUa.reconfigure();
 
@@ -138,13 +142,14 @@ public class RegisterTest {
 
 		clientUa = UaFactory.getInstance(cConfig);
 		clientEndPointController = new SipEndPointController(clientName);
-		Map<String, Object> cEpConfig =  new HashMap<String, Object>();
-		cEpConfig.put("SIP_EXPIRES",expires);
+		Map<String, Object> cEpConfig = new HashMap<String, Object>();
+		cEpConfig.put("SIP_EXPIRES", expires);
 		cEpConfig.put("SIP_RECEIVE_CALL", true);
 		clientEndPoint = clientUa.registerEndpoint(clientName, "kurento.com",
 				clientEndPointController, cEpConfig);
-//		clientEndPoint = EndPointFactory.getInstance(clientName, "kurento.com",
-//				"", expires, clientUa, clientEndPointController, true);
+		// clientEndPoint = EndPointFactory.getInstance(clientName,
+		// "kurento.com",
+		// "", expires, clientUa, clientEndPointController, true);
 		// Create SIP stack and activate SIP EndPoints
 		clientUa.reconfigure();
 
@@ -260,13 +265,14 @@ public class RegisterTest {
 
 		clientUa = UaFactory.getInstance(cConfig);
 		clientEndPointController = new SipEndPointController(clientName);
-		Map<String, Object> cEpConfig =  new HashMap<String, Object>();
-		cEpConfig.put("SIP_EXPIRES",expires);
+		Map<String, Object> cEpConfig = new HashMap<String, Object>();
+		cEpConfig.put("SIP_EXPIRES", expires);
 		cEpConfig.put("SIP_RECEIVE_CALL", true);
 		clientEndPoint = clientUa.registerEndpoint(clientName, "kurento.com",
 				clientEndPointController, cEpConfig);
-//		clientEndPoint = EndPointFactory.getInstance(clientName, "kurento.com",
-//				"", expires, clientUa, clientEndPointController, true);
+		// clientEndPoint = EndPointFactory.getInstance(clientName,
+		// "kurento.com",
+		// "", expires, clientUa, clientEndPointController, true);
 		// Create SIP stack and activate SIP EndPoints
 		clientUa.reconfigure();
 		long tStart = System.currentTimeMillis();
@@ -354,13 +360,14 @@ public class RegisterTest {
 
 		clientUa = UaFactory.getInstance(cConfig);
 		clientEndPointController = new SipEndPointController(clientName);
-		Map<String, Object> cEpConfig =  new HashMap<String, Object>();
-		cEpConfig.put("SIP_EXPIRES",expires);
+		Map<String, Object> cEpConfig = new HashMap<String, Object>();
+		cEpConfig.put("SIP_EXPIRES", expires);
 		cEpConfig.put("SIP_RECEIVE_CALL", true);
 		clientEndPoint = clientUa.registerEndpoint(clientName, "kurento.com",
 				clientEndPointController, cEpConfig);
-//		clientEndPoint = EndPointFactory.getInstance(clientName, "kurento.com",
-//				"", expires, clientUa, clientEndPointController, true);
+		// clientEndPoint = EndPointFactory.getInstance(clientName,
+		// "kurento.com",
+		// "", expires, clientUa, clientEndPointController, true);
 		// Create SIP stack and activate SIP EndPoints
 		clientUa.reconfigure();
 
@@ -374,7 +381,7 @@ public class RegisterTest {
 				EndPointEvent.REGISTER_USER_FAIL.equals(endPointEvent
 						.getEventType()));
 		log.info("OK");
-		
+
 		clientUa.terminate();
 		log.info("-------------------- Test Register Timeout finished OK --------------------");
 
@@ -395,73 +402,148 @@ public class RegisterTest {
 	 * C:---REGISTER-------->:S - Register new contact
 	 * C:<----------200 OK---:S
 	 * </pre>
-	 * @throws Exception 
+	 * 
+	 * @throws Exception
 	 */
 	@Test
-	public void testRegisterAfterNetworkInterfaceChange() throws Exception {
+	public void testRegisterAfterNetworkInterfaceChange() throws Exception{
 
-		log.info("-------------------- Test Register after network interface change --------------------");
+		try {
+			log.info("-------------------- Test Register after network interface change --------------------");
 
-		// C:---REGISTER-------->:S
-		log.info("Register user: " + clientName + "...");
+			// C:---REGISTER-------->:S
+			log.info("Register user: " + clientName + "...");
 
+			SipConfig cConfig = new SipConfig();
+			cConfig.setProxyAddress(TestConfig.PROXY_IP);
+			cConfig.setProxyPort(TestConfig.PROXY_PORT);
+			cConfig.setLocalPort(TestConfig.CLIENT_PORT);
+			cConfig.setLocalAddress(localAddress);
+			cConfig.setTimer(timer);
+
+			clientUa = UaFactory.getInstance(cConfig);
+			((UaImpl) clientUa).setTestMode(true);
+			clientEndPointController = new SipEndPointController(clientName);
+			Map<String, Object> cEpConfig = new HashMap<String, Object>();
+			cEpConfig.put("SIP_EXPIRES", expires);
+			cEpConfig.put("SIP_RECEIVE_CALL", true);
+			clientEndPoint = clientUa.registerEndpoint(clientName,
+					"kurento.com", clientEndPointController, cEpConfig);
+			// clientEndPoint = EndPointFactory.getInstance(clientName,
+			// "kurento.com",
+			// "", expires, clientUa, clientEndPointController, true);
+			// Create SIP stack and activate SIP EndPoints
+			clientUa.reconfigure();
+
+			// Check register is successfully completed
+			EndPointEvent endPointEvent = clientEndPointController
+					.pollSipEndPointEvent(TestConfig.WAIT_TIME);
+			assertTrue("No message received in client UA",
+					endPointEvent != null);
+			assertTrue(
+					"Bad message received in client UA: "
+							+ endPointEvent.getEventType(),
+					EndPointEvent.REGISTER_USER_SUCESSFUL.equals(endPointEvent
+							.getEventType()));
+			log.info("OK");
+
+			// Emulate network change with the UA reconfiguration
+			log.info(clientName + " has changed network interface");
+			clientUa.reconfigure();
+
+			// Check un-register is successfully completed
+			// TODO: add special event to signal unregister
+			endPointEvent = clientEndPointController
+					.pollSipEndPointEvent(TestConfig.WAIT_TIME);
+			assertTrue("No message received in client UA",
+					endPointEvent != null);
+			assertTrue(
+					"Bad message received in client UA: "
+							+ endPointEvent.getEventType(),
+					EndPointEvent.REGISTER_USER_SUCESSFUL.equals(endPointEvent
+							.getEventType()));
+			log.info("OK");
+
+			// Check un-register is successfully completed
+			endPointEvent = clientEndPointController
+					.pollSipEndPointEvent(TestConfig.WAIT_TIME);
+			assertTrue("No message received in client UA",
+					endPointEvent != null);
+			assertTrue(
+					"Bad message received in client UA: "
+							+ endPointEvent.getEventType(),
+					EndPointEvent.REGISTER_USER_SUCESSFUL.equals(endPointEvent
+							.getEventType()));
+			log.info("OK");
+		} finally {
+			clientUa.terminate();
+		}
+	}
+
+	/**
+	 * Verify the User Agent properly handles call and sip protocol after lost
+	 * of network connection
+	 * 
+	 * <pre>
+	 * C:Bad initialization
+	 * C:---REGISTER(exp=0)-X   :S - throw exception
+	 * </pre>
+	 * 
+	 * Associated case: #303
+	 * 
+	 * @throws TestErrorException
+	 * 
+	 * @throws ServerInternalErrorException
+	 */
+	@Test(expected = com.kurento.commons.sip.testutils.TestErrorException.class)
+	public void testRegisterAfterUAInitializationFailure()
+			throws TestErrorException {
+
+		log.info("-------------------- Test Register after UA initialization failure --------------------");
+
+		log.info("Initialize UA for user: " + clientName + "...");
+
+		//
 		SipConfig cConfig = new SipConfig();
 		cConfig.setProxyAddress(TestConfig.PROXY_IP);
 		cConfig.setProxyPort(TestConfig.PROXY_PORT);
-		cConfig.setLocalPort(TestConfig.CLIENT_PORT);
-		cConfig.setLocalAddress(localAddress);
+		cConfig.setLocalPort(0);
+		cConfig.setLocalAddress("nonet");
 		cConfig.setTimer(timer);
 
 		clientUa = UaFactory.getInstance(cConfig);
-		((UaImpl) clientUa).setTestMode(true);
 		clientEndPointController = new SipEndPointController(clientName);
-		Map<String, Object> cEpConfig =  new HashMap<String, Object>();
-		cEpConfig.put("SIP_EXPIRES",expires);
+		Map<String, Object> cEpConfig = new HashMap<String, Object>();
+		cEpConfig.put("SIP_EXPIRES", expires);
 		cEpConfig.put("SIP_RECEIVE_CALL", true);
-		clientEndPoint = clientUa.registerEndpoint(clientName, "kurento.com",
-				clientEndPointController, cEpConfig);
-//		clientEndPoint = EndPointFactory.getInstance(clientName, "kurento.com",
-//				"", expires, clientUa, clientEndPointController, true);
-		// Create SIP stack and activate SIP EndPoints
-		clientUa.reconfigure();
-		
-		// Check register is successfully completed
-		EndPointEvent endPointEvent = clientEndPointController
-				.pollSipEndPointEvent(TestConfig.WAIT_TIME);
-		assertTrue("No message received in client UA", endPointEvent != null);
-		assertTrue(
-				"Bad message received in client UA: "
-						+ endPointEvent.getEventType(),
-				EndPointEvent.REGISTER_USER_SUCESSFUL.equals(endPointEvent
-						.getEventType()));
-		log.info("OK");
-		
-		// Emulate network change with the UA reconfiguration 
-		log.info(clientName + " has changed network interface" );
-		clientUa.reconfigure();
-		
-		// Check un-register is successfully completed
-		// TODO: add special event to signal unregister
-		endPointEvent = clientEndPointController
-				.pollSipEndPointEvent(TestConfig.WAIT_TIME);
-		assertTrue("No message received in client UA", endPointEvent != null);
-		assertTrue(
-				"Bad message received in client UA: "
-						+ endPointEvent.getEventType(),
-				EndPointEvent.REGISTER_USER_SUCESSFUL.equals(endPointEvent
-						.getEventType()));
-		log.info("OK");
+		try {
+			clientEndPoint = clientUa.registerEndpoint(clientName,
+					"kurento.com", clientEndPointController, cEpConfig);
+		} catch (ServerInternalErrorException e) {
+			log.info("Unable to create Endpoint", e);
+			assertTrue("Unable to create Endpoint", false);
+		}
 
-		// Check un-register is successfully completed
-		endPointEvent = clientEndPointController
-				.pollSipEndPointEvent(TestConfig.WAIT_TIME);
-		assertTrue("No message received in client UA", endPointEvent != null);
-		assertTrue(
-				"Bad message received in client UA: "
-						+ endPointEvent.getEventType(),
-				EndPointEvent.REGISTER_USER_SUCESSFUL.equals(endPointEvent
-						.getEventType()));
-		log.info("OK");
+		// Provide a bad reconfiguration
+		log.info("Forze UA bad initialization with wrong interface name");
+		try {
+			clientUa.reconfigure();
+		} catch (ServerInternalErrorException e) {
+			log.info("Expected initialization problem", e);
+		}
+
+		log.info("Try to register Endpoint with unstable SIP stack");
+		// Force UA register
+		try {
+			((SipEndPointImpl) clientEndPoint).register();
+		} catch (ServerInternalErrorException e) {
+			log.info(
+					"Failure while registering on a wrong initialized SIP stack",
+					e);
+			throw new TestErrorException(
+					"Failure while registering on a wrong initialized SIP stack",
+					e);
+		}
 
 	}
 
