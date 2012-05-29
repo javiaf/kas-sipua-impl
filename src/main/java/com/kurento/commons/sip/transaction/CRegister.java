@@ -13,7 +13,7 @@ GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>
-*/
+ */
 package com.kurento.commons.sip.transaction;
 
 import java.security.MessageDigest;
@@ -37,6 +37,7 @@ import javax.sip.message.Response;
 import com.kurento.commons.sip.agent.SipEndPointImpl;
 import com.kurento.commons.sip.agent.UaFactory;
 import com.kurento.commons.ua.event.EndPointEvent;
+import com.kurento.commons.ua.event.EndpointEventEnum;
 import com.kurento.commons.ua.exception.ServerInternalErrorException;
 
 public class CRegister extends CTransaction {
@@ -106,6 +107,10 @@ public class CRegister extends CTransaction {
 			log.warn("<<<<<<< 503 SERVICE_UNAVAILABLE Register: Service unavailable: "
 					+ response.getStatusCode());
 			localParty.notifyEvent(EndPointEvent.SERVER_INTERNAL_ERROR);
+		} else if (statusCode == 476) { // Unresolvable destination
+			log.warn("Register user fail. Status code: "
+					+ response.getStatusCode());
+			localParty.notifyEvent(EndpointEventEnum.REGISTER_USER_FAIL);
 		} else { // Non supported response code Discard
 			log.warn("Register Failure. Status code: "
 					+ response.getStatusCode());
@@ -140,25 +145,28 @@ public class CRegister extends CTransaction {
 
 	}
 
-	//AuthenticationHearder RFC2617 construction for request digest without	qop parameter and MD5 hash algorithm.
-	private AuthorizationHeader getAuthorizationHearder(Response response) throws ServerInternalErrorException{
+	// AuthenticationHearder RFC2617 construction for request digest without qop
+	// parameter and MD5 hash algorithm.
+	private AuthorizationHeader getAuthorizationHearder(Response response)
+			throws ServerInternalErrorException {
 		WWWAuthenticateHeader wwwAuthenticateHeader;
 		AuthorizationHeader authorization = null;
 		try {
-			wwwAuthenticateHeader = (WWWAuthenticateHeader) response.getHeader(WWWAuthenticateHeader.NAME);
-	
+			wwwAuthenticateHeader = (WWWAuthenticateHeader) response
+					.getHeader(WWWAuthenticateHeader.NAME);
+
 			String schema = wwwAuthenticateHeader.getScheme();
 			String realm = wwwAuthenticateHeader.getRealm();
 			String nonce = wwwAuthenticateHeader.getNonce();
 			String alg = wwwAuthenticateHeader.getAlgorithm();
 			String opaque = wwwAuthenticateHeader.getOpaque();
-	
-			log.debug("WWWAuthenticateHeader is "+ wwwAuthenticateHeader.toString());
-			
-		
+
+			log.debug("WWWAuthenticateHeader is "
+					+ wwwAuthenticateHeader.toString());
+
 			URI localUri = localParty.getAddress().getURI();
 			String user = localParty.getUserName();
-			
+
 			HeaderFactory factory = UaFactory.getSipFactory()
 					.createHeaderFactory();
 			authorization = factory.createAuthorizationHeader(schema);
@@ -167,18 +175,20 @@ public class CRegister extends CTransaction {
 			authorization.setNonce(nonce);
 			authorization.setURI(localUri);
 			String respon = getAuthResponse(user, realm,
-					localParty.getPassword(),
-					this.method,localUri.toString(), nonce, alg);
+					localParty.getPassword(), this.method, localUri.toString(),
+					nonce, alg);
 			authorization.setResponse(respon);
 			authorization.setAlgorithm(alg);
 			authorization.setOpaque(opaque);
 
 		} catch (ParseException e1) {
 			log.error(e1.toString());
-			throw new ServerInternalErrorException("Error generating authentication hearder", e1);
+			throw new ServerInternalErrorException(
+					"Error generating authentication hearder", e1);
 		} catch (PeerUnavailableException e) {
 			log.error(e.toString());
-			throw new ServerInternalErrorException("Error generating authentication hearder", e);
+			throw new ServerInternalErrorException(
+					"Error generating authentication hearder", e);
 		}
 		return authorization;
 
@@ -191,8 +201,9 @@ public class CRegister extends CTransaction {
 	}
 
 	private String getAuthResponse(String userName, String realm,
-			String password, String method, String uri, String nonce, String algorithm) {
-		//String cnonce = null;
+			String password, String method, String uri, String nonce,
+			String algorithm) {
+		// String cnonce = null;
 		MessageDigest messageDigest = null;
 		try {
 			messageDigest = MessageDigest.getInstance(algorithm);
@@ -203,16 +214,14 @@ public class CRegister extends CTransaction {
 		String A1 = userName + ":" + realm + ":" + password;
 		byte mdbytes[] = messageDigest.digest(A1.getBytes());
 		String HA1 = toHexString(mdbytes);
-		log.debug("DigestClientAuthenticationMethod for HA1:"
-				+ HA1 + "!");
+		log.debug("DigestClientAuthenticationMethod for HA1:" + HA1 + "!");
 		// A2
 		String A2 = method.toUpperCase() + ":" + uri;
 		mdbytes = messageDigest.digest(A2.getBytes());
 		String HA2 = toHexString(mdbytes);
-		log.debug("DigestClientAuthenticationMethod for HA2:"
-				+ HA2 + "!");
+		log.debug("DigestClientAuthenticationMethod for HA2:" + HA2 + "!");
 		// KD
-		String KD = HA1 +":" + nonce;
+		String KD = HA1 + ":" + nonce;
 		// if (cnonce != null) {
 		// if(cnonce.length()>0) KD += ":" + cnonce;
 		// }
