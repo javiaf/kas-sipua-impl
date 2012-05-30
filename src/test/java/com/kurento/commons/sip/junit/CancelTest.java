@@ -177,17 +177,6 @@ public class CancelTest {
 				clietnCallControllerClient);
 		log.info("OK");
 
-		// log.info(serverName + " expects INVITE from " + clientName + "..." );
-		// SipEvent requestEvent =
-		// serverSipMonitor.pollEvent(TestConfig.WAIT_TIME);
-		// assertTrue("No SIP message received in server UA", requestEvent !=
-		// null);
-		// assertTrue(
-		// "Bad SIP protocol detected in server UA: "
-		// + requestEvent.getMethod(),
-		// "INVITE".equals(requestEvent.getMethod()));
-		// log.info("OK");
-
 		log.info(serverName + " expects incoming call from " + clientName
 				+ "...");
 		endPointEvent = serverEndPointController
@@ -407,4 +396,53 @@ public class CancelTest {
 
 		log.info(" -------------------- Test Cancel with simultaneous accept --------------------");
 	}
+	
+	/**
+	 * Verify the call does not progress in receiving peer when CANCEL is received while waiting local SDP 
+	 * 
+	 * <pre>
+	 * C:INVITE-------------------------------------------->:S
+	 * C:<----------------------------------- 100 Trying ---:S
+	 * C:<---------------------------------- 180 Ringing ---:S
+	 * C:--- CANCEL --------------------------------------->:S
+	 * C:<----------------------200 OK (CSeq: xxx CANCEL)---:S
+	 * C:<-------------------------487 Request Terminated---:S
+	 * C:                                                   :S SDP OK => INCOMING_CALL to Controller
+	 * </pre>
+	 * 
+	 * Associated to case #312
+	 * @throws Exception 
+	 */
+	@Test
+	public void testCancelWhilePeerWaitsLocalSdp() throws Exception  {
+		log.info("-------------------- Test Cancel while peer waits local SDP --------------------");
+	
+		EndPointEvent endPointEvent;
+		CallEvent callEvent;
+		
+		// Add sleep timer to Media stack
+		((MediaSessionDummy)UaFactory.getMediaSession()).setSleepTimer(2000);
+
+		// C:-----INVITE-------------->:S
+		log.info(clientName + " dial to " + serverName + "...");
+		SipCallController clientCallControllerClient = new SipCallController(
+				clientName);
+		Call clientCall = clientEndPoint.dial(serverUri,
+				clientCallControllerClient);
+		log.info("OK");
+
+		// Send inmediate cancel
+		// C:----CANCEL -------------->:S
+		log.info(clientName + " cancel call...");
+		clientCall.cancel();
+		log.info("OK");
+
+		// No event must be received on receiver peer
+		log.info(serverName + " expects no event call from " + clientName
+				+ "...");
+		endPointEvent = serverEndPointController
+				.pollSipEndPointEvent(TestConfig.WAIT_TIME);
+		assertTrue("Message received in server UA", endPointEvent == null);
+	}
+
 }
