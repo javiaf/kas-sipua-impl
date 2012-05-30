@@ -170,9 +170,10 @@ public class SdpPortManagerDummy implements SdpPortManager {
 			sdpString = "v=0 \no=test 2808844564 2808844564 IN IP4 193.147.51.20 "
 					+ "\ns= \nc=IN IP4 193.147.51.20 "
 					+ "\nt=0 0 "
-					+ "\nm=adio 49174 RTP/AVP 98"
-					+ "\na=rtpmap:99 PCMA/8000"
-					+ "\nm=vido 49170 RTP/AVP 96 " + "\na=rtpmap:96 H264/90000";
+					+ "\nm=audio 49174 RTP/AVP 99"
+					+ "\na=rtpmap:98 PCMA/8000"
+					+ "\nm=video 49170 RTP/AVP 96 "
+					+ "\na=rtpmap:96 H264/90000";
 		} else if (SdpPortManagerType.SDP_EMPTY.equals(sdpType)) {
 			sdpString = "";
 		}
