@@ -26,7 +26,13 @@ import com.kurento.commons.mscontrol.mediamixer.MediaMixer;
 import com.kurento.commons.mscontrol.networkconnection.NetworkConnection;
 
 public class MediaSessionDummy implements MediaSession {
+	
+	private int sleepTimer;
 
+	public void setSleepTimer (int sleepTimer) {
+		this.sleepTimer = sleepTimer;
+	}
+	
 	@Override
 	public void release() {
 		// TODO Auto-generated method stub
@@ -44,7 +50,11 @@ public class MediaSessionDummy implements MediaSession {
 	@Override
 	public NetworkConnection createNetworkConnection()
 			throws MsControlException {
-		return new NetworkConnectionDummy();
+		
+		NetworkConnectionDummy nc = new NetworkConnectionDummy();
+		if (sleepTimer > 0) 
+			nc.setSleepTimer(sleepTimer);
+		return nc;
 	}
 
 	@Override

@@ -25,10 +25,16 @@ import com.kurento.commons.mscontrol.networkconnection.NetworkConnection;
 import com.kurento.commons.mscontrol.networkconnection.SdpPortManager;
 
 public class NetworkConnectionDummy implements NetworkConnection {
-	SdpPortManager sdpManager;
+	SdpPortManagerDummy sdpManager;
+	
 
 	NetworkConnectionDummy() {
 		sdpManager = new SdpPortManagerDummy();
+		
+	}
+	
+	public void setSleepTimer (int sleepTimer){
+		sdpManager.setSleepTimer(sleepTimer);
 	}
 
 	@Override

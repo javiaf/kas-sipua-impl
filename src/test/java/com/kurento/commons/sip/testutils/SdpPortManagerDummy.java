@@ -39,7 +39,7 @@ public class SdpPortManagerDummy implements SdpPortManager {
 	
 	MediaEventListener<SdpPortManagerEvent> listener;
 	
-	public void setSleepTime (int sleepTime) {
+	public void setSleepTimer (int sleepTime) {
 		this.sleepTime = sleepTime;
 	}
 	
