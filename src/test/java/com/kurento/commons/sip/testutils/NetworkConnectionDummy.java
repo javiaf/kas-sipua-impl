@@ -23,6 +23,7 @@ import com.kurento.commons.mscontrol.join.JoinableStream;
 import com.kurento.commons.mscontrol.join.JoinableStream.StreamType;
 import com.kurento.commons.mscontrol.networkconnection.NetworkConnection;
 import com.kurento.commons.mscontrol.networkconnection.SdpPortManager;
+import com.kurento.commons.sip.testutils.TestConfig.SdpPortManagerType;
 
 public class NetworkConnectionDummy implements NetworkConnection {
 	SdpPortManagerDummy sdpManager;
@@ -33,6 +34,10 @@ public class NetworkConnectionDummy implements NetworkConnection {
 		
 	}
 	
+	public void setSdpType(SdpPortManagerType sdpType) {
+		sdpManager.setSdpType(sdpType);
+	}
+
 	public void setSleepTimer (int sleepTimer){
 		sdpManager.setSleepTimer(sleepTimer);
 	}

@@ -24,15 +24,21 @@ import com.kurento.commons.mscontrol.Parameters;
 import com.kurento.commons.mscontrol.mediacomponent.MediaComponent;
 import com.kurento.commons.mscontrol.mediamixer.MediaMixer;
 import com.kurento.commons.mscontrol.networkconnection.NetworkConnection;
+import com.kurento.commons.sip.testutils.TestConfig.SdpPortManagerType;
 
 public class MediaSessionDummy implements MediaSession {
 	
 	private int sleepTimer;
+	private SdpPortManagerType sdpType;
 
 	public void setSleepTimer (int sleepTimer) {
 		this.sleepTimer = sleepTimer;
 	}
 	
+	public void setSdpType(SdpPortManagerType sdpType) {
+		this.sdpType = sdpType;
+	}
+
 	@Override
 	public void release() {
 		// TODO Auto-generated method stub
@@ -54,6 +60,7 @@ public class MediaSessionDummy implements MediaSession {
 		NetworkConnectionDummy nc = new NetworkConnectionDummy();
 		if (sleepTimer > 0) 
 			nc.setSleepTimer(sleepTimer);
+			nc.setSdpType(sdpType);
 		return nc;
 	}
 
