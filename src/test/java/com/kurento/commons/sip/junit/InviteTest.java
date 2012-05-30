@@ -27,7 +27,6 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-//import com.kurento.commons.sip.agent.EndPointFactory;
 import com.kurento.commons.sip.agent.UaFactory;
 import com.kurento.commons.sip.agent.UaImpl;
 import com.kurento.commons.sip.testutils.MediaSessionDummy;
@@ -41,7 +40,6 @@ import com.kurento.commons.ua.EndPoint;
 import com.kurento.commons.ua.UA;
 import com.kurento.commons.ua.event.CallEvent;
 import com.kurento.commons.ua.event.EndPointEvent;
-import com.kurento.commons.ua.exception.ServerInternalErrorException;
 import com.kurento.commons.ua.timer.KurentoUaTimer;
 
 public class InviteTest {
@@ -65,6 +63,8 @@ public class InviteTest {
 	private static int expires = 6;
 	private static String localAddress;
 
+	private static MediaSessionDummy mediaSessionDummy;
+
 	private static EndPoint serverEndPoint;
 	private static EndPoint clientEndPoint;
 
@@ -79,7 +79,8 @@ public class InviteTest {
 		log.info("Initialice SIP UA Invite test on platform"
 				+ System.getProperty("os.name"));
 
-		UaFactory.setMediaSession(new MediaSessionDummy());
+		mediaSessionDummy = new MediaSessionDummy();
+		UaFactory.setMediaSession(mediaSessionDummy);
 
 		timer = new TestTimer();
 
@@ -95,8 +96,6 @@ public class InviteTest {
 		// Create and register SIP EndPoint
 		Map<String, Object> sEpConfig =  new HashMap<String, Object>();
 		sEpConfig.put("SIP_RECEIVE_CALL", false);
-		serverEndPoint = serverUa.registerEndpoint(serverName, "kurento.com",
-				serverEndPointController, sEpConfig);
 		serverEndPoint = serverUa.registerEndpoint(serverName, "kurento.com",
 				serverEndPointController, sEpConfig);
 
@@ -150,6 +149,7 @@ public class InviteTest {
 
 		EndPointEvent endPointEvent;
 		CallEvent callEvent;
+
 
 		// C:---INVITE---------->:S
 		log.info(clientName + " dial to " + serverName + "...");
