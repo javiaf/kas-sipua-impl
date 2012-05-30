@@ -7,10 +7,10 @@ public class TestConfig {
 	public final static String USER = "user-test";
 	public final static String PASS = "password";
 
-	public final static String CLIENT_IP= "127.0.0.1";
+	public final static String CLIENT_IP = "127.0.0.1";
 	public final static int CLIENT_PORT = 5090;
 
-	public final static String PROXY_IP= "127.0.0.1";
+	public final static String PROXY_IP = "127.0.0.1";
 	public final static int PROXY_PORT = 5060;
 
 	public final static int WAIT_TIME = 6;
@@ -20,4 +20,7 @@ public class TestConfig {
 		return counter++;
 	}
 
+	public static enum SdpPortManagerType {
+		SDP_CORRECT, SDP_EMPTY, SDP_WITHOUT_AUDIO, SDP_WITHOUT_VIDEO, SDP_WITHOUT_VIDEO_AUDIO, SDP_WRONG, SDP_PAYLOAD_WRONG
+	};
 }
