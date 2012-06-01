@@ -17,7 +17,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>
 package com.kurento.commons.sip.transaction;
 
 import javax.sip.ServerTransaction;
-import javax.sip.TimeoutEvent;
 import javax.sip.message.Request;
 import javax.sip.message.Response;
 
@@ -37,12 +36,6 @@ public class SBye extends STransaction {
 			sendResponse(Response.OK, null);
 			sipContext.terminatedCall();
 		}
-	}
-
-	@Override
-	public void processTimeOut(TimeoutEvent timeoutEvent) {
-		// TODO Auto-generated method stub
-
 	}
 
 }

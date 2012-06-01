@@ -70,8 +70,7 @@ public class CRegister extends CTransaction {
 	}
 
 	@Override
-	public void processResponse(ResponseEvent event)
-			throws ServerInternalErrorException {
+	public void processResponse(ResponseEvent event) {
 		Response response = event.getResponse();
 		int statusCode = response.getStatusCode();
 
@@ -80,11 +79,17 @@ public class CRegister extends CTransaction {
 					+ localParty.getAddress());
 			localParty.notifyEvent(EndPointEvent.REGISTER_USER_SUCESSFUL);
 		} else if (statusCode == Response.UNAUTHORIZED
-				|| statusCode == Response.PROXY_AUTHENTICATION_REQUIRED) { // Peer
-																			// Authentication
-			sendWithAuth(event);
-		} else if (statusCode == Response.REQUEST_TIMEOUT) { // 408: Request
-																// TimeOut
+				|| statusCode == Response.PROXY_AUTHENTICATION_REQUIRED) { 
+			// Peer Authentication
+			try {
+				sendWithAuth(event);
+			} catch (ServerInternalErrorException e) {
+				String msg="Unable to send Auth REGISTER";
+				log.error(msg,e);
+				localParty.notifyEvent(EndPointEvent.REGISTER_USER_FAIL);
+			}
+		} else if (statusCode == Response.REQUEST_TIMEOUT) { 
+			// 408: Request TimeOut
 			log.warn("<<<<<<< 408 REQUEST_TIMEOUT: Register Failure. Unable to contact registrar at "
 					+ localParty.getAddress());
 			localParty.notifyEvent(EndPointEvent.REGISTER_USER_FAIL);
@@ -113,6 +118,12 @@ public class CRegister extends CTransaction {
 		}
 	}
 
+	@Override
+	public void processTimeout() {
+		log.warn("Register request timeout");
+		localParty.notifyEvent(EndPointEvent.REGISTER_USER_FAIL);
+	}
+	
 	private void sendWithAuth(ResponseEvent event)
 			throws ServerInternalErrorException {
 		Response response = event.getResponse();
@@ -182,12 +193,6 @@ public class CRegister extends CTransaction {
 		}
 		return authorization;
 
-	}
-
-	@Override
-	public void processTimeOut(TimeoutEvent timeoutEvent) {
-		log.error("Register Failure due to request timeout");
-		localParty.notifyEvent(EndPointEvent.REGISTER_USER_FAIL);
 	}
 
 	private String getAuthResponse(String userName, String realm,

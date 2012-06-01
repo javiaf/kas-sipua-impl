@@ -13,7 +13,7 @@ GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>
-*/
+ */
 package com.kurento.commons.sip.transaction;
 
 import javax.sip.ServerTransaction;
@@ -22,7 +22,9 @@ import javax.sip.message.Request;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.kurento.commons.media.format.conversor.SdpConversor;
 import com.kurento.commons.mscontrol.EventType;
+import com.kurento.commons.mscontrol.MediaEventListener;
 import com.kurento.commons.mscontrol.MsControlException;
 import com.kurento.commons.mscontrol.networkconnection.SdpPortManagerEvent;
 import com.kurento.commons.sip.agent.SipEndPointImpl;
@@ -47,36 +49,49 @@ public class SAck extends STransaction {
 		// Process ACK request
 		if (getContentLength(request) == 0) {
 			log.debug("ACK does not provides content. Call completes successfully");
-			sipContext.completedIncomingCall();
+			sipContext.completedCall();
 		} else {
 			log.debug("ACK contains SDP response.");
-			if (sipContext != null) {
-				networkConnection = sipContext.getNetworkConnection();
-				try {
-					sdpPortManager = networkConnection.getSdpPortManager();
-				} catch (MsControlException e) {
-					throw new ServerInternalErrorException("SDP negociation error while processing answer", e);
-				}
-				processSdpAnswer(request.getRawContent());
-			} else {
-				throw new ServerInternalErrorException("Unable to find SipContext associated to transaction.");
-			}
-			
-		}
-	}
 
-	@Override
-	public void onEvent(SdpPortManagerEvent event) {
-		// Remove this transaction as a listener of the SDP Port Manager
-		EventType eventType = event.getEventType();
-		log.debug("SdpPortManager complete SDP process. Event received:"
-				+ eventType);
-		event.getSource().removeListener(this);
-		if (SdpPortManagerEvent.ANSWER_PROCESSED.equals(eventType)
-				|| SdpPortManagerEvent.OFFER_GENERATED.equals(eventType)) {
-			sipContext.completedIncomingCall();
-		} else {
-			super.onEvent(event);
+			if (sipContext != null) {
+				try {
+					sipContext.getSdpPortmanager().addListener(
+							new MediaEventListener<SdpPortManagerEvent>() {
+
+								@Override
+								public void onEvent(SdpPortManagerEvent event) {
+									event.getSource().removeListener(this);
+									EventType eventType = event.getEventType();
+									if (SdpPortManagerEvent.ANSWER_PROCESSED
+											.equals(eventType)) {
+										log.debug("SdpPortManager successfully processed SDP offer sent by peer");
+										// Notify incoming call to TU
+										SAck.this.sipContext.completedCall();
+
+									} else {
+										// TODO: Analyze whether more detailed
+										// information
+										// is required of problem found
+										SAck.this.sipContext
+												.callError("Unable to allocate network resources. SdpPortManager event="
+														+ eventType);
+									}
+								}
+							});
+					byte[] rawContent = request.getRawContent();
+					sipContext.getSdpPortmanager().processSdpAnswer(
+							SdpConversor
+									.sdp2SessionSpec(new String(rawContent)));
+				} catch (Exception e) {
+					String msg = "Unable to process SDP response";
+					log.error(msg, e);
+					sipContext.callError(msg);
+				}
+			} else {
+				throw new ServerInternalErrorException(
+						"Unable to find SipContext associated to transaction.");
+			}
+
 		}
 	}
 

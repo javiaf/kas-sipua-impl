@@ -13,22 +13,21 @@ GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>
-*/
+ */
 package com.kurento.commons.sip.transaction;
 
-import javax.sdp.SdpException;
 import javax.sip.ServerTransaction;
-import javax.sip.TimeoutEvent;
 import javax.sip.message.Request;
 import javax.sip.message.Response;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.kurento.commons.media.format.SessionSpec;
 import com.kurento.commons.media.format.conversor.SdpConversor;
 import com.kurento.commons.mscontrol.EventType;
+import com.kurento.commons.mscontrol.MediaEventListener;
 import com.kurento.commons.mscontrol.networkconnection.SdpPortManagerEvent;
+import com.kurento.commons.mscontrol.networkconnection.SdpPortManagerException;
 import com.kurento.commons.sip.agent.SipEndPointImpl;
 import com.kurento.commons.sip.exception.SipTransactionException;
 import com.kurento.commons.ua.exception.ServerInternalErrorException;
@@ -66,45 +65,80 @@ public class SInvite extends STransaction {
 		// Process INVITE request
 		if (getContentLength(request) == 0) {
 			// INVITE with no SDP. Request an offer to send with response
-			generateSdp();
+			sipContext.getSdpPortmanager().addListener(
+					new MediaEventListener<SdpPortManagerEvent>() {
+
+						@Override
+						public void onEvent(SdpPortManagerEvent event) {
+							event.getSource().removeListener(this);
+							EventType eventType = event.getEventType();
+							if (SdpPortManagerEvent.OFFER_GENERATED
+									.equals(eventType)) {
+								log.debug("SdpPortManager successfully generated a SDP to be send to remote peer");
+								// Notify incoming call to TU
+								sipContext.incominCall(SInvite.this);
+							} else {
+								// TODO: Analyze whether more detailed
+								// information
+								// is required of problem found
+								SInvite.this.sipContext
+										.callError("Unable to allocate network resources. SdpPortManager event="
+												+ eventType);
+								try {
+									SInvite.this.sendResponse(Response.UNSUPPORTED_MEDIA_TYPE, null);
+								} catch (ServerInternalErrorException e) {
+									log.error("Unable to terminate transaction for dialog: " + dialog.getDialogId());
+								}
+							}
+
+						}
+					});
+			try {
+				sipContext.getSdpPortmanager().generateSdpOffer();
+			} catch (SdpPortManagerException e) {
+				String msg = "Unable to generate SDP offer for an incoming INVITE request";
+				log.error(msg, e);
+				sendResponse(Response.SERVER_INTERNAL_ERROR, null);
+				// Do not signal incoming call to user
+			}
+
 		} else {
 			// INVITE with SDP. request for process
-			processSdpOffer(request.getRawContent());
+			try {
+				sipContext.getSdpPortmanager().addListener(
+						new MediaEventListener<SdpPortManagerEvent>() {
+
+							@Override
+							public void onEvent(SdpPortManagerEvent event) {
+								event.getSource().removeListener(this);
+								EventType eventType = event.getEventType();
+								if (SdpPortManagerEvent.ANSWER_PROCESSED
+										.equals(eventType)) {
+									log.debug("SdpPortManager successfully processed SDP offer sent by peer");
+									// Notify incoming call to TU
+									SInvite.this.sipContext.incominCall(SInvite.this);
+
+								} else {
+									// TODO: Analyze whether more detailed information is required of problem found
+									SInvite.this.sipContext
+											.callError("Unable to allocate network resources. SdpPortManager event="
+													+ eventType);
+								}
+
+							}
+						});
+				byte[] rawContent = request.getRawContent();
+				sipContext.getSdpPortmanager().processSdpAnswer(
+						SdpConversor.sdp2SessionSpec(new String(rawContent)));
+			} catch (Exception e) {
+				String msg = "Unable to process SDP response";
+				log.error(msg, e);
+				sipContext.callError(msg);
+			}
 		}
 	}
 
 	private void processAck() {
 		log.debug("Invite transaction received a valid ACK for non 2xx response");
 	}
-
-	@Override
-	public void processTimeOut(TimeoutEvent timeoutEvent) {
-		log.error("Time Out while waiting for an ACK");
-		sipContext.failedCall();
-	}
-
-	@Override
-	public void onEvent(SdpPortManagerEvent event) {
-		// Remove this transaction as a listener of the SDP Port Manager
-		event.getSource().removeListener(this);
-		EventType eventType = event.getEventType();
-
-		if (SdpPortManagerEvent.ANSWER_GENERATED.equals(eventType)
-				|| SdpPortManagerEvent.OFFER_GENERATED.equals(eventType)) {
-			// Request user confirmation before sending response
-			log.debug("SdpPortManager successfully generated a SDP to be send to remote peer");
-			SessionSpec session;
-			try {
-				session = event.getMediaServerSdp();
-				localSdp = SdpConversor.sessionSpec2SessionDescription(session);
-				sipContext.incominCall(this, session);
-			} catch (SdpException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-		} else {
-			super.onEvent(event);
-		}
-	}
-
 }
