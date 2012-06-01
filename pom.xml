@@ -16,7 +16,7 @@
 		<!-- Dependency versions -->
 		<kcUaVersion>1.2.6-SNAPSHOT</kcUaVersion>
 		<kcMediaSpecVersion>2.0.0</kcMediaSpecVersion>
-		<kcMediaSpecConversorVersion>1.0.0</kcMediaSpecConversorVersion>
+		<kcMediaSpecConversorVersion>1.0.1-SNAPSHOT</kcMediaSpecConversorVersion>
 		<kcStunVersion>1.0.2-SNAPSHOT</kcStunVersion>
 	</properties>
 
