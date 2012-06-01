@@ -387,6 +387,8 @@ public class SipContext implements Call {
 
 	private static Map<MediaType, Mode> getModesOfMediaTypes(SessionSpec session) {
 		Map<MediaType, Mode> map = new HashMap<MediaType, Mode>();
+		if (session == null)
+			return map;
 		for (MediaSpec m : session.getMediaSpecs()) {
 			try {
 				// Only it is to check that there is a rtp transport
