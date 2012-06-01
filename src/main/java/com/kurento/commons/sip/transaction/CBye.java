@@ -26,13 +26,13 @@ public class CBye extends CTransaction {
 
 	public CBye(SipContext sipContext) throws ServerInternalErrorException {
 		super(Request.BYE,  sipContext);
-		sendRequest(null);
 		sipContext.terminatedCall();
+		sendRequest(null);
 	}
 
 	@Override
 	public void processResponse(ResponseEvent event) {
-
+		// DO NOTHING
 	}
 
 }

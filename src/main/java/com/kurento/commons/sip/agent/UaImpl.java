@@ -230,7 +230,7 @@ public class UaImpl implements SipListener, UaStun {
 							"Unable to reconfigure Endpoint:"
 									+ endpoint.getUserName());
 				}
-				endpoint.setExpiresAndRegister(endpoint.getExpires());
+				endpoint.register(endpoint.getExpires());
 			}
 		}
 	}
@@ -442,17 +442,17 @@ public class UaImpl implements SipListener, UaStun {
 			EndPointListener listener, Map<String, Object> extra)
 			throws ServerInternalErrorException {
 
-		String password="";
+		String password = "";
 		if (extra.get(SIP_PASWORD) instanceof String) {
 			password = (String) extra.get(SIP_PASWORD);
 		}
-		
-		Integer expires=3600;
+
+		Integer expires = 3600;
 		if (extra.get(SIP_EXPIRES) instanceof Integer) {
 			expires = (Integer) extra.get(SIP_EXPIRES);
 		}
-		
-		Boolean receiveCall=true;
+
+		Boolean receiveCall = true;
 		if (extra.get(SIP_RECEIVE_CALL) instanceof Boolean) {
 			receiveCall = (Boolean) extra.get(SIP_RECEIVE_CALL);
 		}
@@ -632,34 +632,23 @@ public class UaImpl implements SipListener, UaStun {
 		if (cTrns == null) {
 			log.error("Server Internal Error (500): Empty application data for response transaction");
 		}
-		try {
-			cTrns.processResponse(responseEvent);
-		} catch (ServerInternalErrorException e) {
-			log.error("Internal server error while procesing a response", e);
-		}
+		cTrns.processResponse(responseEvent);
 
 	}
 
 	@Override
 	public void processTimeout(TimeoutEvent timeoutEvent) {
-		if (timeoutEvent.isServerTransaction()) {
-			ServerTransaction serverTransaction = timeoutEvent
-					.getServerTransaction();
-			log.error("Timeout event found for Server Transaction with ID: "
-					+ serverTransaction.getBranchId());
-			STransaction sTransaction;
-			if ((sTransaction = (STransaction) serverTransaction
-					.getApplicationData()) != null) {
-				sTransaction.processTimeOut(timeoutEvent);
-			}
-		} else {
-			ClientTransaction clientTransaction = timeoutEvent
-					.getClientTransaction();
-			log.error("Timeout event found for Client Transaction with ID:\n"
-					+ clientTransaction.getBranchId());
-			CTransaction cTransaction = (CTransaction) clientTransaction
-					.getApplicationData();
-			cTransaction.processTimeOut(timeoutEvent);
+		log.warn("Transaction timeout:" + timeoutEvent.toString());
+		try {
+			if (timeoutEvent.getClientTransaction() != null){
+				CTransaction cTrns = (CTransaction) timeoutEvent.getClientTransaction().getApplicationData();
+				if (cTrns != null)
+					cTrns.processTimeout();
+
+			} else if (timeoutEvent.getServerTransaction() != null)
+				timeoutEvent.getServerTransaction().terminate();
+		} catch (ObjectInUseException e) {
+			log.error("Unable to handle timeouts");
 		}
 	}
 

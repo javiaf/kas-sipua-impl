@@ -345,7 +345,7 @@ public abstract class CTransaction extends Transaction {
 
 	public void sendRequest(byte[] sdp) throws ServerInternalErrorException {
 
-		if (sdp != null) {
+		if (sdp != null && sdp.length > 0) {
 			try {
 				request.setContent(sdp, buildContentTypeHeader());
 			} catch (ParseException e) {
@@ -370,92 +370,10 @@ public abstract class CTransaction extends Transaction {
 		}
 	}
 
-//	public void sendCancel() throws ServerInternalErrorException {
-//		if (request != null) {
-//			try {
-//				log.info("SIP send request\n"
-//						+ ">>>>>>>>>> SIP send request >>>>>>>>>>\n"
-//						+ clientTransaction.getRequest().toString()
-//						+ ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
-//				clientTransaction.sendRequest();
-//			} catch (SipException e) {
-//				throw new ServerInternalErrorException(
-//						"Sip Exception sending CANCEL request", e);
-//			}
-//		}
-//	}
+	public abstract void processResponse(ResponseEvent event);
+	
+	public void processTimeout(){}
 
-	public abstract void processResponse(ResponseEvent event)
-			throws ServerInternalErrorException;
 
-	// ////////////////////
-	//
-	// SDP Port Manager Interface
-	//
-	// ////////////////////
-
-	@Override
-	public void onEvent(SdpPortManagerEvent event) {
-		// Remove this transaction as a listener of the SDP Port Manager
-		event.getSource().removeListener(this);
-
-		EventType eventType = event.getEventType();
-		// List of events with default behavor in client transactions
-		try {
-			if (eventType != null) { // ok
-				if (SdpPortManagerEvent.OFFER_GENERATED.equals(eventType)) {
-					// Generated after processSdpOffer : SDP = response to give
-					try {
-						sendRequest( SdpConversor.sessionSpec2Sdp(event.getMediaServerSdp()).getBytes() );
-					} catch (SdpException e) {
-						log.warn("Unable to get local SDP", e);
-					}
-				} else if (SdpPortManagerEvent.ANSWER_PROCESSED
-						.equals(eventType)) {
-					log.debug("SdpPortManager successfully processed SDP answer received from remote peer");
-					// sipContext.notifySipCallEvent(SipCallEvent.)
-				} else {
-					log.error("Unknown event received from SdpPortManager: "
-							+ eventType);
-					// sipContext.notifySipCallEvent(SipCallEvent.SERVER_INTERNAL_ERROR);
-				}
-			} else { // error
-				MediaErr error = event.getError();
-
-				if (SdpPortManagerEvent.RESOURCE_UNAVAILABLE.equals(error)) {
-					// Notify error
-					log.error("No media resources to attend client transaction:"
-							+ clientTransaction.toString());
-					// sipContext.notifySipCallEvent(SipCallEvent.MEDIA_RESOURCE_NOT_AVAILABLE);
-				} else if (SdpPortManagerEvent.SDP_NOT_ACCEPTABLE.equals(error)) {
-					log.error("SDP not acceptable in client transaction: "
-							+ clientTransaction.toString());
-					// sipContext.notifySipCallEvent(SipCallEvent.MEDIA_NOT_SUPPORTED);
-				} else {
-					log.error("Unknown event received from SdpPortManager: "
-							+ error);
-					// sipContext.notifySipCallEvent(SipCallEvent.SERVER_INTERNAL_ERROR);
-				}
-				sipContext.failedCall();
-			}
-
-		} catch (ServerInternalErrorException e) {
-			log.error("Server error while managing SdpPortManagerEvent:"
-					+ eventType, e);
-			sipContext.failedCall();
-			// sipContext.notifySipCallEvent(SipCallEvent.SERVER_INTERNAL_ERROR);
-		} finally {
-			// Release media resources managed by this transaction
-			release();
-		}
-	}
-
-	// public void processTimeOut(TimeoutEvent timeoutEvent) {
-	// // Nothing general to do.
-	// // This function avoids every transaction to define processTimeOut
-	// log.error("Time Out while waiting a response from client transaction: " +
-	// method);
-	// release();
-	// }
 
 }

@@ -129,7 +129,7 @@ public class SipEndPointImpl implements EndPoint {
 	public void terminate() throws ServerInternalErrorException {
 		if (isRegister()) {
 			log.info("terminating endpoint");
-			setExpiresAndRegister(0);
+			register(0);
 		}
 	}
 
@@ -160,14 +160,22 @@ public class SipEndPointImpl implements EndPoint {
 		EndPointEvent event = new EndPointEvent(eventType, this);
 		if (EndPointEvent.REGISTER_USER_SUCESSFUL.equals(eventType)
 				&& expires != 0) {
+
+			log.debug("Endpoint becomes registered: " + eventType + ", expires=" + expires);
 			setIsRegister(true);
+
+			// Set new Register schedule
+			log.debug("Expires = " + expires);
+			long period = (long) (getExpires() * 1000 * 0.8);
+			log.debug("Period = " + expires);
+			timer.schedule(sipEndPointTimerTask, period, period);
+
 		} else if (EndPointEvent.REGISTER_USER_SUCESSFUL.equals(eventType)
 				&& expires == 0
 				|| EndPointEvent.REGISTER_USER_FAIL.equals(eventType)
 				|| EndPointEvent.REGISTER_USER_NOT_FOUND.equals(eventType)) {
-			if (timer != null)
-				timer.cancel(sipEndPointTimerTask);
 
+			log.debug("Endpoint becomes de-registered: " + eventType + ", expires=" + expires);
 			setIsRegister(false);
 		}
 		if (listener != null) {
@@ -193,56 +201,34 @@ public class SipEndPointImpl implements EndPoint {
 		return this.ua;
 	}
 
-	public void setExpiresAndRegister(int expires) {
-
-		if (receiveCall) {
-			// Cancel previous schedulers
-			this.expires = expires;
-			log.debug("Expires = " + expires);
-			timer.cancel(sipEndPointTimerTask);
-			if (this.expires != 0) {
-				// Set new Register schedule
-				long period = (long) (getExpires() * 1000 * 0.8);
-				log.debug("Period = " + expires);
-
-				timer.schedule(sipEndPointTimerTask, 0, period);
-			} else {
-				// Send register with expires=0
-				try {
-					register();
-				} catch (ServerInternalErrorException e) {
-					timer.cancel(sipEndPointTimerTask);
-				}
-			}
-		}
-
-	}
-
-	public void register() throws ServerInternalErrorException {
+	public void register(int expires) throws ServerInternalErrorException {
+		this.expires = expires;
 		if (receiveCall) {
 			// Create call ID to avoid IP addresses that can be mangled by
 			// routers
+			SipProvider sipProvider = getUa().getSipProvider();
+
+			if (sipProvider == null)
+				throw new ServerInternalErrorException(
+						"SipProvider is null when trying to register Endpoint: "
+								+ userName + "@" + realm);
+
+			this.registrarCallId = sipProvider.getNewCallId();
+
 			try {
-				SipProvider sipProvider = getUa().getSipProvider();
-
-				if (sipProvider == null)
-					throw new ServerInternalErrorException(
-							"SipProvider is null when trying to register Endpoint: "
-									+ userName + "@" + realm);
-
-				this.registrarCallId = sipProvider.getNewCallId();
-
 				this.registrarCallId.setCallId(getUa().getInstanceId()
 						.toString());
 
-				CRegister register;
-				register = new CRegister(this);
-				register.sendRequest(null);
 			} catch (ParseException e) {
-				throw new ServerInternalErrorException(
-						"Register failure due to bad call id:" + getUa().getInstanceId()
-						.toString() + e);
+				log.warn("Unable to set callid for REGISTER request. Continue anyway");
 			}
+			
+			// Before registration remove previous timers
+			timer.cancel(sipEndPointTimerTask);
+			
+			CRegister register;
+			register = new CRegister(this);
+			register.sendRequest(null);
 		}
 	}
 
@@ -294,7 +280,7 @@ public class SipEndPointImpl implements EndPoint {
 		public void run() {
 			log.debug("sipEndpointTimerTask register");
 			try {
-				ep.register();
+				ep.register(ep.getExpires());
 			} catch (ServerInternalErrorException e) {
 				log.error("Timer SipEndPointTimerTask exception: " + e);
 			}

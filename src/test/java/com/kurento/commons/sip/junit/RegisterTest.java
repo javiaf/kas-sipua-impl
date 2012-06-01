@@ -167,7 +167,7 @@ public class RegisterTest {
 		log.info("OK");
 
 		// C:---REGISTER(exp=0)->:S
-		log.info("Implicit un-reregister of user " + clientName + "...");
+		log.info("Implicit un-register of user " + clientName + "...");
 		clientEndPoint.terminate();
 
 		// C:<----------200 OK---:S
@@ -182,6 +182,8 @@ public class RegisterTest {
 		log.info("OK");
 
 		// C:---REGISTER(exp=0)->:S (second time)
+		// Wait a moment
+		Thread.sleep(500);
 		log.info("Terminate user " + clientName
 				+ "... Verify no register request is sent");
 		clientEndPoint.terminate();
@@ -340,7 +342,8 @@ public class RegisterTest {
 	}
 
 	/**
-	 * Verify the EndPoint handles REGISTER timeouts due to connection problems
+	 * Verify the EndPoint handles REGISTER timeouts due to connection problems.
+	 * Verify the register timer does not start
 	 * 
 	 * <pre>
 	 * C:---REGISTER-------->:S
@@ -371,9 +374,6 @@ public class RegisterTest {
 			cEpConfig.put("SIP_RECEIVE_CALL", true);
 			clientEndPoint = clientUa.registerEndpoint(clientName,
 					"kurento.com", clientEndPointController, cEpConfig);
-			// clientEndPoint = EndPointFactory.getInstance(clientName,
-			// "kurento.com",
-			// "", expires, clientUa, clientEndPointController, true);
 			// Create SIP stack and activate SIP EndPoints
 			clientUa.reconfigure();
 
@@ -387,7 +387,6 @@ public class RegisterTest {
 							+ endPointEvent.getEventType(),
 					EndPointEvent.REGISTER_USER_FAIL.equals(endPointEvent
 							.getEventType()));
-			log.info("OK");
 
 			log.info("-------------------- Test Register Timeout finished OK --------------------");
 		} finally {
@@ -544,7 +543,7 @@ public class RegisterTest {
 		log.info("Try to register Endpoint with unstable SIP stack");
 		// Force UA register
 		try {
-			((SipEndPointImpl) clientEndPoint).register();
+			((SipEndPointImpl) clientEndPoint).register(expires);
 		} catch (ServerInternalErrorException e) {
 			log.info(
 					"Failure while registering on a wrong initialized SIP stack",

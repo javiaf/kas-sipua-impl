@@ -13,10 +13,9 @@ GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>
-*/
+ */
 package com.kurento.commons.sip.transaction;
 
-import javax.sdp.SdpException;
 import javax.sdp.SessionDescription;
 import javax.sip.Dialog;
 import javax.sip.TimeoutEvent;
@@ -25,19 +24,14 @@ import javax.sip.address.Address;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.kurento.commons.media.format.conversor.SdpConversor;
 import com.kurento.commons.mscontrol.MediaEventListener;
-import com.kurento.commons.mscontrol.MsControlException;
 import com.kurento.commons.mscontrol.networkconnection.NetworkConnection;
 import com.kurento.commons.mscontrol.networkconnection.SdpPortManager;
 import com.kurento.commons.mscontrol.networkconnection.SdpPortManagerEvent;
 import com.kurento.commons.sip.agent.SipContext;
 import com.kurento.commons.sip.agent.SipEndPointImpl;
-import com.kurento.commons.sip.agent.UaFactory;
-import com.kurento.commons.ua.exception.ServerInternalErrorException;
 
-public abstract class Transaction implements
-		MediaEventListener<SdpPortManagerEvent> {
+public abstract class Transaction {
 
 	private static Logger log = LoggerFactory.getLogger(Transaction.class);
 
@@ -52,11 +46,6 @@ public abstract class Transaction implements
 	protected String localTag;
 	protected static long cSeqNumber = System.currentTimeMillis() % 100000000;
 
-	protected NetworkConnection networkConnection;
-	protected SdpPortManager sdpPortManager;
-	protected SessionDescription localSdp;
-	protected byte[] remoteSdp;
-
 	// ///////////////
 	//
 	// Constructor
@@ -70,88 +59,12 @@ public abstract class Transaction implements
 		this.localParty = localParty;
 	}
 
-	protected void generateSdp() throws ServerInternalErrorException {
-		// Request SDP
-		log.debug("Request SDP template to SdpPortManager");
-		try {
-			createSdpPortManager();
-			sdpPortManager.addListener(this);
-			sdpPortManager.generateSdpOffer();
-		} catch (MsControlException e) {
-			throw new ServerInternalErrorException(
-					"SDP negociation error while generating offer", e);
-		}
-
-	}
-
-	protected void processSdpOffer(byte[] rawSdp)
-			throws ServerInternalErrorException {
-		log.debug("Process received SDP offer");
-		remoteSdp = rawSdp;
-		try {
-			createSdpPortManager();
-			sdpPortManager.addListener(this);
-			String sdp = new String(rawSdp);
-			try {
-				sdpPortManager.processSdpOffer(SdpConversor.sdp2SessionSpec(sdp));
-			} catch (SdpException e) {
-				log.error("Can not obtain Session Spec from ", sdp, e);
-			}
-		} catch (MsControlException e) {
-			throw new ServerInternalErrorException(
-					"SDP negociation error while processing answer", e);
-
-		}
-	}
-
-	protected void processSdpAnswer(byte[] rawSdp)
-			throws ServerInternalErrorException {
-		log.info("Process received SDP answer");
-		remoteSdp = rawSdp;
-		try {
-			createSdpPortManager();
-			sdpPortManager.addListener(this);
-			String sdp = new String(rawSdp);
-			try {
-				sdpPortManager.processSdpAnswer(SdpConversor.sdp2SessionSpec(sdp));
-			} catch (SdpException e) {
-				log.error("Can not obtain Session Spec from ", sdp, e);
-			}
-		} catch (MsControlException e) {
-			throw new ServerInternalErrorException(
-					"SDP negociation error while processing answer", e);
-		}
-	}
-
-	private void createSdpPortManager() throws MsControlException,
-			ServerInternalErrorException {
-		
-		if (networkConnection == null) {
-			networkConnection = UaFactory.getMediaSession().createNetworkConnection();
-			sdpPortManager = networkConnection.getSdpPortManager();
-		}
-
-	}
-
-	protected void release() {
-		if (networkConnection != null) {
-			networkConnection.release();
-		}
-	}
-
-	public SessionDescription getLocalSdp() {
-		return localSdp;
-	}
-
-	public NetworkConnection getNetworkConnection() {
-		return networkConnection;
-	}
-
-	public void processTimeOut(TimeoutEvent timeoutEvent) {
-		// This function avoids every transaction to define processTimeOut
-		log.error("Time Out while waiting a response from client transaction: "
-				+ method);
-		release();
-	}
+//	public void processTimeOut(TimeoutEvent timeoutEvent) {
+//		String msg ="Time Out while waiting for an ACK";
+//		timeoutEvent.
+//		log.error(msg);
+//		if (sipContext != null)
+//			sipContext.failedCall(msg);
+//	}
 
 }

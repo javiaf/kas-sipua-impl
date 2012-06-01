@@ -38,7 +38,7 @@ public class SCancel extends STransaction {
 		else {
 			// Matching transaction found ==> send 200 code regardless of dialog status
 			sendResponse(Response.OK, null);
-			sipContext.cancelCall();
+			sipContext.remoteCallCancel();
 		}
 	}
 

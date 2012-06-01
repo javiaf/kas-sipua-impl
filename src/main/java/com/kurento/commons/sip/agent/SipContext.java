@@ -21,9 +21,8 @@ import java.util.Map;
 import java.util.Set;
 
 import javax.sip.Dialog;
-import javax.sip.SipException;
+import javax.sip.DialogState;
 import javax.sip.address.Address;
-import javax.sip.message.Request;
 import javax.sip.message.Response;
 
 import org.slf4j.Logger;
@@ -31,20 +30,19 @@ import org.slf4j.LoggerFactory;
 
 import com.kurento.commons.media.format.MediaSpec;
 import com.kurento.commons.media.format.SessionSpec;
+import com.kurento.commons.media.format.conversor.SdpConversor;
 import com.kurento.commons.media.format.enums.MediaType;
 import com.kurento.commons.media.format.enums.Mode;
-import com.kurento.commons.media.format.exceptions.ArgumentNotSetException;
 import com.kurento.commons.mscontrol.MsControlException;
 import com.kurento.commons.mscontrol.join.Joinable;
 import com.kurento.commons.mscontrol.join.JoinableStream.StreamType;
 import com.kurento.commons.mscontrol.networkconnection.NetworkConnection;
+import com.kurento.commons.mscontrol.networkconnection.SdpPortManager;
 import com.kurento.commons.sip.transaction.CBye;
 import com.kurento.commons.sip.transaction.CCancel;
 import com.kurento.commons.sip.transaction.CInvite;
 import com.kurento.commons.sip.transaction.CTransaction;
-import com.kurento.commons.sip.transaction.SInvite;
 import com.kurento.commons.sip.transaction.STransaction;
-import com.kurento.commons.sip.transaction.Transaction;
 import com.kurento.commons.ua.Call;
 import com.kurento.commons.ua.CallListener;
 import com.kurento.commons.ua.event.CallEvent;
@@ -53,25 +51,33 @@ import com.kurento.commons.ua.exception.ServerInternalErrorException;
 
 public class SipContext implements Call {
 
+	// private enum OutState {
+	// IDLE, SDP_OFFER_GEN, REQUEST_SENT, RESPONSE_RECV, SDP_ANSWER_PROC,
+	// COMPLETE
+	// };
+	//
+	// private enum InState {
+	// IDLE, SDP_OFFER_PROC, WAIT_TU, RESPONSE_SENT, COMPLETE
+	// }
+
 	protected static final Logger log = LoggerFactory
 			.getLogger(SipContext.class);
-
-	private Dialog dialog;
-	private Request cancelRequest;
 
 	private SipEndPointImpl localEndPoint;
 	private Address remoteParty;
 
-	private STransaction incomingPendingRequest;
-	// private CTransaction outgoingPendingRequest;
-
+	private Dialog dialog;
 	private NetworkConnection networkConnection;
-	private Map<MediaType, Mode> mediaTypesModes;
+	private SdpPortManager sdpPortManager;
+
+	private STransaction incomingInitiatingRequest;
+	private CTransaction outgoingInitiatingRequest;
+	private Boolean request2Terminate = false;
+	// private OutState outState = OutState.IDLE;
+	// private InState inState = InState.IDLE;
 
 	private CallListener callListener;
-	private boolean outgoingRequestCancelled;
-
-	// private boolean isComplete = false;
+	private Map<MediaType, Mode> mediaTypesModes;
 
 	// ////////////////////
 	//
@@ -106,6 +112,12 @@ public class SipContext implements Call {
 		return remoteParty;
 	}
 
+	public SdpPortManager getSdpPortmanager()
+			throws ServerInternalErrorException {
+		createSdpPortManager();
+		return sdpPortManager;
+	}
+
 	// ////////////////////
 	//
 	// SIP CALL INTERFACE
@@ -114,65 +126,98 @@ public class SipContext implements Call {
 
 	@Override
 	public void accept() throws ServerInternalErrorException {
-		// Accept only if there is a pending transaction
+		// Accept only if there are incoming transactions
 		log.debug("Accept Call: Check if there is a pending transaction");
-		if (incomingPendingRequest == null) {
+
+		if (dialog == null) {
 			throw new ServerInternalErrorException(
-					"Bad accept. There isn't a pending request to be accepted");
+					"Bad accept. Unable to find a dialog for this call");
 		}
 
-		// Send ACCEPT RESPONSE
-		incomingPendingRequest.sendResponse(Response.OK,
-				incomingPendingRequest.getLocalSdp());
+		if (incomingInitiatingRequest == null) {
+			throw new ServerInternalErrorException(
+					"Bad accept. There isn't a incoming request to be accepted");
+		}
+
+		// Accept only when dialog is in early state
+		// TODO: Will it be required to accept transactions when dialog is
+		// in
+		// confirmed state?. This will happen when in-dialog INVITE requests
+		// are
+		// received
+		if (!DialogState.EARLY.equals(dialog.getState())) {
+			throw new ServerInternalErrorException(
+					"Bad accept. Dialog state is not EARLY. dialog="
+							+ dialog.getState());
+		}
+
+		// Send response if not already canceled
+		if (!request2Terminate)
+			incomingInitiatingRequest.sendResponse(Response.OK, getLocalSdp());
+
+	}
+
+	@Override
+	public void hangup() throws ServerInternalErrorException {
+		log.info("Request to terminate call");
+
+		// Label this context to be terminated as soon as possible
+		request2Terminate = true;
+
+		// Check valid states where a call can be canceled
+		if (dialog == null) {
+			// Dialog can be null before the INVITE request is sent
+			// DO NOTHING: Wait until SDP offer is generated and prevent
+			// INVITE to be sent
+			log.debug("Request to terminate outgoing call with no INVITE transaction created yet");
+
+		} else if (dialog.getState() == null) {
+			// Dialog state is null until INVITE request is sent
+			// DO NOTHING: INVITE will be sent and immediately canceled
+			log.debug("Request to terminate outgoing call with no SDP offer generated yet");
+
+		} else if (DialogState.EARLY.equals(dialog.getState())
+				&& outgoingInitiatingRequest != null) {
+			// Hang out an outgoing call after INVITE request is sent and
+			// before response is received
+			log.debug("Request to terminate pending outgoing call");
+			// Send cancel request
+			localCallCancel();
+
+		} else if (DialogState.CONFIRMED.equals(dialog.getState())
+				&& outgoingInitiatingRequest == null
+				&& incomingInitiatingRequest == null) {
+			// Terminate established call that already signal CALL_SETUP
+			log.debug("Request to terminate established call");
+			new CBye(this);
+
+		} else if (DialogState.EARLY.equals(dialog.getState())
+				&& incomingInitiatingRequest != null) {
+			// TU requested CALL reject
+			log.debug("Request to reject incoming call");
+			// This code competes with the remote cancel. First one to execute
+			// will cause the other to throw an exception avoiding duplicate
+			// events
+			incomingInitiatingRequest.sendResponse(Response.DECLINE, null);
+			rejectedCall();
+		}
+
+		// Do not accept hang up
+		else {
+			throw new ServerInternalErrorException(
+					"Bad hangup. Unable to hangup a call");
+		}
 
 	}
 
 	@Override
 	public void reject() throws ServerInternalErrorException {
-		// Reject only if there is a pending transaction
-		log.debug("Reject Call: Check if there is a pending transaction");
-		if (incomingPendingRequest == null) {
-			throw new ServerInternalErrorException(
-					"Bad reject. There isn't a pending request to be accepted");
-		}
-
-		if (networkConnection != null) {
-			networkConnection.release();
-			networkConnection = null;
-		}
-
-		// Send DECLINE response
-		incomingPendingRequest.sendResponse(Response.DECLINE, null);
-		incomingPendingRequest = null;
-	}
-
-	@Override
-	public void hangup() {
-		log.info("Request to terminate callId: " + dialog.getCallId());
-		try {
-			new CBye(this);
-		} catch (ServerInternalErrorException e) {
-			log.warn("Unable to send BYE request", e);
-		}
-		if (networkConnection != null) {
-			networkConnection.release();
-			networkConnection = null;
-		}
+		throw new ServerInternalErrorException("Method reject is deprecated");
 	}
 
 	@Override
 	public void cancel() throws ServerInternalErrorException {
-		log.info("Request to cancel callId: " + dialog.getCallId());
-		if (cancelRequest == null)
-			throw new ServerInternalErrorException("Cancel request is null");
-
-		new CCancel(cancelRequest, this);
-		outgoingRequestCancelled = true;
-
-		if (networkConnection != null) {
-			networkConnection.release();
-			networkConnection = null;
-		}
+		throw new ServerInternalErrorException("Method cancel is deprecated");
 	}
 
 	@Override
@@ -182,7 +227,8 @@ public class SipContext implements Call {
 
 	@Override
 	public void removeListener(CallListener listener) {
-		callListener = null;
+		if (listener == callListener)
+			callListener = null;
 	}
 
 	public NetworkConnection getNetworkConnection() {
@@ -196,7 +242,10 @@ public class SipContext implements Call {
 
 	@Override
 	public Boolean isConnected() {
-		return false;
+		if (dialog != null && DialogState.CONFIRMED.equals(dialog.getState()))
+			return true;
+		else
+			return false;
 	}
 
 	@Override
@@ -213,6 +262,57 @@ public class SipContext implements Call {
 		return remoteParty.toString();
 	}
 
+	@Override
+	public Joinable getJoinable(StreamType media) {
+		try {
+			return networkConnection.getJoinableStream(media);
+		} catch (MsControlException e) {
+			return null;
+		}
+	}
+
+	@Override
+	public String getId() {
+		if (dialog != null)
+			return dialog.getCallId().toString();
+		else
+			return "";
+	}
+
+	private Map<MediaType, Mode> getModesOfMediaTypes() {
+		Map<MediaType, Mode> map = new HashMap<MediaType, Mode>();
+		if (sdpPortManager != null) {
+			try {
+				SessionSpec session = this.sdpPortManager
+						.getMediaServerSessionDescription();
+
+				for (MediaSpec m : session.getMediaSpecs()) {
+					// Only it is to check that there is a rtp transport
+					m.getTransport().getRtp();
+
+					// Check that Mode is Inactive
+					if (m.getMode() == Mode.INACTIVE)
+						continue;
+
+					Set<MediaType> mediaTypes = m.getTypes();
+
+					if (mediaTypes.size() != 1)
+						continue;
+
+					for (MediaType t : mediaTypes) {
+						map.put(t, m.getMode());
+						break;
+					}
+				}
+			} catch (Exception e) {
+				log.error(
+						"Unable to retrieve SDP port manager while creating media type map",
+						e);
+			}
+		}
+		return map;
+	}
+
 	// /////////////////////
 	//
 	// Sip End Point API
@@ -224,19 +324,10 @@ public class SipContext implements Call {
 		this.remoteParty = remoteParty;
 		log.info("Request connection from " + localEndPoint.getAddress()
 				+ " => To => " + remoteParty);
-		// Create transaction INVITE
-		CInvite invite = new CInvite(this);
-		dialog = invite.getClientTransaction().getDialog();
-		dialog.setApplicationData(this);
-
-		try {
-			cancelRequest = invite.getClientTransaction().createCancel();
-			outgoingRequestCancelled = false;
-		} catch (SipException e) {
-			log.error(
-					"Unable to generate CANCEL request to use it in the future",
-					e);
-		}
+		new CInvite(this);
+		// Do not associate this CInvite to the outgoing call until the INVITE
+		// request is sent. This will be done through notification outgoingCall
+		// This prevent run conditions when hanging up while SDP is generated
 	}
 
 	// ////////////////////
@@ -245,28 +336,150 @@ public class SipContext implements Call {
 	//
 	// ////////////////////
 
-	public void incominCall(SInvite pendingInvite, SessionSpec session) {
+	// /////// COMMANDS
+
+	// Used by SCancel transaction to notify reception of CANCEL request
+
+	public void remoteCallCancel() throws ServerInternalErrorException {
+		log.info("Request call Cancel from remote peer");
+		request2Terminate = true;
+		if (incomingInitiatingRequest != null) {
+			// Cancel received after SDP offer has been process
+			// Send now the response
+			// If 200OK response is already sent it will throw an exception and
+			// no cancel notification will be sent to local party. The call will
+			// progress normally
+			incomingInitiatingRequest.sendResponse(Response.REQUEST_TERMINATED,
+					null);
+			canceledCall();
+			// Remove reference to the initiating request
+			incomingInitiatingRequest = null;
+		} else {
+			// Cancel received before the SDP has been processed
+			log.info("Incoming pending request to cancel not yet processed");
+		}
+	}
+
+	// /////// EVENTS
+
+	// Use by CInvite to notify when the SDP offer has been generated and
+	// request sent. This method is called when dialog satate is EARLY
+	public void outgoingCall(CTransaction outgoingTransaction) {
+
+		if (outgoingTransaction == null)
+			return;
+
+		this.dialog = outgoingTransaction.getClientTransaction().getDialog();
+		this.dialog.setApplicationData(this);
+		this.outgoingInitiatingRequest = outgoingTransaction;
+
+		if (request2Terminate) {
+			// Cancel request received from local party while SDP was generated.
+			try {
+				localCallCancel();
+			} catch (ServerInternalErrorException e) {
+				log.warn("Unable to cancel outgoing call", e);
+			}
+		}
+	}
+
+	// Use by SInvite to notify an incoming INVITE request. SDP offer is already
+	// process and the SDP answer is ready to be sent
+	public void incominCall(STransaction incomingTransaction) {
+
+		if (incomingTransaction == null)
+			return;
+
+		if (request2Terminate) {
+			// This condition can verify when a remote CANCEL request is
+			// received before the SDP offer of incoming INVITE is still being
+			// processed
+			// Force call cancel and do not signal incoming to the controller
+			try {
+				incomingTransaction.sendResponse(Response.REQUEST_TERMINATED,null);
+				canceledCall();
+			} catch (ServerInternalErrorException e) {
+				log.warn("Unable to terminate call canceled by remote party",e);
+				// Controller doesn't know about this call. Do not signall anything
+			}
+			release();
+			return;
+		}
+
 		// Store pending request
 		log.info("Incoming call signalled with callId:"
-				+ pendingInvite.getServerTransaction().getDialog().getCallId());
-		this.incomingPendingRequest = pendingInvite;
-		this.remoteParty = this.incomingPendingRequest.getServerTransaction()
+				+ incomingTransaction.getServerTransaction().getDialog()
+						.getCallId());
+		this.remoteParty = incomingTransaction.getServerTransaction()
 				.getDialog().getRemoteParty();
-		this.mediaTypesModes = getModesOfMediaTypes(session);
-		this.networkConnection = incomingPendingRequest.getNetworkConnection();
+		this.mediaTypesModes = getModesOfMediaTypes();
+		this.incomingInitiatingRequest = incomingTransaction;
 
-		// Notify the incoming call to EndPoint controllers
+		// Notify the incoming call to EndPoint controllers and waits for
+		// response (accept or reject)
 		log.info("Notify incoming call to EndPoint listener");
 		localEndPoint.incomingCall(this);
 	}
 
-	public void rejectedCall() {
-		notifySipCallEvent(CallEvent.CALL_REJECT);
+	// Used by transactions CInvite and SAck to inform when the call has set up
+	// has completed
+	public void completedCall() {
+		if (request2Terminate) {
+			// CANCEL request, either remote or local, arrived after 200 OK was
+			// generated or an error condition (normally associated to media
+			// negotiation) has been found. Call has been setup but it must be
+			// immediately released
+			try {
+				new CBye(this);
+			} catch (ServerInternalErrorException e) {
+				String msg = "Unable to terminate CALL for dialog: "
+						+ dialog.getDialogId();
+				log.error(msg, e);
+				callFailed(msg);
+			}
+			release();
+			return;
+
+		} else if (networkConnection != null) {
+			try {
+				networkConnection.confirm();
+				mediaTypesModes = getModesOfMediaTypes();
+				notifySipCallEvent(CallEvent.CALL_SETUP);
+			} catch (MsControlException e) {
+				String msg = "Unable to set up media session. Terminate call";
+				log.error(msg, e);
+				callFailed(msg);
+			}
+		} else {
+			// No network connection???
+			String msg = "Null network connection found before declaring Call setup";
+			log.error(msg);
+			callFailed(msg);
+		}
+		// Remove reference to the initiating transactions (might be in or out)
+		incomingInitiatingRequest = null;
+		outgoingInitiatingRequest = null;
+	}
+
+	// Transaction completed the call negotiation with an error that will
+	// prevent media transfer. request termination and call completedCall
+	public void completedCallWithError(String msg) {
+		request2Terminate = true;
+		completedCall();
+	}
+
+	public void callError(String msg) {
+		notifySipCallEvent(CallEvent.CALL_ERROR, msg);
 		terminatedCall();
 	}
 
-	public void failedCall() {
-		notifySipCallEvent(CallEvent.CALL_ERROR);
+	public void canceledCall() {
+		notifySipCallEvent(CallEvent.CALL_CANCEL);
+		terminatedCall();
+	}
+
+	public void rejectedCall() {
+		notifySipCallEvent(CallEvent.CALL_REJECT);
 		terminatedCall();
 	}
 
@@ -280,63 +493,21 @@ public class SipContext implements Call {
 		terminatedCall();
 	}
 
+	public void unsupportedCode() {
+		notifySipCallEvent(CallEvent.USER_NOT_FOUND);
+		terminatedCall();
+	}
+
 	public void terminatedCall() {
+		release();
 		notifySipCallEvent(CallEvent.CALL_TERMINATE);
-		if (networkConnection != null) {
-			networkConnection.release();
-			networkConnection = null;
-		}
-	}
-
-	public void completedIncomingCall() {
-		log.debug("Incoming Call setup, callId: " + dialog.getCallId());
-		// Set up connection
-		completedCall(incomingPendingRequest);
-		incomingPendingRequest = null;
-	}
-
-	public void completedOutgoingCall(CTransaction outgoingPendingRequest) {
-		log.debug("Outgoing Call setup, callId: " + dialog.getCallId());
-		// this.outgoingPendingRequest = outgoingPendingRequest;
-		completedCall(outgoingPendingRequest);
-	}
-
-	private void completedCall(Transaction transaction) {
-		boolean hangup = false;
-
-		// if (networkConnection != null) {
-		// // Release previous connection
-		// log.debug("Release old network connection");
-		// networkConnection.release();
-		// networkConnection = null;
-		// }
-
-		// Get active networkConnection
-		log.debug("Get network connection");
-		if (!(transaction != null && (networkConnection = transaction
-				.getNetworkConnection()) != null)) {
-			// Really bad
-			log.error("Unable to find a network connection for the call. Terminate call");
-			hangup = true;
-		} else {
-			try {
-				networkConnection.confirm();
-				SessionSpec session = networkConnection.getSdpPortManager()
-						.getMediaServerSessionDescription();
-				this.mediaTypesModes = getModesOfMediaTypes(session);
-			} catch (MsControlException e) {
-				log.error("Unable to set up media session. Terminate call", e);
-				hangup = true;
-			}
-		}
-
-		// Notify listeners
-		notifySipCallEvent(CallEvent.CALL_SETUP);
-		if (hangup)
-			this.hangup();
 	}
 
 	private void notifySipCallEvent(CallEventEnum eventType) {
+		notifySipCallEvent(eventType, "");
+	}
+
+	private void notifySipCallEvent(CallEventEnum eventType, String msg) {
 		// Notify call events when dialog are not complete
 		if (callListener != null) {
 			CallEvent event = new CallEvent(eventType, this);
@@ -348,69 +519,68 @@ public class SipContext implements Call {
 		}
 	}
 
-	public void cancelCall() throws ServerInternalErrorException {
-		log.info("Cancel Call");
-		if (incomingPendingRequest != null) {
-			incomingPendingRequest.sendResponse(Response.REQUEST_TERMINATED,
-					null);
-			// pendingRequest.cancel();
-			incomingPendingRequest = null;
-			if (networkConnection != null) {
-				networkConnection.release();
-				networkConnection = null;
-			}
-			notifySipCallEvent(CallEvent.CALL_CANCEL);
-		} else
-			throw new ServerInternalErrorException(
-					"Cancel call error, there are not pending request");
+	// /////////////////////
+	//
+	// Helper functions
+	//
+	// //////////////////////
 
+	// Used internally by Context to signal internal error conditions precenting
+	// call setup
+
+	private void callFailed(String msg) {
+		notifySipCallEvent(CallEvent.CALL_ERROR, msg);
+		terminatedCall();
 	}
 
-	public boolean isCancelled() {
-		return outgoingRequestCancelled;
-	}
-
-	@Override
-	public Joinable getJoinable(StreamType media) {
+	private void localCallCancel() throws ServerInternalErrorException {
 		try {
-			return networkConnection.getJoinableStream(media);
-		} catch (MsControlException e) {
-			return null;
+			new CCancel(outgoingInitiatingRequest.getClientTransaction()
+					.createCancel(), this);
+			// Do not notify. Wait for reception of response 487
+		} catch (Exception e) {
+			// Unable to complete signalling. Notify call error
+			String msg = "Unable to create CANCEL request";
+			callFailed(msg);
+			throw new ServerInternalErrorException(msg, e);
 		}
 	}
 
-	@Override
-	public String getId() {
-		// TODO Auto-generated method stub
-		return null;
+	private void release() {
+		incomingInitiatingRequest = null;
+		outgoingInitiatingRequest = null;
+		if (networkConnection != null) {
+			networkConnection.release();
+			networkConnection = null;
+		}
 	}
 
-	private static Map<MediaType, Mode> getModesOfMediaTypes(SessionSpec session) {
-		Map<MediaType, Mode> map = new HashMap<MediaType, Mode>();
-		for (MediaSpec m : session.getMediaSpecs()) {
+	private void createSdpPortManager() throws ServerInternalErrorException {
+
+		if (networkConnection == null) {
 			try {
-				// Only it is to check that there is a rtp transport
-				m.getTransport().getRtp();
+				networkConnection = UaFactory.getMediaSession()
+						.createNetworkConnection();
+				sdpPortManager = networkConnection.getSdpPortManager();
 
-				// Check that Mode is Inactive
-				if (m.getMode() == Mode.INACTIVE)
-					continue;
-
-				Set<MediaType> mediaTypes = m.getTypes();
-
-				if (mediaTypes.size() != 1)
-					continue;
-
-				for (MediaType t : mediaTypes) {
-					map.put(t, m.getMode());
-					break;
-				}
-
-			} catch (ArgumentNotSetException e) {
-
+			} catch (MsControlException e) {
+				throw new ServerInternalErrorException(
+						"Unable to allocate network resources", e);
 			}
 		}
-		return map;
 	}
 
+	private byte[] getLocalSdp() throws ServerInternalErrorException {
+		if (sdpPortManager == null)
+			throw new ServerInternalErrorException(
+					"Null SDP port manager found when requesting Session Descriptor");
+		try {
+			return SdpConversor.sessionSpec2Sdp(
+					sdpPortManager.getMediaServerSessionDescription())
+					.getBytes();
+		} catch (Exception e) {
+			throw new ServerInternalErrorException(
+					"Unable to retrieve local Session Description", e);
+		}
+	}
 }

@@ -30,6 +30,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 //import com.kurento.commons.sip.agent.EndPointFactory;
+import com.kurento.commons.mscontrol.EventType;
 import com.kurento.commons.sip.agent.UaFactory;
 import com.kurento.commons.sip.agent.UaImpl;
 import com.kurento.commons.sip.event.SipEvent;
@@ -102,13 +103,14 @@ public class CancelTest {
 		serverUa = UaFactory.getInstance(sConfig);
 		serverEndPointController = new SipEndPointController(serverName);
 		// Create and register SIP EndPoint
-		Map<String, Object> sEpConfig =  new HashMap<String, Object>();
+		Map<String, Object> sEpConfig = new HashMap<String, Object>();
 		sEpConfig.put("SIP_RECEIVE_CALL", false);
 		serverEndPoint = serverUa.registerEndpoint(serverName, "kurento.com",
-				serverEndPointController,sEpConfig);
+				serverEndPointController, sEpConfig);
 
-//		serverEndPoint = EndPointFactory.getInstance(serverName, "kurento.com",
-//				"", expires, serverUa, serverEndPointController, false);
+		// serverEndPoint = EndPointFactory.getInstance(serverName,
+		// "kurento.com",
+		// "", expires, serverUa, serverEndPointController, false);
 		// Create SIP stack and activate SIP EndPoints
 		serverUa.reconfigure();
 		// // Listen SIP events
@@ -124,12 +126,13 @@ public class CancelTest {
 
 		clientUa = UaFactory.getInstance(cConfig);
 		clientEndPointController = new SipEndPointController(clientName);
-		Map<String, Object> cEpConfig =  new HashMap<String, Object>();
+		Map<String, Object> cEpConfig = new HashMap<String, Object>();
 		cEpConfig.put("SIP_RECEIVE_CALL", false);
 		clientEndPoint = clientUa.registerEndpoint(clientName, "kurento.com",
 				clientEndPointController, cEpConfig);
-//		clientEndPoint = EndPointFactory.getInstance(clientName, "kurento.com",
-//				"", 10, clientUa, clientEndPointController, false);
+		// clientEndPoint = EndPointFactory.getInstance(clientName,
+		// "kurento.com",
+		// "", 10, clientUa, clientEndPointController, false);
 		// Create SIP stack and activate SIP EndPoints
 		clientUa.reconfigure();
 		// // Listen SIP events
@@ -195,7 +198,7 @@ public class CancelTest {
 
 		// C:----CANCEL -------------->:S
 		log.info(clientName + " cancel call...");
-		clientCall.cancel();
+		clientCall.hangup();
 		log.info("OK");
 
 		log.info(serverName + " expects cancel from " + clientName + "...");
@@ -312,6 +315,7 @@ public class CancelTest {
 	 * </pre>
 	 * 
 	 * Associated to case #203
+	 * 
 	 * @throws Exception
 	 */
 	@Test
@@ -361,7 +365,7 @@ public class CancelTest {
 
 		// C:------CANCEL----->:S
 		log.info(clientName + " cancel call...");
-		clientCall.cancel();
+		clientCall.hangup();
 		log.info("OK");
 
 		// C:ACK ---------------------------------------------->:S
@@ -374,7 +378,7 @@ public class CancelTest {
 				CallEvent.CALL_TERMINATE.equals(callEvent.getEventType()));
 
 		log.info("OK");
-		
+
 		// Server will receive CALL_SETUP
 		log.info(serverName + " expects CALL_SETUP...");
 		callEvent = serverCallController
@@ -384,7 +388,7 @@ public class CancelTest {
 				CallEvent.CALL_SETUP.equals(callEvent.getEventType()));
 		log.info("OK");
 
-		// and inmediately receive CALL_TERMIANTE
+		// and immediately receive CALL_TERMIANTE
 		log.info(serverName + " expects CALL_TERMINATE...");
 		callEvent = serverCallController
 				.pollSipEndPointEvent(TestConfig.WAIT_TIME);
@@ -393,12 +397,12 @@ public class CancelTest {
 				CallEvent.CALL_TERMINATE.equals(callEvent.getEventType()));
 		log.info("OK");
 
-
 		log.info(" -------------------- Test Cancel with simultaneous accept --------------------");
 	}
-	
+
 	/**
-	 * Verify the call does not progress in receiving peer when CANCEL is received while waiting local SDP 
+	 * Verify the call does not progress in receiving peer when CANCEL is
+	 * received while waiting local SDP
 	 * 
 	 * <pre>
 	 * C:INVITE-------------------------------------------->:S
@@ -411,38 +415,57 @@ public class CancelTest {
 	 * </pre>
 	 * 
 	 * Associated to case #312
-	 * @throws Exception 
+	 * 
+	 * @throws Exception
 	 */
 	@Test
-	public void testCancelWhilePeerWaitsLocalSdp() throws Exception  {
+	public void testCancelWhilePeerWaitsLocalSdp() throws Exception {
 		log.info("-------------------- Test Cancel while peer waits local SDP --------------------");
-	
+
 		EndPointEvent endPointEvent;
 		CallEvent callEvent;
-		
+
 		// Add sleep timer to Media stack
-		((MediaSessionDummy)UaFactory.getMediaSession()).setSleepTimer(2000);
+		((MediaSessionDummy) UaFactory.getMediaSession()).setSleepTimer(2000);
 
 		// C:-----INVITE-------------->:S
 		log.info(clientName + " dial to " + serverName + "...");
-		SipCallController clientCallControllerClient = new SipCallController(
+		SipCallController clientCallController = new SipCallController(
 				clientName);
 		Call clientCall = clientEndPoint.dial(serverUri,
-				clientCallControllerClient);
+				clientCallController);
 		log.info("OK");
 
 		// Send inmediate cancel
 		// C:----CANCEL -------------->:S
 		log.info(clientName + " cancel call...");
-		clientCall.cancel();
+		clientCall.hangup();
 		log.info("OK");
 
-		// No event must be received on receiver peer
-		log.info(serverName + " expects no event call from " + clientName
+		// Server controller will not receive any event. It will cancel the request silently
+		log.info(serverName + " expects no event associated to " + clientName
 				+ "...");
 		endPointEvent = serverEndPointController
 				.pollSipEndPointEvent(TestConfig.WAIT_TIME);
 		assertTrue("Message received in server UA", endPointEvent == null);
-	}
+		log.info("OK");
 
+		// Client will receive call cancel event
+		log.info(clientName + " expects call cancel  ...");
+		callEvent = clientCallController.pollSipEndPointEvent(TestConfig.WAIT_TIME);
+		assertTrue("No message received in server UA", callEvent != null);
+		assertTrue("Call terminate expected in client UA",
+				CallEvent.CALL_CANCEL.equals(callEvent.getEventType()));
+		log.info("OK");
+		
+		// Client will receive call terminate event
+		log.info(clientName + " expects call terminate  ...");
+		callEvent = clientCallController
+				.pollSipEndPointEvent(TestConfig.WAIT_TIME);
+		assertTrue("No message received in server UA", callEvent != null);
+		assertTrue("Call terminate expected in client UA",
+				CallEvent.CALL_TERMINATE.equals(callEvent.getEventType()));
+		log.info("OK");
+	}
+	
 }
