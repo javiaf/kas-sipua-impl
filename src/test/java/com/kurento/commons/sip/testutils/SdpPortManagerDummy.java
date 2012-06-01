@@ -40,6 +40,7 @@ public class SdpPortManagerDummy implements SdpPortManager {
 	private int sleepTime;
 	private static SdpPortManagerType sdpType;
 	MediaEventListener<SdpPortManagerEvent> listener;
+	private static boolean firstTime = true;
 
 	public void setSdpType(SdpPortManagerType msdpType) {
 		if (msdpType == null)
@@ -135,6 +136,11 @@ public class SdpPortManagerDummy implements SdpPortManager {
 	private static String getSdpString() {
 		String sdpString = "";
 
+		if (!firstTime) {
+			sdpType = SdpPortManagerType.SDP_CORRECT;
+			firstTime = true;
+		}
+
 		if (SdpPortManagerType.SDP_CORRECT.equals(sdpType)) {
 			sdpString = "v=0 \no=test 2808844564 2808844564 IN IP4 193.147.51.20 "
 					+ "\ns= \nc=IN IP4 193.147.51.20 "
@@ -177,7 +183,7 @@ public class SdpPortManagerDummy implements SdpPortManager {
 		} else if (SdpPortManagerType.SDP_EMPTY.equals(sdpType)) {
 			sdpString = "";
 		}
-
+		firstTime = false;
 		return sdpString;
 	}
 
