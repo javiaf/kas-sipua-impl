@@ -1,0 +1,151 @@
+   ------
+   Kurento Android SIP User Agent Test Plan
+   ------
+   ------
+   Date
+   ------
+
+SIP User Agent Test Plan
+
+  	[<<Conventions>>]
+	
+		[<Automation>] Each test indicates if an automated procedure is in place.
+		               Automated tests are JUnit based.
+		  
+		[<Pass criteria>] Pass criteria will provide a set of conditions to be 
+	                      verified in order to declare the test passed. False 
+	                      conditions will cause the test to be set as NOT PASSED.
+
+* Register & un-register
+
+	SIP User Agent must execute register process according to 
+	{{{http://www.ietf.org/rfc/rfc3261.txt}SIP specification}}. When
+	the EndPoint (SIPURI manager) is terminated, the contact must be
+	automatically removed.
+	
+ 	[<<Test Procedure>>]
+
+		[<Step 1>] Request the UA to register a contact for a given SIPURI
+	
+		[<Step 2>] Request the UA to terminate the EndPoint. This will cause
+	               the EndPoint to automatically un-register the SIPURI
+	             
+		[<Step 3>] Request the UA to terminate again the EndPoint. No further
+	               un-register request are sent.
+	               
+	    <<Automated by>> <<<com.kurento.commons.sip.junit.RegisterTest.testRegisterAndUnregister()>>>
+	             
+	
+	[]
+	
++-----------------
+ 1 - C:---REGISTER-------->:S
+     C:<----------200 OK---:S
+ 2 - C:sipEndPoint.terminate()
+     C:---REGISTER(exp=0)->:S
+ 3 - C:sipEndPoint.terminate()
+     C:---REGISTER---x     :S : Verify no REGISTER request is sent (EP is already un-register)
++-----------------
+
+ 	[<<Pass Criteria>>]
+
+		[[1]] Verify in <Step 1> the EndPoint detects the response from the Proxy
+	          Server and changes status.
+	  
+		[[2]] Verify in <Step 2> the EndPoint sends a REGISTER request with <expires>
+	  		  set to 0 and detects response from the Proxy Server
+	  
+		[[3]] Verify in <Step 3> the EndPoint is not sending any REGISTER request
+
+* Call setup & drop from caller
+
+	SIP User Agent must be able to set up an tear down a call with a remote peer.
+
+ 	[<<Test Procedure>>]
+
+		[<Step 1>] Request the client UA to setup a call with the server UA
+		
+		[<Step 2>] Request the client UA to terminate (hangup) the call
+	                
+	    <<Automated by>> <<<com.kurento.commons.sip.junit.InviteTest.testCallSetupAndDropFromCaller()>>>             
+	
+	[]
+	
++-----------------
+ 1 - C:---INVITE---------->:S
+     C:<----------200 OK---:S
+     C:---ACK------------->:S
+ 2 - C:---BYE------------->:S
+     C:<----------200 OK---:S
++-----------------
+
+ 	[<<Pass Criteria>>]
+
+		[[1]] Verify in <Step 1> the server EndPoint receives an INVITE request
+		      and issues an INCOMMING_CALL event
+	  
+		[[2]] Verify in <Step 1> the the client EndPoint receives a positive
+		      response (200 OK)
+	  
+		[[3]] Verify in <Step 1> the client EndPoint issues CALL_SETUP event
+		      after ACK message is sent
+		
+		[[4]] Verify in <Step 1> the server EndPoint issues CALL_SETUP event
+		      after ACK message reception
+		  
+		[[5]] Verify in <Step 2> the client EndPoint issues CALL_TERMINATE event
+		      after BYE message is sent
+		          
+		[[6]] Verify in <Step 2> the server EndPoint issues CALL_TERMINATE event
+		      after BYE message is received
+
+* Call setup & drop from called
+
+		      
+* SIP keep-alive
+
+	In order to provide connectivity in NAT environments the SIP User Agent
+	must implement a punch hole mechanism based double-CRLF keep-alive 
+	messages. This mechanism must be configurable from the application
+	layer
+	
+		[<<Test Procedure>>]
+
+			[<Step 1>] Configure SIP User Agent to send keep-alive with method
+			           <<<config.setEnableKeepAlive(true)>>>
+			           
+			[<Step 2>] Start SIP User Agent
+			
+			[<Step 3>] Terminate SIP User Agent
+			
+			[<Step 4>] Configure SIP User Agent not to send keep-alive with
+					   <<<config.setEnableKeepAlive(true)>>>
+			
+			[<Step 5>] Start SIP User Agent
+					    
+	
+	[]
+	
++-----------------
+ 1 - C:config.setEnableKeepAlive(true)
+ 2 - C:---CRLF-------->:S
+     C:---CRLF-------->:S
+     C:---CRLF-------->:S
+     ...
+ 3 - C:ua.terminate()
+ 4 - C:C:config.setEnableKeepAlive(false)
++-----------------
+
+ 	[<<Pass Criteria>>]
+
+		[[1]] Verify in <Step 2> the SIP User Agent send packets consisting of
+		double CRLF every keep-alive period.
+		
+		[[2]] Verify in <Step 5> the SIP User Agent does not send any packets
+
+
+
+* Call reject
+
+* Call cancel
+
