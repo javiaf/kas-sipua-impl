@@ -78,16 +78,16 @@ public class SInvite extends STransaction {
 								// Notify incoming call to TU
 								sipContext.incominCall(SInvite.this);
 							} else {
-								// TODO: Analyze whether more detailed
-								// information
-								// is required of problem found
-								SInvite.this.sipContext
-										.callError("Unable to allocate network resources. SdpPortManager event="
-												+ eventType);
+								// No caller listener available at this stage.
+								// Do not send any error event
+								log.debug("Unable to generate SDP offer to an empty incoming invite. SDP Port Manager event:"
+										+ eventType);
 								try {
-									SInvite.this.sendResponse(Response.UNSUPPORTED_MEDIA_TYPE, null);
+									SInvite.this.sendResponse(
+											Response.SERVICE_UNAVAILABLE, null);
 								} catch (ServerInternalErrorException e) {
-									log.error("Unable to terminate transaction for dialog: " + dialog.getDialogId());
+									log.error("Unable to terminate transaction for dialog: "
+											+ dialog.getDialogId());
 								}
 							}
 
@@ -112,17 +112,33 @@ public class SInvite extends STransaction {
 							public void onEvent(SdpPortManagerEvent event) {
 								event.getSource().removeListener(this);
 								EventType eventType = event.getEventType();
-								if (SdpPortManagerEvent.ANSWER_PROCESSED
+								if (SdpPortManagerEvent.ANSWER_GENERATED
 										.equals(eventType)) {
 									log.debug("SdpPortManager successfully processed SDP offer sent by peer");
 									// Notify incoming call to TU
-									SInvite.this.sipContext.incominCall(SInvite.this);
+									SInvite.this.sipContext
+											.incominCall(SInvite.this);
 
 								} else {
-									// TODO: Analyze whether more detailed information is required of problem found
-									SInvite.this.sipContext
-											.callError("Unable to allocate network resources. SdpPortManager event="
-													+ eventType);
+									// No caller listener available at this stage.
+									// Do not send any error event
+									log.debug("Unable to process SDP offer to an incoming invite. SDP Port Manager event:"
+											+ eventType);
+									
+									try {
+										if (SdpPortManagerEvent.RESOURCE_UNAVAILABLE
+												.equals(eventType)) {
+											sendResponse(Response.SERVICE_UNAVAILABLE, null);
+
+										} else if (SdpPortManagerEvent.SDP_NOT_ACCEPTABLE.equals(eventType)) {
+											sendResponse(Response.UNSUPPORTED_MEDIA_TYPE, null); 
+
+										} else {
+											sendResponse(Response.SERVER_INTERNAL_ERROR, null);
+										}
+									} catch (Exception e) {
+										log.error("Unable to send error response to an incoming invite", e);
+									}
 								}
 
 							}
@@ -140,5 +156,33 @@ public class SInvite extends STransaction {
 
 	private void processAck() {
 		log.debug("Invite transaction received a valid ACK for non 2xx response");
+	}
+
+	private void sendErrorResponse(SdpPortManagerEvent event) {
+
+		EventType eventType = event.getEventType();
+
+		try {
+			if (SdpPortManagerEvent.NETWORK_STREAM_FAILURE.equals(eventType)) {
+				sendResponse(Response.SERVER_INTERNAL_ERROR, null);
+
+			} else if (SdpPortManagerEvent.RESOURCE_UNAVAILABLE
+					.equals(eventType)) {
+				sendResponse(Response.SERVICE_UNAVAILABLE, null);
+
+			} else if (SdpPortManagerEvent.SDP_GLARE.equals(eventType)) {
+
+			} else if (SdpPortManagerEvent.SDP_NOT_ACCEPTABLE.equals(eventType)) {
+
+			} else if (SdpPortManagerEvent.UNSOLICITED_OFFER_GENERATED
+					.equals(eventType)) {
+
+			} else {
+
+			}
+		} catch (Exception e) {
+			log.error("Unable to send error response", e);
+		}
+
 	}
 }
