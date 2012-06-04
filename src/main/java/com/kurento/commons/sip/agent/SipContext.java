@@ -494,6 +494,11 @@ public class SipContext implements Call {
 		terminatedCall();
 	}
 
+	public void busyCall() {
+		notifySipCallEvent(CallEvent.CALL_BUSY);
+		terminatedCall();		
+	}
+	
 	public void rejectedCall() {
 		notifySipCallEvent(CallEvent.CALL_REJECT);
 		terminatedCall();

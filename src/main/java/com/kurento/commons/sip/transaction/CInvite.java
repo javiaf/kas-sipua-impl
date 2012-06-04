@@ -157,9 +157,15 @@ public class CInvite extends CTransaction {
 					+ this.dialog + ", state: " + dialog.getState());
 			sipContext.canceledCall();
 
+		} else if (	statusCode == Response.BUSY_HERE
+				|| statusCode == Response.BUSY_EVERYWHERE ) {
+			log.info("<<<<<<< " + statusCode
+					+ "Remote peer is BUSY: dialog: " + this.dialog
+					+ ", state: " + dialog.getState());
+			sipContext.busyCall();
+
 		} else if (statusCode == Response.TEMPORARILY_UNAVAILABLE
-				|| statusCode == Response.BUSY_HERE
-				|| statusCode == Response.BUSY_EVERYWHERE
+
 				|| statusCode == Response.DECLINE) {
 			log.info("<<<<<<< " + statusCode
 					+ "Session REJECT by remote peer: dialog: " + this.dialog
