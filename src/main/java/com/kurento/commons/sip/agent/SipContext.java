@@ -482,6 +482,10 @@ public class SipContext implements Call {
 		notifySipCallEvent(CallEvent.CALL_REJECT);
 		terminatedCall();
 	}
+	
+	public void ringingCall() {
+		notifySipCallEvent(CallEvent.CALL_RINGING);
+	}
 
 	public void unsupportedMediaType() {
 		notifySipCallEvent(CallEvent.MEDIA_NOT_SUPPORTED);

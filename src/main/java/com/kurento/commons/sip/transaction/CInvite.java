@@ -23,7 +23,6 @@ import javax.sip.DialogState;
 import javax.sip.InvalidArgumentException;
 import javax.sip.ResponseEvent;
 import javax.sip.SipException;
-import javax.sip.TimeoutEvent;
 import javax.sip.header.CSeqHeader;
 import javax.sip.header.ContentTypeHeader;
 import javax.sip.message.Request;
@@ -140,7 +139,7 @@ public class CInvite extends CTransaction {
 		} else if (statusCode == Response.SESSION_PROGRESS) {
 			log.info("<<<<<<< 183 Session Progress: dialog: " + this.dialog
 					+ ", state: " + dialog.getState());
-			// DO NOTHING
+			sipContext.ringingCall();
 
 		} else if (statusCode < 200) {
 			log.info("<<<<<<< " + statusCode + " 1xx: dialog: " + this.dialog
