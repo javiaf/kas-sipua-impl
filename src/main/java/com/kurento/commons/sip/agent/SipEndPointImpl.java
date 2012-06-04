@@ -114,6 +114,11 @@ public class SipEndPointImpl implements EndPoint {
 	public Address getAddress() {
 		return sipUriAddress;
 	}
+	
+	@Override
+	public String getUri() {
+		return sipUriAddress.toString();
+	}
 
 	public Address getContact() {
 		return contactAddress;

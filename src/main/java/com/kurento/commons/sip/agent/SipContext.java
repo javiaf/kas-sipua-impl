@@ -45,6 +45,7 @@ import com.kurento.commons.sip.transaction.CTransaction;
 import com.kurento.commons.sip.transaction.STransaction;
 import com.kurento.commons.ua.Call;
 import com.kurento.commons.ua.CallListener;
+import com.kurento.commons.ua.TerminateReason;
 import com.kurento.commons.ua.event.CallEvent;
 import com.kurento.commons.ua.event.CallEventEnum;
 import com.kurento.commons.ua.exception.ServerInternalErrorException;
@@ -158,8 +159,16 @@ public class SipContext implements Call {
 	}
 
 	@Override
-	public void hangup() throws ServerInternalErrorException {
-		log.info("Request to terminate call");
+	public void terminate() throws ServerInternalErrorException {
+		terminate(TerminateReason.DECLINE);
+
+	}
+
+	@Override
+	public void terminate(TerminateReason code)
+			throws ServerInternalErrorException {
+
+		log.info("Request to terminate call with code:" + code);
 
 		// Label this context to be terminated as soon as possible
 		request2Terminate = true;
@@ -184,10 +193,8 @@ public class SipContext implements Call {
 			// Send cancel request
 			localCallCancel();
 
-		} else if (DialogState.CONFIRMED.equals(dialog.getState())
-				&& outgoingInitiatingRequest == null
-				&& incomingInitiatingRequest == null) {
-			// Terminate established call that already signal CALL_SETUP
+		} else if (DialogState.CONFIRMED.equals(dialog.getState())) {
+			// Terminate request after 200 OK response. ACK might still not being received
 			log.debug("Request to terminate established call");
 			new CBye(this);
 
@@ -198,26 +205,21 @@ public class SipContext implements Call {
 			// This code competes with the remote cancel. First one to execute
 			// will cause the other to throw an exception avoiding duplicate
 			// events
-			incomingInitiatingRequest.sendResponse(Response.DECLINE, null);
+			if (TerminateReason.BUSY.equals(code)) {
+				incomingInitiatingRequest
+						.sendResponse(Response.BUSY_HERE, null);
+			} else {
+				incomingInitiatingRequest.sendResponse(Response.DECLINE, null);
+			}
 			rejectedCall();
-		}
+		} 
 
-		// Do not accept hang up
+		// Do not accept call to this method
 		else {
 			throw new ServerInternalErrorException(
 					"Bad hangup. Unable to hangup a call");
 		}
 
-	}
-
-	@Override
-	public void reject() throws ServerInternalErrorException {
-		throw new ServerInternalErrorException("Method reject is deprecated");
-	}
-
-	@Override
-	public void cancel() throws ServerInternalErrorException {
-		throw new ServerInternalErrorException("Method cancel is deprecated");
 	}
 
 	@Override
@@ -430,19 +432,23 @@ public class SipContext implements Call {
 	// has completed
 	public void completedCall() {
 		if (request2Terminate) {
-			// CANCEL request, either remote or local, arrived after 200 OK was
-			// generated or an error condition (normally associated to media
-			// negotiation) has been found. Call has been setup but it must be
-			// immediately released
-			try {
-				new CBye(this);
-			} catch (ServerInternalErrorException e) {
-				String msg = "Unable to terminate CALL for dialog: "
-						+ dialog.getDialogId();
-				log.error(msg, e);
-				callFailed(msg);
+			// Call terminate request arrived between 200 OK response and ACK
+			// 1.- CANCEL request, either remote or local, arrived after 200 OK
+			// 2.- Error found.Normally associated to media
+			// 3.- Terminate request due to lack of ACK (symetric NAT problem)
+
+			if (DialogState.CONFIRMED.equals(dialog.getState())) {
+				// Terminate call only if dialog is still in confirmed state
+				try {
+					new CBye(this);
+				} catch (ServerInternalErrorException e) {
+					String msg = "Unable to terminate CALL for dialog: "
+							+ dialog.getDialogId();
+					log.error(msg, e);
+					callFailed(msg);
+				}
+				release();
 			}
-			release();
 			return;
 
 		} else if (networkConnection != null) {
@@ -487,7 +493,7 @@ public class SipContext implements Call {
 		notifySipCallEvent(CallEvent.CALL_REJECT);
 		terminatedCall();
 	}
-	
+
 	public void ringingCall() {
 		notifySipCallEvent(CallEvent.CALL_RINGING);
 	}
@@ -592,4 +598,5 @@ public class SipContext implements Call {
 					"Unable to retrieve local Session Description", e);
 		}
 	}
+
 }

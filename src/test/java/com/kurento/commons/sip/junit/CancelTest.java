@@ -174,10 +174,10 @@ public class CancelTest {
 
 		// C:-----INVITE-------------->:S
 		log.info(clientName + " dial to " + serverName + "...");
-		SipCallController clietnCallControllerClient = new SipCallController(
+		SipCallController callControllerClient = new SipCallController(
 				clientName);
 		Call clientCall = clientEndPoint.dial(serverUri,
-				clietnCallControllerClient);
+				callControllerClient);
 		log.info("OK");
 
 		log.info(serverName + " expects incoming call from " + clientName
@@ -195,10 +195,20 @@ public class CancelTest {
 				serverName);
 		serverCall.addListener(callControllerServer);
 		log.info("OK");
+		
+		// Client  expects CALL_RINGING
+		log.info(clientName + " expects ringing from " + serverName
+				+ "...");
+		callEvent = callControllerClient
+				.pollSipEndPointEvent(TestConfig.WAIT_TIME);
+		assertTrue("No message received in client UA", callEvent != null);
+		assertTrue("Bad message received in client UA",
+				CallEvent.CALL_RINGING.equals(callEvent.getEventType()));
+		log.info("OK");
 
 		// C:----CANCEL -------------->:S
 		log.info(clientName + " cancel call...");
-		clientCall.hangup();
+		clientCall.terminate();
 		log.info("OK");
 
 		log.info(serverName + " expects cancel from " + clientName + "...");
@@ -222,85 +232,95 @@ public class CancelTest {
 
 	}
 
-	/**
-	 * 
-	 * Verify call setup is complete if CANCEL request arrives after final
-	 * response is sent
-	 * 
-	 * <pre>
-	 * C:---INVITE----------------------------->:S
-	 * C:<-------------------------100 Trying---:S
-	 * C:<------------------------180 Ringing---:S
-	 * C:<--------- 200 OK (CSeq: xxx INVITE)---:S
-	 * C:---CANCEL----------------------------->:S (Rises exception)
-	 * C:<--------- 200 OK (CSeq: xxx CANCEL)---:S
-	 * C:----ACK ------------------------------>:S (Call setup successfully)
-	 * </pre>
-	 * 
-	 * @throws Exception
-	 */
-	@Test(expected = ServerInternalErrorException.class)
-	public void testCancelAfterAccept() throws Exception {
-		log.info("-------------------- Test Cancel After Accept --------------------");
-
-		EndPointEvent endPointEvent;
-		CallEvent callEvent;
-
-		// C:-----INVITE-------------->:S
-		log.info(clientName + " dial to " + serverName + "...");
-		SipCallController clientCallController = new SipCallController(
-				clientName);
-		Call clientCall = clientEndPoint.dial(serverUri, clientCallController);
-		log.info("OK");
-
-		// Verify server receives event INCOMING_CALL
-		log.info(serverName + " expects incoming call from " + clientName
-				+ "...");
-		endPointEvent = serverEndPointController
-				.pollSipEndPointEvent(TestConfig.WAIT_TIME);
-		assertTrue("No message received in server UA", endPointEvent != null);
-		assertTrue(
-				"Bad message received in server UA: "
-						+ endPointEvent.getEventType(),
-				EndPointEvent.INCOMING_CALL.equals(endPointEvent.getEventType()));
-
-		// C:<--------- 200 OK (CSeq: xxx INVITE)---:S
-		// Accept call
-		Call serverCall = endPointEvent.getCallSource();
-		SipCallController serverCallController = new SipCallController(
-				serverName);
-		serverCall.addListener(serverCallController);
-		log.info("OK");
-
-		log.info(serverName + " accepts call...");
-		serverCall.accept();
-		log.info("OK");
-
-		// C:----ACK ------------------------------>:S (Call setup successfully)
-		// Call set up in both: client and server
-		log.info(clientName + " expects call setup...");
-		callEvent = clientCallController
-				.pollSipEndPointEvent(TestConfig.WAIT_TIME);
-		assertTrue("No message received in server UA", callEvent != null);
-		assertTrue("Bad message received in server UA",
-				CallEvent.CALL_SETUP.equals(callEvent.getEventType()));
-		log.info("OK");
-
-		log.info(serverName + " expects call setup...");
-		callEvent = serverCallController
-				.pollSipEndPointEvent(TestConfig.WAIT_TIME);
-		assertTrue("No message received in server UA", callEvent != null);
-		assertTrue("Bad message received in server UA",
-				CallEvent.CALL_SETUP.equals(callEvent.getEventType()));
-		log.info("OK");
-
-		// C:---CANCEL----------------------------->:S
-		log.info(clientName + " cancel call...");
-		clientCall.cancel();
-		log.info("OK");
-
-		log.info(" -------------------- Test Cancel After Accept finished OK --------------------");
-	}
+//	/**
+//	 * 
+//	 * Verify call setup is complete if CANCEL request arrives after final
+//	 * response is sent
+//	 * 
+//	 * <pre>
+//	 * C:---INVITE----------------------------->:S
+//	 * C:<-------------------------100 Trying---:S
+//	 * C:<------------------------180 Ringing---:S
+//	 * C:<--------- 200 OK (CSeq: xxx INVITE)---:S
+//	 * C:---CANCEL----------------------------->:S (Rises exception)
+//	 * C:<--------- 200 OK (CSeq: xxx CANCEL)---:S
+//	 * C:----ACK ------------------------------>:S (Call setup successfully)
+//	 * </pre>
+//	 * 
+//	 * @throws Exception
+//	 */
+//	@Test(expected = ServerInternalErrorException.class)
+//	public void testCancelAfterAccept() throws Exception {
+//		log.info("-------------------- Test Cancel After Accept --------------------");
+//
+//		EndPointEvent endPointEvent;
+//		CallEvent callEvent;
+//
+//		// C:-----INVITE-------------->:S
+//		log.info(clientName + " dial to " + serverName + "...");
+//		SipCallController clientCallController = new SipCallController(
+//				clientName);
+//		Call clientCall = clientEndPoint.dial(serverUri, clientCallController);
+//		log.info("OK");
+//
+//		// Verify server receives event INCOMING_CALL
+//		log.info(serverName + " expects incoming call from " + clientName
+//				+ "...");
+//		endPointEvent = serverEndPointController
+//				.pollSipEndPointEvent(TestConfig.WAIT_TIME);
+//		assertTrue("No message received in server UA", endPointEvent != null);
+//		assertTrue(
+//				"Bad message received in server UA: "
+//						+ endPointEvent.getEventType(),
+//				EndPointEvent.INCOMING_CALL.equals(endPointEvent.getEventType()));
+//		
+//		// Client  expects CALL_RINGING
+//		log.info(clientName + " expects ringing from " + serverName
+//				+ "...");
+//		callEvent = clientCallController
+//				.pollSipEndPointEvent(TestConfig.WAIT_TIME);
+//		assertTrue("No message received in client UA", callEvent != null);
+//		assertTrue("Bad message received in client UA",
+//				CallEvent.CALL_RINGING.equals(callEvent.getEventType()));
+//		log.info("OK");
+//
+//		// C:<--------- 200 OK (CSeq: xxx INVITE)---:S
+//		// Accept call
+//		Call serverCall = endPointEvent.getCallSource();
+//		SipCallController serverCallController = new SipCallController(
+//				serverName);
+//		serverCall.addListener(serverCallController);
+//		log.info("OK");
+//
+//		log.info(serverName + " accepts call...");
+//		serverCall.accept();
+//		log.info("OK");
+//
+//		// C:----ACK ------------------------------>:S (Call setup successfully)
+//		// Call set up in both: client and server
+//		log.info(clientName + " expects call setup...");
+//		callEvent = clientCallController
+//				.pollSipEndPointEvent(TestConfig.WAIT_TIME);
+//		assertTrue("No message received in server UA", callEvent != null);
+//		assertTrue("Bad message received in server UA",
+//				CallEvent.CALL_SETUP.equals(callEvent.getEventType()));
+//		log.info("OK");
+//
+//		log.info(serverName + " expects call setup...");
+//		callEvent = serverCallController
+//				.pollSipEndPointEvent(TestConfig.WAIT_TIME);
+//		assertTrue("No message received in server UA", callEvent != null);
+//		assertTrue("Bad message received in server UA",
+//				CallEvent.CALL_SETUP.equals(callEvent.getEventType()));
+//		log.info("OK");
+//
+//		// C:---CANCEL----------------------------->:S
+//		log.info(clientName + " cancel call...");
+//		clientCall.hangup();
+//		log.info("OK");
+//
+//		log.info(" -------------------- Test Cancel After Accept finished OK --------------------");
+//	}
 
 	/**
 	 * Verify the call is setup when CANCEL from client and final response from
@@ -347,6 +367,16 @@ public class CancelTest {
 				serverName);
 		finalServerCall.addListener(serverCallController);
 		log.info("OK");
+		
+		// Client  expects CALL_RINGING
+		log.info(clientName + " expects ringing from " + serverName
+				+ "...");
+		callEvent = clientCallController
+				.pollSipEndPointEvent(TestConfig.WAIT_TIME);
+		assertTrue("No message received in client UA", callEvent != null);
+		assertTrue("Bad message received in client UA",
+				CallEvent.CALL_RINGING.equals(callEvent.getEventType()));
+		log.info("OK");
 
 		// C: <------ 200 OK (CSeq: xxx INVITE)---:S
 		log.info(serverName + " accepts call...");
@@ -365,7 +395,7 @@ public class CancelTest {
 
 		// C:------CANCEL----->:S
 		log.info(clientName + " cancel call...");
-		clientCall.hangup();
+		clientCall.terminate();
 		log.info("OK");
 
 		// C:ACK ---------------------------------------------->:S
@@ -439,7 +469,7 @@ public class CancelTest {
 		// Send inmediate cancel
 		// C:----CANCEL -------------->:S
 		log.info(clientName + " cancel call...");
-		clientCall.hangup();
+		clientCall.terminate();
 		log.info("OK");
 
 		// Server controller will not receive any event. It will cancel the request silently
@@ -450,6 +480,14 @@ public class CancelTest {
 		assertTrue("Message received in server UA", endPointEvent == null);
 		log.info("OK");
 
+		// Client will receive CALL_RINGING event
+		log.info(clientName + " expects call ringing  ...");
+		callEvent = clientCallController.pollSipEndPointEvent(TestConfig.WAIT_TIME);
+		assertTrue("No message received in server UA", callEvent != null);
+		assertTrue("Call terminate expected in client UA",
+						CallEvent.CALL_RINGING.equals(callEvent.getEventType()));
+		log.info("OK");
+				
 		// Client will receive call cancel event
 		log.info(clientName + " expects call cancel  ...");
 		callEvent = clientCallController.pollSipEndPointEvent(TestConfig.WAIT_TIME);
@@ -457,6 +495,7 @@ public class CancelTest {
 		assertTrue("Call terminate expected in client UA",
 				CallEvent.CALL_CANCEL.equals(callEvent.getEventType()));
 		log.info("OK");
+		
 		
 		// Client will receive call terminate event
 		log.info(clientName + " expects call terminate  ...");
