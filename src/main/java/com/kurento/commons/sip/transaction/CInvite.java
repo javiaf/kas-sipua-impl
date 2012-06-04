@@ -157,17 +157,17 @@ public class CInvite extends CTransaction {
 			sipContext.canceledCall();
 
 		} else if (statusCode == Response.TEMPORARILY_UNAVAILABLE
-				|| statusCode == Response.NOT_ACCEPTABLE_HERE
 				|| statusCode == Response.BUSY_HERE
 				|| statusCode == Response.BUSY_EVERYWHERE
-				|| statusCode == Response.NOT_ACCEPTABLE
 				|| statusCode == Response.DECLINE) {
 			log.info("<<<<<<< " + statusCode
 					+ "Session REJECT by remote peer: dialog: " + this.dialog
 					+ ", state: " + dialog.getState());
 			sipContext.rejectedCall();
 
-		} else if (statusCode == Response.UNSUPPORTED_MEDIA_TYPE) {
+		} else if (statusCode == Response.UNSUPPORTED_MEDIA_TYPE
+				|| statusCode == Response.NOT_ACCEPTABLE_HERE
+				|| statusCode == Response.NOT_ACCEPTABLE) {
 			log.info("<<<<<<< " + statusCode
 					+ " UNSUPPORTED_MEDIA_TYPE: dialog: " + this.dialog
 					+ ", state: " + dialog.getState());
