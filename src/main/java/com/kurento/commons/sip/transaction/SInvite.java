@@ -96,7 +96,7 @@ public class SInvite extends STransaction {
 			try {
 				sipContext.getSdpPortmanager().generateSdpOffer();
 			} catch (SdpPortManagerException e) {
-				String msg = "Unable to generate SDP offer for an incoming INVITE request";
+				String msg = "Unable to generate SDP offer to respond an empty incoming INVITE request";
 				log.error(msg, e);
 				sendResponse(Response.SERVICE_UNAVAILABLE, null);
 				// Do not signal incoming call to user
@@ -157,11 +157,10 @@ public class SInvite extends STransaction {
 				sipContext.getSdpPortmanager().processSdpOffer(
 						SdpConversor.sdp2SessionSpec(new String(rawContent)));
 			} catch (Exception e) {
-				String msg = "Unable to process SDP offer";
+				String msg = "Unable to process SDP offer from incoming INVITE";
 				log.error(msg, e);
 				sendResponse(Response.SERVICE_UNAVAILABLE, null);
 				// Do not signal incoming call to user
-
 			}
 		}
 	}

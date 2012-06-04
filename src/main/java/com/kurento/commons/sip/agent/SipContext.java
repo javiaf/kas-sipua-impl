@@ -74,6 +74,7 @@ public class SipContext implements Call {
 	private STransaction incomingInitiatingRequest;
 	private CTransaction outgoingInitiatingRequest;
 	private Boolean request2Terminate = false;
+	private Boolean terminated = false;
 	// private OutState outState = OutState.IDLE;
 	// private InState inState = InState.IDLE;
 
@@ -196,6 +197,7 @@ public class SipContext implements Call {
 		} else if (DialogState.CONFIRMED.equals(dialog.getState())) {
 			// Terminate request after 200 OK response. ACK might still not being received
 			log.debug("Request to terminate established call");
+			terminated = true;
 			new CBye(this);
 
 		} else if (DialogState.EARLY.equals(dialog.getState())
@@ -419,7 +421,7 @@ public class SipContext implements Call {
 						.getCallId());
 		this.remoteParty = incomingTransaction.getServerTransaction()
 				.getDialog().getRemoteParty();
-		this.mediaTypesModes = getModesOfMediaTypes();
+		//this.mediaTypesModes = getModesOfMediaTypes();
 		this.incomingInitiatingRequest = incomingTransaction;
 
 		// Notify the incoming call to EndPoint controllers and waits for
@@ -437,9 +439,12 @@ public class SipContext implements Call {
 			// 2.- Error found.Normally associated to media
 			// 3.- Terminate request due to lack of ACK (symetric NAT problem)
 
-			if (DialogState.CONFIRMED.equals(dialog.getState())) {
+			//if (DialogState.CONFIRMED.equals(dialog.getState())) {
+			if (! terminated) {
 				// Terminate call only if dialog is still in confirmed state
+				// Use terminated variable as dialog state does not change quick enough
 				try {
+					log.debug("Inmediatelly terminate an already stablished call");
 					new CBye(this);
 				} catch (ServerInternalErrorException e) {
 					String msg = "Unable to terminate CALL for dialog: "

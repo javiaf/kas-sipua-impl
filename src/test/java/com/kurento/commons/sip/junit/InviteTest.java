@@ -82,6 +82,7 @@ public class InviteTest {
 				+ System.getProperty("os.name"));
 
 		mediaSessionDummy = new MediaSessionDummy();
+		//mediaSessionDummy.setSleepTimer(1000);
 		UaFactory.setMediaSession(mediaSessionDummy);
 
 		timer = new TestTimer();
@@ -172,9 +173,8 @@ public class InviteTest {
 				EndPointEvent.INCOMING_CALL.equals(endPointEvent.getEventType()));
 		Call serverCall = endPointEvent.getCallSource();
 		log.info("OK");
-		
-		log.info(clientName + " expects ringing from " + serverName
-				+ "...");
+
+		log.info(clientName + " expects ringing from " + serverName + "...");
 		callEvent = callControllerClient
 				.pollSipEndPointEvent(TestConfig.WAIT_TIME);
 		assertTrue("No message received in client UA", callEvent != null);
@@ -275,16 +275,14 @@ public class InviteTest {
 				EndPointEvent.INCOMING_CALL.equals(endPointEvent.getEventType()));
 		Call serverCall = endPointEvent.getCallSource();
 		log.info("OK");
-		
-		log.info(clientName + " expects ringing from " + serverName
-				+ "...");
+
+		log.info(clientName + " expects ringing from " + serverName + "...");
 		callEvent = callControllerClient
 				.pollSipEndPointEvent(TestConfig.WAIT_TIME);
 		assertTrue("No message received in client UA", callEvent != null);
 		assertTrue("Bad message received in client UA",
 				CallEvent.CALL_RINGING.equals(callEvent.getEventType()));
 		log.info("OK");
-		
 
 		// C:<----------200 OK --:S
 		log.info(serverName + " accepts call...");
@@ -315,6 +313,7 @@ public class InviteTest {
 		// C:<-------------BYE---:S
 		log.info(serverName + " hangup...");
 		serverCall.terminate();
+
 		callEvent = callControllerServer
 				.pollSipEndPointEvent(TestConfig.WAIT_TIME);
 		assertTrue("No message received in client UA", callEvent != null);
@@ -331,6 +330,107 @@ public class InviteTest {
 		log.info("OK");
 
 		log.info(" -------------------- Test Call Setup and Drop from called finished OK --------------------");
+	}
+
+	/**
+	 * Verify call can be terminated if ACK is not received on time. This
+	 * situation can be found when clilent is connected through a symmetric NAT
+	 * 
+	 * <pre>
+	 * C:---INVITE---------->:S
+	 * C:<----------200 OK---:S
+	 * C:---ACK-----X        :S
+	 * C:<-------------BYE---:S
+	 * C:---200 OK---------->:S
+	 * </pre>
+	 * 
+	 * @throws Exception
+	 */
+	@Test
+	public void testCallWithAckTimeout() throws Exception {
+		log.info("-------------------- Test Call with ACK timeout --------------------");
+
+		EndPointEvent endPointEvent;
+		CallEvent callEvent;
+
+		// C:---INVITE---------->:S
+		log.info(clientName + " dial to " + serverName + "...");
+		SipCallController callControllerClient = new SipCallController(
+				clientName);
+		Call clientCall = clientEndPoint.dial(serverUri, callControllerClient);
+		log.info("OK");
+
+		log.info(serverName + " expects incoming call from " + clientName
+				+ "...");
+		endPointEvent = serverEndPointController
+				.pollSipEndPointEvent(TestConfig.WAIT_TIME);
+		assertTrue("No message received in server UA", endPointEvent != null);
+		assertTrue(
+				"Bad message received in server UA: "
+						+ endPointEvent.getEventType(),
+				EndPointEvent.INCOMING_CALL.equals(endPointEvent.getEventType()));
+		final Call serverCallt3 = endPointEvent.getCallSource();
+		log.info("OK");
+
+		log.info(clientName + " expects ringing from " + serverName + "...");
+		callEvent = callControllerClient
+				.pollSipEndPointEvent(TestConfig.WAIT_TIME);
+		assertTrue("No message received in client UA", callEvent != null);
+		assertTrue("Bad message received in client UA",
+				CallEvent.CALL_RINGING.equals(callEvent.getEventType()));
+		log.info("OK");
+
+		// C:<----------200 OK --:S
+		log.info(serverName + " accepts call...");
+		SipCallController callControllerServer = new SipCallController(
+				serverName);
+		serverCallt3.addListener(callControllerServer);
+		serverCallt3.accept();
+		log.info("OK");
+
+		// C:<-------------BYE---:S
+		// Send BYE. Response will still be under process due to
+		// MediaSessionDummy sleep timer and ACK not sent
+		log.info(serverName + " hangup...");
+		
+		new Thread(new Runnable() {
+			public void run() {
+				try {
+					serverCallt3.terminate();
+				} catch (ServerInternalErrorException e) {
+					log.error("Unable to accept call", e);
+				}
+
+			}
+		}).start();
+				
+		log.info(clientName + " expects accepted call from " + serverName
+				+ "...");
+		callEvent = callControllerClient
+				.pollSipEndPointEvent(TestConfig.WAIT_TIME);
+		assertTrue("No message received in client UA", callEvent != null);
+		assertTrue("Bad message received in client UA",
+				CallEvent.CALL_SETUP.equals(callEvent.getEventType()));
+		log.info("OK");
+	
+		log.info(serverName + " expects call terminate...");
+		callEvent = callControllerServer
+				.pollSipEndPointEvent(TestConfig.WAIT_TIME);
+		assertTrue("No message received in server UA", callEvent != null);
+		assertTrue("Bad message received in server UA",
+				CallEvent.CALL_TERMINATE.equals(callEvent.getEventType()));
+		log.info("OK");
+		
+		
+		// No more events must be received on server
+		log.info(serverName + " expects no more events...");
+		callEvent = callControllerServer
+				.pollSipEndPointEvent(TestConfig.WAIT_TIME);
+		assertTrue("Message received in server UA", callEvent == null);
+		log.info("OK");
+		
+		log.info("-------------------- Test Call with ACK timeout finished OK --------------------");
+
 	}
 
 	/**
@@ -434,16 +534,14 @@ public class InviteTest {
 				EndPointEvent.INCOMING_CALL.equals(endPointEvent.getEventType()));
 		Call serverCall = endPointEvent.getCallSource();
 		log.info("OK");
-		
-		log.info(clientName + " expects ringing from " + serverName
-				+ "...");
+
+		log.info(clientName + " expects ringing from " + serverName + "...");
 		callEvent = callControllerClient
 				.pollSipEndPointEvent(TestConfig.WAIT_TIME);
 		assertTrue("No message received in client UA", callEvent != null);
 		assertTrue("Bad message received in client UA",
 				CallEvent.CALL_RINGING.equals(callEvent.getEventType()));
 		log.info("OK");
-		
 
 		// C:<----------200 OK --:S
 		log.info(serverName + " accepts call...");
@@ -530,15 +628,14 @@ public class InviteTest {
 		Call serverCall = endPointEvent.getCallSource();
 		log.info("OK");
 
-		log.info(clientName + " expects ringing from " + serverName
-				+ "...");
+		log.info(clientName + " expects ringing from " + serverName + "...");
 		callEvent = callControllerClient
 				.pollSipEndPointEvent(TestConfig.WAIT_TIME);
 		assertTrue("No message received in client UA", callEvent != null);
 		assertTrue("Bad message received in client UA",
 				CallEvent.CALL_RINGING.equals(callEvent.getEventType()));
 		log.info("OK");
-		
+
 		// C:<----------200 OK --:S
 		log.info(serverName + " accepts call...");
 		SipCallController callControllerServer = new SipCallController(
@@ -623,9 +720,8 @@ public class InviteTest {
 				EndPointEvent.INCOMING_CALL.equals(endPointEvent.getEventType()));
 		Call serverCall = endPointEvent.getCallSource();
 		log.info("OK");
-		
-		log.info(clientName + " expects ringing from " + serverName
-				+ "...");
+
+		log.info(clientName + " expects ringing from " + serverName + "...");
 		callEvent = callControllerClient
 				.pollSipEndPointEvent(TestConfig.WAIT_TIME);
 		assertTrue("No message received in client UA", callEvent != null);
@@ -719,9 +815,8 @@ public class InviteTest {
 				EndPointEvent.INCOMING_CALL.equals(endPointEvent.getEventType()));
 		Call serverCall = endPointEvent.getCallSource();
 		log.info("OK");
-		
-		log.info(clientName + " expects ringing from " + serverName
-				+ "...");
+
+		log.info(clientName + " expects ringing from " + serverName + "...");
 		callEvent = callControllerClient
 				.pollSipEndPointEvent(TestConfig.WAIT_TIME);
 		assertTrue("No message received in client UA", callEvent != null);
@@ -814,9 +909,8 @@ public class InviteTest {
 				EndPointEvent.INCOMING_CALL.equals(endPointEvent.getEventType()));
 		Call serverCall = endPointEvent.getCallSource();
 		log.info("OK");
-		
-		log.info(clientName + " expects ringing from " + serverName
-				+ "...");
+
+		log.info(clientName + " expects ringing from " + serverName + "...");
 		callEvent = callControllerClient
 				.pollSipEndPointEvent(TestConfig.WAIT_TIME);
 		assertTrue("No message received in client UA", callEvent != null);
@@ -910,9 +1004,8 @@ public class InviteTest {
 				EndPointEvent.INCOMING_CALL.equals(endPointEvent.getEventType()));
 		Call serverCall = endPointEvent.getCallSource();
 		log.info("OK");
-		
-		log.info(clientName + " expects ringing from " + serverName
-				+ "...");
+
+		log.info(clientName + " expects ringing from " + serverName + "...");
 		callEvent = callControllerClient
 				.pollSipEndPointEvent(TestConfig.WAIT_TIME);
 		assertTrue("No message received in client UA", callEvent != null);
@@ -973,8 +1066,8 @@ public class InviteTest {
 	}
 
 	/**
-	 * Verify the SipEndPoint manages adequately call setup when a second
-	 * one has been drop with BUSY message
+	 * Verify the SipEndPoint manages adequately call setup when a second one
+	 * has been drop with BUSY message
 	 * 
 	 * <pre>
 	 * C1:------- INVITE --------->:S
@@ -985,11 +1078,13 @@ public class InviteTest {
 	 * C1:--- BYE ---------------->:S
 	 * C1:<------------- 200 OK ---:S
 	 * </pre>
-	 * @throws InterruptedException 
-	 * @throws ServerInternalErrorException 
+	 * 
+	 * @throws InterruptedException
+	 * @throws ServerInternalErrorException
 	 */
 	@Test
-	public void testInviteWithTwoIncomingCalls() throws InterruptedException, ServerInternalErrorException {
+	public void testInviteWithTwoIncomingCalls() throws InterruptedException,
+			ServerInternalErrorException {
 
 		SipEndPointController clientEndPointController2 = new SipEndPointController(
 				clientName + "2");
@@ -1013,8 +1108,7 @@ public class InviteTest {
 		Thread.sleep(500); // Wait a moment to allow C1 to be first
 		clientEndPoint2.dial(serverUri, clientCallController2);
 		log.info("OK");
-		
-		
+
 		// Server controller expects incoming call from 1st client
 		log.info(serverName + " expects incoming call from " + clientName
 				+ "...");
@@ -1025,12 +1119,13 @@ public class InviteTest {
 				"Bad message received in server UA: "
 						+ endPointEvent.getEventType(),
 				EndPointEvent.INCOMING_CALL.equals(endPointEvent.getEventType()));
-		
+
 		// Add listener to 1st call
-		SipCallController serverCallController = new SipCallController(serverName );
+		SipCallController serverCallController = new SipCallController(
+				serverName);
 		Call serverCall = endPointEvent.getCallSource();
 		serverCall.addListener(serverCallController);
-		
+
 		// Server controller expects incoming call from 2nd client
 		log.info(serverName + " expects incoming call from " + clientName + "2"
 				+ "...");
@@ -1040,79 +1135,79 @@ public class InviteTest {
 		assertTrue(
 				"Bad message received in server UA: "
 						+ endPointEvent2.getEventType(),
-				EndPointEvent.INCOMING_CALL.equals(endPointEvent2.getEventType()));
+				EndPointEvent.INCOMING_CALL.equals(endPointEvent2
+						.getEventType()));
 
 		// Add listener to 2nd call
-		SipCallController serverCallController2 = new SipCallController(serverName );
+		SipCallController serverCallController2 = new SipCallController(
+				serverName);
 		Call serverCall2 = endPointEvent2.getCallSource();
 		serverCall2.addListener(serverCallController2);
-		
+
 		// Send busy signal to 2nd client
 		log.info(serverName + " send BUSY to " + clientName + "2 ...");
 		endPointEvent2.getCallSource().terminate();
-		
+
 		// Client2 expects ringing
-		log.info(clientName + " expects ringing from " + serverName
-				+ "...");
+		log.info(clientName + " expects ringing from " + serverName + "...");
 		CallEvent callEvent = clientCallController2
 				.pollSipEndPointEvent(TestConfig.WAIT_TIME);
 		assertTrue("No message received in client UA", callEvent != null);
 		assertTrue("Bad message received in client UA",
 				CallEvent.CALL_RINGING.equals(callEvent.getEventType()));
 		log.info("OK");
-		
-		// Client2  expects call rejected
+
+		// Client2 expects call rejected
 		log.info(clientName + "2 expects call rejected from " + serverName
-						+ "...");
-		 callEvent = clientCallController2
-						.pollSipEndPointEvent(TestConfig.WAIT_TIME);
-		assertTrue("No message received in client UA", callEvent != null);
-		assertTrue("Bad message received in client UA",
-		CallEvent.CALL_REJECT.equals(callEvent.getEventType()));
-		log.info("OK");
-		
-		// Client2  expects call terminate
-		log.info(clientName + "2 expects call rejected from " + serverName
-						+ "...");
+				+ "...");
 		callEvent = clientCallController2
-						.pollSipEndPointEvent(TestConfig.WAIT_TIME);
+				.pollSipEndPointEvent(TestConfig.WAIT_TIME);
 		assertTrue("No message received in client UA", callEvent != null);
 		assertTrue("Bad message received in client UA",
-		CallEvent.CALL_TERMINATE.equals(callEvent.getEventType()));
+				CallEvent.CALL_REJECT.equals(callEvent.getEventType()));
 		log.info("OK");
-		
+
+		// Client2 expects call terminate
+		log.info(clientName + "2 expects call rejected from " + serverName
+				+ "...");
+		callEvent = clientCallController2
+				.pollSipEndPointEvent(TestConfig.WAIT_TIME);
+		assertTrue("No message received in client UA", callEvent != null);
+		assertTrue("Bad message received in client UA",
+				CallEvent.CALL_TERMINATE.equals(callEvent.getEventType()));
+		log.info("OK");
+
 		// Server expects call terminate events for 2nd call
 		log.info(serverName + " expects call rejected");
 		callEvent = serverCallController2
-						.pollSipEndPointEvent(TestConfig.WAIT_TIME);
+				.pollSipEndPointEvent(TestConfig.WAIT_TIME);
 		assertTrue("No message received in client UA", callEvent != null);
 		assertTrue("Bad message received in client UA",
-						CallEvent.CALL_REJECT.equals(callEvent.getEventType()));
+				CallEvent.CALL_REJECT.equals(callEvent.getEventType()));
 		log.info("OK");
 
 		// Server controller expects call terminated
 		log.info(serverName + " expects call terminated");
 		callEvent = serverCallController2
-						.pollSipEndPointEvent(TestConfig.WAIT_TIME);
+				.pollSipEndPointEvent(TestConfig.WAIT_TIME);
 		assertTrue("No message received in client UA", callEvent != null);
 		assertTrue("Bad message received in client UA",
-						CallEvent.CALL_TERMINATE.equals(callEvent.getEventType()));
-		log.info("OK");		
+				CallEvent.CALL_TERMINATE.equals(callEvent.getEventType()));
+		log.info("OK");
 
 		// Accept 1st call
 		log.info(serverName + " accepts call from " + clientName + "...");
 		endPointEvent.getCallSource().accept();
 
 		// Client 1 expects CALL_RINGING
-		log.info(clientName + " expects ringing from " + serverName
-				+ "...");
+		log.info(clientName + " expects ringing from " + serverName + "...");
 		callEvent = clientCallController
 				.pollSipEndPointEvent(TestConfig.WAIT_TIME);
 		assertTrue("No message received in client UA", callEvent != null);
 		assertTrue("Bad message received in client UA",
 				CallEvent.CALL_RINGING.equals(callEvent.getEventType()));
 		log.info("OK");
-		
+
 		// Client 1 expects CALL_SETUP
 		log.info(clientName + " expects call accept ...");
 		callEvent = clientCallController
@@ -1120,8 +1215,8 @@ public class InviteTest {
 		assertTrue("No message received in client UA", callEvent != null);
 		assertTrue("Bad message received in client UA",
 				CallEvent.CALL_SETUP.equals(callEvent.getEventType()));
-		log.info("OK");		
-		
+		log.info("OK");
+
 		// Server expects call setup in 1st call
 		log.info(serverName + " expects call accept ...");
 		callEvent = serverCallController
@@ -1129,12 +1224,12 @@ public class InviteTest {
 		assertTrue("No message received in server UA", callEvent != null);
 		assertTrue("Bad message received in server UA",
 				CallEvent.CALL_SETUP.equals(callEvent.getEventType()));
-		log.info("OK");			
-		
+		log.info("OK");
+
 		// Client 1 terminates call
 		log.info(clientName + " terminates call with " + serverName + "...");
 		clientCall.terminate();
-		
+
 		// Client 1 expects call terminate
 		log.info(clientName + " expects call terminate ...");
 		callEvent = clientCallController
@@ -1142,8 +1237,8 @@ public class InviteTest {
 		assertTrue("No message received in client UA", callEvent != null);
 		assertTrue("Bad message received in client UA",
 				CallEvent.CALL_TERMINATE.equals(callEvent.getEventType()));
-		log.info("OK");			
-		
+		log.info("OK");
+
 		// Serve expects call terminate
 		log.info(serverName + " expects call accept ...");
 		callEvent = serverCallController
@@ -1151,7 +1246,7 @@ public class InviteTest {
 		assertTrue("No message received in server UA", callEvent != null);
 		assertTrue("Bad message received in server UA",
 				CallEvent.CALL_TERMINATE.equals(callEvent.getEventType()));
-		log.info("OK");		
-	
+		log.info("OK");
+
 	}
 }
