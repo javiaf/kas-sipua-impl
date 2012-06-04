@@ -527,6 +527,7 @@ public class UaImpl implements SipListener, UaStun {
 		try {
 			if ((serverTransaction = requestEvent.getServerTransaction()) == null) {
 				// Create transaction
+
 				serverTransaction = sipProvider
 						.getNewServerTransaction(requestEvent.getRequest());
 			}
@@ -596,7 +597,7 @@ public class UaImpl implements SipListener, UaStun {
 				}
 			}
 		} catch (Exception e) {
-			log.error("Unable to process server transaction", e);
+			log.warn("Unable to process server transaction", e);
 		}
 
 	}
