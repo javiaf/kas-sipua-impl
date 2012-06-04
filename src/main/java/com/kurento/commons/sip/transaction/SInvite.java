@@ -98,58 +98,70 @@ public class SInvite extends STransaction {
 			} catch (SdpPortManagerException e) {
 				String msg = "Unable to generate SDP offer for an incoming INVITE request";
 				log.error(msg, e);
-				sendResponse(Response.SERVER_INTERNAL_ERROR, null);
+				sendResponse(Response.SERVICE_UNAVAILABLE, null);
 				// Do not signal incoming call to user
 			}
 
 		} else {
 			// INVITE with SDP. request for process
-			try {
-				sipContext.getSdpPortmanager().addListener(
-						new MediaEventListener<SdpPortManagerEvent>() {
+			sipContext.getSdpPortmanager().addListener(
+					new MediaEventListener<SdpPortManagerEvent>() {
 
-							@Override
-							public void onEvent(SdpPortManagerEvent event) {
-								event.getSource().removeListener(this);
-								EventType eventType = event.getEventType();
-								if (SdpPortManagerEvent.ANSWER_GENERATED
-										.equals(eventType)) {
-									log.debug("SdpPortManager successfully processed SDP offer sent by peer");
-									// Notify incoming call to TU
-									SInvite.this.sipContext
-											.incominCall(SInvite.this);
+						@Override
+						public void onEvent(SdpPortManagerEvent event) {
+							event.getSource().removeListener(this);
+							EventType eventType = event.getEventType();
+							if (SdpPortManagerEvent.ANSWER_GENERATED
+									.equals(eventType)) {
+								log.debug("SdpPortManager successfully processed SDP offer sent by peer");
+								// Notify incoming call to TU
+								SInvite.this.sipContext
+										.incominCall(SInvite.this);
 
-								} else {
-									// No caller listener available at this stage.
-									// Do not send any error event
-									log.debug("Unable to process SDP offer to an incoming invite. SDP Port Manager event:"
-											+ eventType);
-									
-									try {
-										if (SdpPortManagerEvent.RESOURCE_UNAVAILABLE
-												.equals(eventType)) {
-											sendResponse(Response.SERVICE_UNAVAILABLE, null);
+							} else {
+								// No caller listener available at this stage.
+								// Do not send any error event
+								log.debug("Unable to process SDP offer to an incoming invite. SDP Port Manager event:"
+										+ eventType);
 
-										} else if (SdpPortManagerEvent.SDP_NOT_ACCEPTABLE.equals(eventType)) {
-											sendResponse(Response.UNSUPPORTED_MEDIA_TYPE, null); 
+								try {
+									if (SdpPortManagerEvent.RESOURCE_UNAVAILABLE
+											.equals(eventType)) {
+										sendResponse(
+												Response.SERVICE_UNAVAILABLE,
+												null);
 
-										} else {
-											sendResponse(Response.SERVER_INTERNAL_ERROR, null);
-										}
-									} catch (Exception e) {
-										log.error("Unable to send error response to an incoming invite", e);
+									} else if (SdpPortManagerEvent.SDP_NOT_ACCEPTABLE
+											.equals(eventType)) {
+										sendResponse(
+												Response.UNSUPPORTED_MEDIA_TYPE,
+												null);
+
+									} else {
+										sendResponse(
+												Response.SERVER_INTERNAL_ERROR,
+												null);
 									}
+								} catch (Exception e) {
+									log.error(
+											"Unable to send error response to an incoming invite",
+											e);
 								}
-
 							}
-						});
+
+						}
+					});
+			try {
+
 				byte[] rawContent = request.getRawContent();
 				sipContext.getSdpPortmanager().processSdpOffer(
 						SdpConversor.sdp2SessionSpec(new String(rawContent)));
 			} catch (Exception e) {
-				String msg = "Unable to process SDP response";
+				String msg = "Unable to process SDP offer";
 				log.error(msg, e);
-				sipContext.callError(msg);
+				sendResponse(Response.SERVICE_UNAVAILABLE, null);
+				// Do not signal incoming call to user
+
 			}
 		}
 	}
