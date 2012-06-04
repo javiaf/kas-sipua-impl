@@ -134,12 +134,13 @@ public class CInvite extends CTransaction {
 		} else if (statusCode == Response.RINGING) {
 			log.info("<<<<<<< 180 Ringing: dialog: " + this.dialog
 					+ ", state: " + dialog.getState());
-			// DO NOTHING (We might inform ringing takes place)
+			// DO NOTHING
+			sipContext.ringingCall();
 
 		} else if (statusCode == Response.SESSION_PROGRESS) {
 			log.info("<<<<<<< 183 Session Progress: dialog: " + this.dialog
 					+ ", state: " + dialog.getState());
-			sipContext.ringingCall();
+			// DO NOTHING
 
 		} else if (statusCode < 200) {
 			log.info("<<<<<<< " + statusCode + " 1xx: dialog: " + this.dialog
