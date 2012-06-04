@@ -128,7 +128,7 @@ public class SInvite extends STransaction {
 							}
 						});
 				byte[] rawContent = request.getRawContent();
-				sipContext.getSdpPortmanager().processSdpAnswer(
+				sipContext.getSdpPortmanager().processSdpOffer(
 						SdpConversor.sdp2SessionSpec(new String(rawContent)));
 			} catch (Exception e) {
 				String msg = "Unable to process SDP response";
