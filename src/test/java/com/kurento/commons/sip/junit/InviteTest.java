@@ -210,7 +210,7 @@ public class InviteTest {
 
 		// C:---BYE------------->:S
 		log.info(clientName + " hangup...");
-		clientCall.hangup();
+		clientCall.terminate();
 		log.info("OK");
 
 		log.info(serverName + " expects call hangup from " + clientName + "...");
@@ -314,7 +314,7 @@ public class InviteTest {
 
 		// C:<-------------BYE---:S
 		log.info(serverName + " hangup...");
-		serverCall.hangup();
+		serverCall.terminate();
 		callEvent = callControllerServer
 				.pollSipEndPointEvent(TestConfig.WAIT_TIME);
 		assertTrue("No message received in client UA", callEvent != null);
@@ -473,7 +473,7 @@ public class InviteTest {
 
 		// C:---BYE------------->:S
 		log.info(clientName + " hangup...");
-		clientCall.hangup();
+		clientCall.terminate();
 		log.info("OK");
 
 		log.info(serverName + " expects call hangup from " + clientName + "...");
@@ -567,7 +567,7 @@ public class InviteTest {
 
 		// C:---BYE------------->:S
 		log.info(clientName + " hangup...");
-		clientCall.hangup();
+		clientCall.terminate();
 		log.info("OK");
 
 		log.info(serverName + " expects call hangup from " + clientName + "...");
@@ -661,7 +661,7 @@ public class InviteTest {
 
 		// C:---BYE------------->:S
 		log.info(clientName + " hangup...");
-		clientCall.hangup();
+		clientCall.terminate();
 		log.info("OK");
 
 		log.info(serverName + " expects call hangup from " + clientName + "...");
@@ -757,7 +757,7 @@ public class InviteTest {
 
 		// C:---BYE------------->:S
 		log.info(clientName + " hangup...");
-		clientCall.hangup();
+		clientCall.terminate();
 		log.info("OK");
 
 		log.info(serverName + " expects call hangup from " + clientName + "...");
@@ -852,7 +852,7 @@ public class InviteTest {
 
 		// C:---BYE------------->:S
 		log.info(clientName + " hangup...");
-		clientCall.hangup();
+		clientCall.terminate();
 		log.info("OK");
 
 		log.info(serverName + " expects call hangup from " + clientName + "...");
@@ -948,7 +948,7 @@ public class InviteTest {
 
 		// C:---BYE------------->:S
 		log.info(clientName + " hangup...");
-		clientCall.hangup();
+		clientCall.terminate();
 		log.info("OK");
 
 		log.info(serverName + " expects call hangup from " + clientName + "...");
@@ -1049,7 +1049,7 @@ public class InviteTest {
 		
 		// Send busy signal to 2nd client
 		log.info(serverName + " send BUSY to " + clientName + "2 ...");
-		endPointEvent2.getCallSource().hangup();
+		endPointEvent2.getCallSource().terminate();
 		
 		// Client2 expects ringing
 		log.info(clientName + " expects ringing from " + serverName
@@ -1104,7 +1104,6 @@ public class InviteTest {
 		endPointEvent.getCallSource().accept();
 
 		// Client 1 expects CALL_RINGING
-		// Client2 expects ringing
 		log.info(clientName + " expects ringing from " + serverName
 				+ "...");
 		callEvent = clientCallController
@@ -1134,7 +1133,7 @@ public class InviteTest {
 		
 		// Client 1 terminates call
 		log.info(clientName + " terminates call with " + serverName + "...");
-		clientCall.hangup();
+		clientCall.terminate();
 		
 		// Client 1 expects call terminate
 		log.info(clientName + " expects call terminate ...");

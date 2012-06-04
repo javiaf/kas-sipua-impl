@@ -178,7 +178,7 @@ public class RejectTest {
 		SipCallController serverCallController = new SipCallController(
 				serverName);
 		serverCall.addListener(serverCallController);
-		serverCall.hangup();
+		serverCall.terminate();
 		log.info("OK");
 
 		log.info(clientName + " expects call rejected from " + serverName
@@ -242,7 +242,7 @@ public class RejectTest {
 		new Thread(new Runnable() {
 			public void run() {
 				try {
-					serverCallFinal.hangup();
+					serverCallFinal.terminate();
 				} catch (ServerInternalErrorException e) {
 					log.error("Unable to accept call", e);
 				}
@@ -252,7 +252,7 @@ public class RejectTest {
 
 		// Send cancel request from Client
 		// C:--- CANCEL ---X
-		clientCall.hangup();
+		clientCall.terminate();
 
 		// Server controller expects call rejected
 		log.info(serverName + " expects call rejected");
@@ -374,7 +374,7 @@ public class RejectTest {
 		
 		// Send busy signal to 2nd client
 		log.info(serverName + " send BUSY to " + clientName + "2 ...");
-		endPointEvent2.getCallSource().hangup();
+		endPointEvent2.getCallSource().terminate();
 		
 		// Client2  expects call rejected
 		log.info(clientName + "2 expects call rejected from " + serverName
@@ -416,7 +416,7 @@ public class RejectTest {
 				
 		// Reject 1st call
 		log.info(serverName + " send DECLINE message to " + clientName + "...");
-		endPointEvent.getCallSource().hangup();
+		endPointEvent.getCallSource().terminate();
 		
 		// Client1  expects call rejected
 		log.info(clientName + " expects call rejected from " + serverName

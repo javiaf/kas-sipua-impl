@@ -45,6 +45,7 @@ import com.kurento.commons.sip.transaction.CTransaction;
 import com.kurento.commons.sip.transaction.STransaction;
 import com.kurento.commons.ua.Call;
 import com.kurento.commons.ua.CallListener;
+import com.kurento.commons.ua.TerminateReason;
 import com.kurento.commons.ua.event.CallEvent;
 import com.kurento.commons.ua.event.CallEventEnum;
 import com.kurento.commons.ua.exception.ServerInternalErrorException;
@@ -156,10 +157,18 @@ public class SipContext implements Call {
 			incomingInitiatingRequest.sendResponse(Response.OK, getLocalSdp());
 
 	}
+	
+	@Override
+	public void terminate() throws ServerInternalErrorException {
+		terminate(TerminateReason.DECLINE);
+		
+	}
 
 	@Override
-	public void hangup() throws ServerInternalErrorException {
-		log.info("Request to terminate call");
+	public void terminate(TerminateReason code)
+			throws ServerInternalErrorException {
+
+		log.info("Request to terminate call with code:" + code );
 
 		// Label this context to be terminated as soon as possible
 		request2Terminate = true;
@@ -198,26 +207,20 @@ public class SipContext implements Call {
 			// This code competes with the remote cancel. First one to execute
 			// will cause the other to throw an exception avoiding duplicate
 			// events
-			incomingInitiatingRequest.sendResponse(Response.DECLINE, null);
+			if (TerminateReason.BUSY.equals(code)){
+				incomingInitiatingRequest.sendResponse(Response.BUSY_HERE, null);
+			} else {
+				incomingInitiatingRequest.sendResponse(Response.DECLINE, null);
+			}
 			rejectedCall();
 		}
 
-		// Do not accept hang up
+		// Do not accept call to this method
 		else {
 			throw new ServerInternalErrorException(
 					"Bad hangup. Unable to hangup a call");
 		}
 
-	}
-
-	@Override
-	public void reject() throws ServerInternalErrorException {
-		throw new ServerInternalErrorException("Method reject is deprecated");
-	}
-
-	@Override
-	public void cancel() throws ServerInternalErrorException {
-		throw new ServerInternalErrorException("Method cancel is deprecated");
 	}
 
 	@Override
@@ -592,4 +595,5 @@ public class SipContext implements Call {
 					"Unable to retrieve local Session Description", e);
 		}
 	}
+
 }

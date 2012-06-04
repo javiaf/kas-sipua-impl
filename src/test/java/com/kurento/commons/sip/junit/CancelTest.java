@@ -208,7 +208,7 @@ public class CancelTest {
 
 		// C:----CANCEL -------------->:S
 		log.info(clientName + " cancel call...");
-		clientCall.hangup();
+		clientCall.terminate();
 		log.info("OK");
 
 		log.info(serverName + " expects cancel from " + clientName + "...");
@@ -395,7 +395,7 @@ public class CancelTest {
 
 		// C:------CANCEL----->:S
 		log.info(clientName + " cancel call...");
-		clientCall.hangup();
+		clientCall.terminate();
 		log.info("OK");
 
 		// C:ACK ---------------------------------------------->:S
@@ -469,7 +469,7 @@ public class CancelTest {
 		// Send inmediate cancel
 		// C:----CANCEL -------------->:S
 		log.info(clientName + " cancel call...");
-		clientCall.hangup();
+		clientCall.terminate();
 		log.info("OK");
 
 		// Server controller will not receive any event. It will cancel the request silently
