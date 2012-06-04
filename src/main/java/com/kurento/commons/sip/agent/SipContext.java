@@ -286,6 +286,9 @@ public class SipContext implements Call {
 				SessionSpec session = this.sdpPortManager
 						.getMediaServerSessionDescription();
 
+				if (session == null)
+					return map;
+
 				for (MediaSpec m : session.getMediaSpecs()) {
 					// Only it is to check that there is a rtp transport
 					m.getTransport().getRtp();
@@ -396,11 +399,13 @@ public class SipContext implements Call {
 			// processed
 			// Force call cancel and do not signal incoming to the controller
 			try {
-				incomingTransaction.sendResponse(Response.REQUEST_TERMINATED,null);
+				incomingTransaction.sendResponse(Response.REQUEST_TERMINATED,
+						null);
 				canceledCall();
 			} catch (ServerInternalErrorException e) {
-				log.warn("Unable to terminate call canceled by remote party",e);
-				// Controller doesn't know about this call. Do not signall anything
+				log.warn("Unable to terminate call canceled by remote party", e);
+				// Controller doesn't know about this call. Do not signall
+				// anything
 			}
 			release();
 			return;
@@ -554,7 +559,6 @@ public class SipContext implements Call {
 			networkConnection = null;
 		}
 	}
-	
 
 	private void createSdpPortManager() throws ServerInternalErrorException {
 
@@ -570,8 +574,7 @@ public class SipContext implements Call {
 			}
 		}
 	}
-	
-	
+
 	private byte[] getLocalSdp() throws ServerInternalErrorException {
 		if (sdpPortManager == null)
 			throw new ServerInternalErrorException(
