@@ -20,7 +20,6 @@ import gov.nist.javax.sip.header.ContentLength;
 
 import java.text.ParseException;
 
-import javax.sdp.SessionDescription;
 import javax.sip.ServerTransaction;
 import javax.sip.header.ContactHeader;
 import javax.sip.header.ContentTypeHeader;

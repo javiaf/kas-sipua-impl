@@ -27,7 +27,7 @@ public class NatKeepAlive {
 		proxyAddr = config.getProxyAddress();
 		proxyPort = config.getProxyPort();
 		delay = config.getKeepAlivePeriod();
-		log.debug("Delay for  hole punching setted as " + delay);
+		log.debug("Delay for hole punching setted as " + delay);
 		listeningPointImpl = (ListeningPointExt) listeningPoint;
 		timer = config.getTimer();
 		if (timer == null)
@@ -50,7 +50,7 @@ public class NatKeepAlive {
 	};
 
 	public void start() {
-		timer.schedule(task, 0, delay);
+		timer.schedule(task, delay, delay);
 	}
 
 	public void stop() {

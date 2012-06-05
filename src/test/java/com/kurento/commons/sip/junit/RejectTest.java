@@ -31,6 +31,7 @@ import org.slf4j.LoggerFactory;
 import com.kurento.commons.sip.agent.UaFactory;
 import com.kurento.commons.sip.agent.UaImpl;
 import com.kurento.commons.sip.testutils.MediaSessionDummy;
+import com.kurento.commons.sip.testutils.NetworkController;
 import com.kurento.commons.sip.testutils.SipCallController;
 import com.kurento.commons.sip.testutils.SipEndPointController;
 import com.kurento.commons.sip.testutils.TestConfig;
@@ -52,6 +53,9 @@ public class RejectTest {
 
 	private static SipEndPointController serverEndPointController;
 	private static SipEndPointController clientEndPointController;
+
+	private static NetworkController serverNc;
+	private static NetworkController clientNc;
 
 	private static TestTimer timer;
 
@@ -101,7 +105,9 @@ public class RejectTest {
 		// "kurento.com",
 		// "", expires, serverUa, serverEndPointController, false);
 		// Create SIP stack and activate SIP EndPoints
-		serverUa.reconfigure();
+		serverNc = new NetworkController();
+		serverNc.setNetworkListener(UaFactory.getNetworkListener(serverUa));
+		serverNc.execNetworkChange();
 
 		log.info("	ServerUa created");
 
@@ -123,7 +129,11 @@ public class RejectTest {
 		// "kurento.com",
 		// "", expires, clientUa, clientEndPointController, false);
 		// Create SIP stack and activate SIP EndPoints
-		clientUa.reconfigure();
+		clientNc = new NetworkController();
+		clientNc.setNetworkListener(UaFactory.getNetworkListener(clientUa));
+		
+		// Initialize SIP stack
+		clientNc.execNetworkChange();
 
 		log.info("	ClientUa created");
 
@@ -339,7 +349,9 @@ public class RejectTest {
 		cEpConfig.put("SIP_RECEIVE_CALL", false);
 		EndPoint clientEndPoint2 = clientUa.registerEndpoint(clientName + "2",
 				"kurento.com", clientEndPointController2, cEpConfig);
-		clientUa.reconfigure();
+		
+		// Initialize SIP stack
+		clientNc.execNetworkChange();
 
 		// C1:------- INVITE --------->:S
 		log.info(clientName + " dial to " + serverName + "...");

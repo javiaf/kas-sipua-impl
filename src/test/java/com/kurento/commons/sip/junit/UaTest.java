@@ -11,6 +11,7 @@ import org.slf4j.LoggerFactory;
 
 import com.kurento.commons.sip.agent.UaFactory;
 import com.kurento.commons.sip.testutils.MediaSessionDummy;
+import com.kurento.commons.sip.testutils.NetworkController;
 import com.kurento.commons.sip.testutils.SipEndPointController;
 import com.kurento.commons.sip.testutils.TestConfig;
 import com.kurento.commons.sip.testutils.TestErrorException;
@@ -21,9 +22,10 @@ import com.kurento.commons.ua.UA;
 import com.kurento.commons.ua.exception.ServerInternalErrorException;
 
 public class UaTest {
-	
-	private final static Logger log = LoggerFactory.getLogger(RegisterTest.class);
-	
+
+	private final static Logger log = LoggerFactory
+			.getLogger(RegisterTest.class);
+
 	private static TestTimer timer;
 
 	private static String domain = "kurento.com";
@@ -33,23 +35,25 @@ public class UaTest {
 	private static String localAddress;
 
 	private static EndPoint endPoint;
-	
+
 	/**
-	 * Verify the UA does not allow any SIP message to be send if the SIP stack finds any initialization problem
+	 * Verify the UA does not allow any SIP message to be send if the SIP stack
+	 * finds any initialization problem
+	 * 
 	 * <pre>
 	 * C:Bad UA init         :S Rise exception and disable UA
-	 * C:---SIP MSG----X	 :S 
+	 * C:---SIP MSG----X	 :S
 	 * </pre>
 	 * 
 	 * Associated to case: #256
 	 * 
-	 * @throws Exception 
+	 * @throws Exception
 	 */
 	@Test(expected = TestErrorException.class)
 	public void testBadUaInitDueToPort() throws TestErrorException {
-		
+
 		log.info("-------------------- Test Bad UA initialization due to PORT --------------------");
-		
+
 		if (System.getProperty("os.name").startsWith("Mac"))
 			localAddress = "lo0";
 		else
@@ -57,7 +61,7 @@ public class UaTest {
 
 		log.info("Initialice SIP UA Cancel test on platform: "
 				+ System.getProperty("os.name"));
-		
+
 		UaFactory.setMediaSession(new MediaSessionDummy());
 
 		// Provide wrong configuration (port 0) to avoid correct initialization
@@ -69,36 +73,38 @@ public class UaTest {
 		config.setLocalAddress(localAddress);
 		config.setTimer(timer);
 
-		
 		// Get UA instance
 		UA ua = UaFactory.getInstance(config);
-		
+		NetworkController nc = new NetworkController();
+		nc.setNetworkListener(UaFactory.getNetworkListener(ua));
+
 		// Initialize SIP stack
 		try {
-			ua.reconfigure();
+			nc.execNetworkChange();
 		} catch (ServerInternalErrorException e) {
-			log.info("UA throwed exception during initialization", e);
-			throw new TestErrorException("UA throwed exception during initialization",e);
+			throw new TestErrorException("Expected error", e);
 		}
-		
+
 	}
 
 	/**
-	 * Verify the UA does not allow any SIP message to be send if the SIP stack finds any initialization problem
+	 * Verify the UA does not allow any SIP message to be send if the SIP stack
+	 * finds any initialization problem
+	 * 
 	 * <pre>
 	 * C:Bad UA init         :S Rise exception and disable UA
-	 * C:---SIP MSG----X	 :S 
+	 * C:---SIP MSG----X	 :S
 	 * </pre>
 	 * 
 	 * Associated to case: #256
 	 * 
-	 * @throws Exception 
+	 * @throws Exception
 	 */
 	@Test(expected = TestErrorException.class)
 	public void testBadUaInitDueToInterface() throws TestErrorException {
-		
+
 		log.info("-------------------- Test Bad UA initialization due to interface --------------------");
-		
+
 		localAddress = "non-exists";
 
 		UaFactory.setMediaSession(new MediaSessionDummy());
@@ -112,35 +118,42 @@ public class UaTest {
 		config.setLocalAddress(localAddress);
 		config.setTimer(timer);
 
-		
 		// Get UA instance
 		UA ua = UaFactory.getInstance(config);
-		
+
+		// Initialize SIP stack
+		NetworkController nc = new NetworkController();
+		nc.setNetworkListener(UaFactory.getNetworkListener(ua));
+
 		// Initialize SIP stack
 		try {
-			ua.reconfigure();
+			nc.execNetworkChange();
 		} catch (ServerInternalErrorException e) {
-			log.info("UA throwed exception during initialization", e);
-			throw new TestErrorException("UA throwed exception during initialization",e);
+			throw new TestErrorException("Expected error", e);
 		}
 	}
-	
+
 	/**
-	 * Verify the UA does not allow any SIP message to be send if the SIP stack finds any initialization problem
+	 * Verify the UA does not allow any SIP message to be send if the SIP stack
+	 * finds any initialization problem
+	 * 
 	 * <pre>
 	 * C:Bad UA init         :S Rise exception and disable UA
-	 * C:---SIP MSG----X	 :S 
+	 * C:---SIP MSG----X	 :S
 	 * </pre>
 	 * 
 	 * Associated to case: #256, #308
 	 * 
-	 * @throws Exception 
+	 * @throws ServerInternalErrorException
+	 * 
+	 * @throws Exception
 	 */
 	@Test(expected = TestErrorException.class)
-	public void testBadUaInitDueToAlreadyBind() throws TestErrorException {
-		
+	public void testBadUaInitDueToAlreadyBind() throws TestErrorException,
+			ServerInternalErrorException {
+
 		log.info("-------------------- Test Bad UA initialization due to interface --------------------");
-		
+
 		if (System.getProperty("os.name").startsWith("Mac"))
 			localAddress = "lo0";
 		else
@@ -157,23 +170,25 @@ public class UaTest {
 		config.setLocalAddress(localAddress);
 		config.setTimer(timer);
 
-		
 		// Get UA instances
 		UA ua1 = UaFactory.getInstance(config);
 		UA ua2 = UaFactory.getInstance(config);
-		
+
+		// Initialize SIP stack
+		NetworkController nc1 = new NetworkController();
+		nc1.setNetworkListener(UaFactory.getNetworkListener(ua1));
+
+		// Initialize SIP stack
+		nc1.execNetworkChange();
+
+		NetworkController nc2 = new NetworkController();
+		nc2.setNetworkListener(UaFactory.getNetworkListener(ua2));
+
 		// Initialize SIP stack
 		try {
-			ua1.reconfigure();
+			nc2.execNetworkChange();
 		} catch (ServerInternalErrorException e) {
-			log.info("UA throwed exception during initialization", e);
-			assertTrue("Misplaced exception",false);
-		}
-		try {
-			ua2.reconfigure();
-		} catch (ServerInternalErrorException e) {
-			log.info("UA throwed exception during initialization", e);
-			throw new TestErrorException("UA throwed exception during initialization",e);
+			throw new TestErrorException("Expected error", e);
 		}
 	}
 }
