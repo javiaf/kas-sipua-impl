@@ -54,7 +54,6 @@ import javax.sip.header.ToHeader;
 import javax.sip.message.Request;
 import javax.sip.message.Response;
 
-import org.hamcrest.core.IsEqual;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
