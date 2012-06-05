@@ -44,6 +44,7 @@ import com.kurento.commons.sip.transaction.CInvite;
 import com.kurento.commons.sip.transaction.CTransaction;
 import com.kurento.commons.sip.transaction.STransaction;
 import com.kurento.commons.ua.Call;
+import com.kurento.commons.ua.CallAttributes;
 import com.kurento.commons.ua.CallListener;
 import com.kurento.commons.ua.TerminateReason;
 import com.kurento.commons.ua.event.CallEvent;
@@ -52,14 +53,9 @@ import com.kurento.commons.ua.exception.ServerInternalErrorException;
 
 public class SipContext implements Call {
 
-	// private enum OutState {
-	// IDLE, SDP_OFFER_GEN, REQUEST_SENT, RESPONSE_RECV, SDP_ANSWER_PROC,
-	// COMPLETE
-	// };
-	//
-	// private enum InState {
-	// IDLE, SDP_OFFER_PROC, WAIT_TU, RESPONSE_SENT, COMPLETE
-	// }
+	enum ContextState {
+		NULL, EARLY, CONFIRMED, TERMINATED
+	}
 
 	protected static final Logger log = LoggerFactory
 			.getLogger(SipContext.class);
@@ -67,6 +63,11 @@ public class SipContext implements Call {
 	private SipEndPointImpl localEndPoint;
 	private Address remoteParty;
 
+	// We need to keep a context state because dialog state does not allow us to
+	// know with precision the state machine. There is a lag between message
+	// command and dialog state change causing severe problems wit concurrence.
+
+	private ContextState state = ContextState.NULL;
 	private Dialog dialog;
 	private NetworkConnection networkConnection;
 	private SdpPortManager sdpPortManager;
@@ -74,11 +75,9 @@ public class SipContext implements Call {
 	private STransaction incomingInitiatingRequest;
 	private CTransaction outgoingInitiatingRequest;
 	private Boolean request2Terminate = false;
-	private Boolean terminated = false;
-	// private OutState outState = OutState.IDLE;
-	// private InState inState = InState.IDLE;
 
 	private CallListener callListener;
+	private CallAttributes callAttributes = new CallAttributes();
 	private Map<MediaType, Mode> mediaTypesModes;
 
 	// ////////////////////
@@ -94,6 +93,7 @@ public class SipContext implements Call {
 	public SipContext(SipEndPointImpl localEndPoint, Dialog dialog) {
 		this.localEndPoint = localEndPoint;
 		this.dialog = dialog;
+
 	}
 
 	// ////////////////////
@@ -119,6 +119,10 @@ public class SipContext implements Call {
 		createSdpPortManager();
 		return sdpPortManager;
 	}
+	
+	public void setCallAttributes(CallAttributes callAttributes) {
+		this.callAttributes = callAttributes;
+	}
 
 	// ////////////////////
 	//
@@ -126,6 +130,11 @@ public class SipContext implements Call {
 	//
 	// ////////////////////
 
+	@Override
+	public CallAttributes getAttributes() {
+		return callAttributes;
+	}
+	
 	@Override
 	public void accept() throws ServerInternalErrorException {
 		// Accept only if there are incoming transactions
@@ -141,21 +150,14 @@ public class SipContext implements Call {
 					"Bad accept. There isn't a incoming request to be accepted");
 		}
 
-		// Accept only when dialog is in early state
-		// TODO: Will it be required to accept transactions when dialog is
-		// in
-		// confirmed state?. This will happen when in-dialog INVITE requests
-		// are
-		// received
-		if (!DialogState.EARLY.equals(dialog.getState())) {
-			throw new ServerInternalErrorException(
-					"Bad accept. Dialog state is not EARLY. dialog="
-							+ dialog.getState());
-		}
-
-		// Send response if not already canceled
-		if (!request2Terminate)
+		// Accept only possible to EARLY contexts
+		if (ContextState.EARLY.equals(state)) {
+			state = ContextState.CONFIRMED;
 			incomingInitiatingRequest.sendResponse(Response.OK, getLocalSdp());
+		} else {
+			throw new ServerInternalErrorException(
+					"Bad accept. Context state is not EARLY. state=" + state);
+		}
 
 	}
 
@@ -175,18 +177,12 @@ public class SipContext implements Call {
 		request2Terminate = true;
 
 		// Check valid states where a call can be canceled
-		if (dialog == null) {
-			// Dialog can be null before the INVITE request is sent
-			// DO NOTHING: Wait until SDP offer is generated and prevent
-			// INVITE to be sent
+		if (state == ContextState.NULL) {
+			// State is null until INVITE request is sent.
+			// DO NOTHING. Cancel must be sent after invite is sent
 			log.debug("Request to terminate outgoing call with no INVITE transaction created yet");
 
-		} else if (dialog.getState() == null) {
-			// Dialog state is null until INVITE request is sent
-			// DO NOTHING: INVITE will be sent and immediately canceled
-			log.debug("Request to terminate outgoing call with no SDP offer generated yet");
-
-		} else if (DialogState.EARLY.equals(dialog.getState())
+		} else if (ContextState.EARLY.equals(state)
 				&& outgoingInitiatingRequest != null) {
 			// Hang out an outgoing call after INVITE request is sent and
 			// before response is received
@@ -194,19 +190,21 @@ public class SipContext implements Call {
 			// Send cancel request
 			localCallCancel();
 
-		} else if (DialogState.CONFIRMED.equals(dialog.getState())) {
-			// Terminate request after 200 OK response. ACK might still not being received
-			log.debug("Request to terminate established call");
-			terminated = true;
+		} else if (ContextState.CONFIRMED.equals(dialog.getState())) {
+			// Terminate request after 200 OK response. ACK might still not
+			// being received
+			log.debug("Request to terminate established call (ACK might still be pending");
+			state = ContextState.TERMINATED;
 			new CBye(this);
 
-		} else if (DialogState.EARLY.equals(dialog.getState())
+		} else if (ContextState.EARLY.equals(state)
 				&& incomingInitiatingRequest != null) {
 			// TU requested CALL reject
 			log.debug("Request to reject incoming call");
 			// This code competes with the remote cancel. First one to execute
 			// will cause the other to throw an exception avoiding duplicate
 			// events
+			state = ContextState.TERMINATED;
 			if (TerminateReason.BUSY.equals(code)) {
 				incomingInitiatingRequest
 						.sendResponse(Response.BUSY_HERE, null);
@@ -214,7 +212,7 @@ public class SipContext implements Call {
 				incomingInitiatingRequest.sendResponse(Response.DECLINE, null);
 			}
 			rejectedCall();
-		} 
+		}
 
 		// Do not accept call to this method
 		else {
@@ -331,6 +329,7 @@ public class SipContext implements Call {
 		this.remoteParty = remoteParty;
 		log.info("Request connection from " + localEndPoint.getAddress()
 				+ " => To => " + remoteParty);
+		state = ContextState.EARLY;
 		new CInvite(this);
 		// Do not associate this CInvite to the outgoing call until the INVITE
 		// request is sent. This will be done through notification outgoingCall
@@ -356,6 +355,7 @@ public class SipContext implements Call {
 			// If 200OK response is already sent it will throw an exception and
 			// no cancel notification will be sent to local party. The call will
 			// progress normally
+			state = ContextState.TERMINATED;
 			incomingInitiatingRequest.sendResponse(Response.REQUEST_TERMINATED,
 					null);
 			canceledCall();
@@ -376,6 +376,7 @@ public class SipContext implements Call {
 		if (outgoingTransaction == null)
 			return;
 
+		state = ContextState.EARLY;
 		this.dialog = outgoingTransaction.getClientTransaction().getDialog();
 		this.dialog.setApplicationData(this);
 		this.outgoingInitiatingRequest = outgoingTransaction;
@@ -403,6 +404,7 @@ public class SipContext implements Call {
 			// processed
 			// Force call cancel and do not signal incoming to the controller
 			try {
+				state = ContextState.TERMINATED;
 				incomingTransaction.sendResponse(Response.REQUEST_TERMINATED,
 						null);
 				canceledCall();
@@ -421,7 +423,7 @@ public class SipContext implements Call {
 						.getCallId());
 		this.remoteParty = incomingTransaction.getServerTransaction()
 				.getDialog().getRemoteParty();
-		//this.mediaTypesModes = getModesOfMediaTypes();
+		// this.mediaTypesModes = getModesOfMediaTypes();
 		this.incomingInitiatingRequest = incomingTransaction;
 
 		// Notify the incoming call to EndPoint controllers and waits for
@@ -437,14 +439,16 @@ public class SipContext implements Call {
 			// Call terminate request arrived between 200 OK response and ACK
 			// 1.- CANCEL request, either remote or local, arrived after 200 OK
 			// 2.- Error found.Normally associated to media
-			// 3.- Terminate request due to lack of ACK (symetric NAT problem)
+			// 3.- Terminate request due to lack of ACK (symmetric NAT problem)
 
-			//if (DialogState.CONFIRMED.equals(dialog.getState())) {
-			if (! terminated) {
+			// if (DialogState.CONFIRMED.equals(dialog.getState())) {
+			if (ContextState.CONFIRMED.equals(state)) {
 				// Terminate call only if dialog is still in confirmed state
-				// Use terminated variable as dialog state does not change quick enough
+				// Use terminated variable as dialog state does not change quick
+				// enough
 				try {
 					log.debug("Inmediatelly terminate an already stablished call");
+					state = ContextState.TERMINATED;
 					new CBye(this);
 				} catch (ServerInternalErrorException e) {
 					String msg = "Unable to terminate CALL for dialog: "
@@ -458,6 +462,7 @@ public class SipContext implements Call {
 
 		} else if (networkConnection != null) {
 			try {
+				state=ContextState.CONFIRMED;
 				networkConnection.confirm();
 				mediaTypesModes = getModesOfMediaTypes();
 				notifySipCallEvent(CallEvent.CALL_SETUP);
@@ -496,9 +501,9 @@ public class SipContext implements Call {
 
 	public void busyCall() {
 		notifySipCallEvent(CallEvent.CALL_BUSY);
-		terminatedCall();		
+		terminatedCall();
 	}
-	
+
 	public void rejectedCall() {
 		notifySipCallEvent(CallEvent.CALL_REJECT);
 		terminatedCall();

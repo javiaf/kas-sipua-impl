@@ -28,6 +28,7 @@ import org.slf4j.LoggerFactory;
 
 import com.kurento.commons.sip.transaction.CRegister;
 import com.kurento.commons.ua.Call;
+import com.kurento.commons.ua.CallAttributes;
 import com.kurento.commons.ua.CallListener;
 import com.kurento.commons.ua.EndPoint;
 import com.kurento.commons.ua.EndPointListener;
@@ -249,13 +250,23 @@ public class SipEndPointImpl implements EndPoint {
 		return userName;
 	}
 
+
 	@Override
-	public Call dial(String remoteParty, CallListener callController)
+	public Call dial(String remoteParty,
+			CallListener callController) throws ServerInternalErrorException {
+		return dial (remoteParty, new CallAttributes(), callController);
+	}
+	
+	@Override
+	public Call dial(String remoteParty, CallAttributes callAttributes, CallListener callController)
 			throws ServerInternalErrorException {
 
 		if (remoteParty != null) {
 			log.debug("Creating new SipContext");
 			SipContext sipContext = new SipContext(this);
+			if (callAttributes != null) {
+				sipContext.setCallAttributes(callAttributes);
+			}
 			sipContext.addListener(callController);
 			Address remotePartyAddress;
 			try {
