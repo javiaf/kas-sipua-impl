@@ -115,6 +115,14 @@ public class UaFactory {
 		UaImpl ua = new UaImpl(config);
 		return ua;
 	}
+	
+	public static NetworkListener getNetworkListener (UA ua) {
+		if (ua instanceof UaImpl){
+			return ((UaImpl) ua).getNetworkListener();
+		} else {
+			return null;
+		}
+	}
 
 	/**
 	 * Returns the User Agent header as defined by JAIN-SIP

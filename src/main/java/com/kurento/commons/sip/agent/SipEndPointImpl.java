@@ -97,15 +97,6 @@ public class SipEndPointImpl implements EndPoint {
 
 	}
 
-	protected void reconfigureEndPoint() throws ParseException {
-
-		this.contactAddress = UaFactory.getAddressFactory().createAddress(
-				"sip:" + userName + "@" + ua.getPublicAddress() + ":"
-						+ ua.getPublicPort());
-		// The register will do the UA when it has connectivity
-		// register();
-	}
-
 	// //////////
 	//
 	// Getters
@@ -115,7 +106,7 @@ public class SipEndPointImpl implements EndPoint {
 	public Address getAddress() {
 		return sipUriAddress;
 	}
-	
+
 	@Override
 	public String getUri() {
 		return sipUriAddress.toString();
@@ -167,7 +158,8 @@ public class SipEndPointImpl implements EndPoint {
 		if (EndPointEvent.REGISTER_USER_SUCESSFUL.equals(eventType)
 				&& expires != 0) {
 
-			log.debug("Endpoint becomes registered: " + eventType + ", expires=" + expires);
+			log.debug("Endpoint becomes registered: " + eventType
+					+ ", expires=" + expires);
 			setIsRegister(true);
 
 			// Set new Register schedule
@@ -181,7 +173,8 @@ public class SipEndPointImpl implements EndPoint {
 				|| EndPointEvent.REGISTER_USER_FAIL.equals(eventType)
 				|| EndPointEvent.REGISTER_USER_NOT_FOUND.equals(eventType)) {
 
-			log.debug("Endpoint becomes de-registered: " + eventType + ", expires=" + expires);
+			log.debug("Endpoint becomes de-registered: " + eventType
+					+ ", expires=" + expires);
 			setIsRegister(false);
 		}
 		if (listener != null) {
@@ -207,11 +200,41 @@ public class SipEndPointImpl implements EndPoint {
 		return this.ua;
 	}
 
-	public void register(int expires) throws ServerInternalErrorException {
-		this.expires = expires;
+	protected void register(int expires) throws ServerInternalErrorException {
+		log.debug("Request to register Endpoint: " + getUri());
+		
+		if (expires != 0) {
+			// Calculate current contact address
+			Address contactAddress;
+			try {
+				contactAddress = UaFactory.getAddressFactory()
+						.createAddress(
+								"sip:" + userName + "@"
+										+ ua.getPublicAddress() + ":"
+										+ ua.getPublicPort());
+			} catch (ParseException e) {
+				throw new ServerInternalErrorException(
+						"Unable to create contact address while registering",
+						e);
+			}
+			log.debug("Calculate contact address: " + contactAddress);
+			if (!contactAddress.equals(this.contactAddress)) {
+				log.debug("Detected contact address change from : " + this.contactAddress + " to " + contactAddress);
+				// Contact address changed
+				if (isRegister) {
+					log.debug("Endpoint was already registered with old contact. De-Register first");
+					// if still registered unregister previous contact
+					register(0);
+				}
+				// Set new contact address
+				this.contactAddress = contactAddress;
+			}
+		}
+		
 		if (receiveCall) {
-			// Create call ID to avoid IP addresses that can be mangled by
-			// routers
+			this.expires = expires;
+
+			// Register contact
 			SipProvider sipProvider = getUa().getSipProvider();
 
 			if (sipProvider == null)
@@ -228,13 +251,15 @@ public class SipEndPointImpl implements EndPoint {
 			} catch (ParseException e) {
 				log.warn("Unable to set callid for REGISTER request. Continue anyway");
 			}
-			
+
 			// Before registration remove previous timers
 			timer.cancel(sipEndPointTimerTask);
 			
 			CRegister register;
 			register = new CRegister(this);
 			register.sendRequest(null);
+		} else {
+			log.debug("Do not send REGISTER request. No call reception configured");
 		}
 	}
 
@@ -250,16 +275,15 @@ public class SipEndPointImpl implements EndPoint {
 		return userName;
 	}
 
+	@Override
+	public Call dial(String remoteParty, CallListener callController)
+			throws ServerInternalErrorException {
+		return dial(remoteParty, new CallAttributes(), callController);
+	}
 
 	@Override
-	public Call dial(String remoteParty,
+	public Call dial(String remoteParty, CallAttributes callAttributes,
 			CallListener callController) throws ServerInternalErrorException {
-		return dial (remoteParty, new CallAttributes(), callController);
-	}
-	
-	@Override
-	public Call dial(String remoteParty, CallAttributes callAttributes, CallListener callController)
-			throws ServerInternalErrorException {
 
 		if (remoteParty != null) {
 			log.debug("Creating new SipContext");

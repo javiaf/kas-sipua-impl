@@ -28,6 +28,7 @@ import org.slf4j.LoggerFactory;
 //import com.kurento.commons.sip.agent.EndPointFactory;
 import com.kurento.commons.sip.agent.UaFactory;
 import com.kurento.commons.sip.testutils.MediaSessionDummy;
+import com.kurento.commons.sip.testutils.NetworkController;
 import com.kurento.commons.sip.testutils.SipEndPointController;
 import com.kurento.commons.sip.testutils.TestConfig;
 import com.kurento.commons.sip.testutils.TestTimer;
@@ -46,6 +47,9 @@ public class BugTest {
 	private static SipEndPointController serverEndPointController;
 	private static SipEndPointController clientEndPointController;
 	private static SipEndPointController secondClientEndPointController;
+	
+	private static NetworkController serverNc;
+	private static NetworkController clientNc;
 
 	private static TestTimer serverTimer;
 	private static TestTimer clientTimer;
@@ -92,7 +96,9 @@ public class BugTest {
 		// "kurento.com",
 		// "", expires, serverUa, serverEndPointController, false);
 		// Create SIP stack and activate SIP EndPoints
-		serverUa.reconfigure();
+		serverNc = new NetworkController();
+		serverNc.setNetworkListener(UaFactory.getNetworkListener(serverUa));
+		serverNc.execNetworkChange();
 
 		SipConfig sConfig = new SipConfig();
 		sConfig.setProxyAddress(TestConfig.CLIENT_IP);
@@ -112,7 +118,9 @@ public class BugTest {
 		// "kurento.com",
 		// "", expires, clientUa, clientEndPointController, false);
 		// Create SIP stack and activate SIP EndPoints
-		clientUa.reconfigure();
+		clientNc = new NetworkController();
+		clientNc.setNetworkListener(UaFactory.getNetworkListener(clientUa));
+		clientNc.execNetworkChange();
 
 	}
 

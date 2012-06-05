@@ -168,32 +168,4 @@ public class SInvite extends STransaction {
 	private void processAck() {
 		log.debug("Invite transaction received a valid ACK for non 2xx response");
 	}
-
-	private void sendErrorResponse(SdpPortManagerEvent event) {
-
-		EventType eventType = event.getEventType();
-
-		try {
-			if (SdpPortManagerEvent.NETWORK_STREAM_FAILURE.equals(eventType)) {
-				sendResponse(Response.SERVER_INTERNAL_ERROR, null);
-
-			} else if (SdpPortManagerEvent.RESOURCE_UNAVAILABLE
-					.equals(eventType)) {
-				sendResponse(Response.SERVICE_UNAVAILABLE, null);
-
-			} else if (SdpPortManagerEvent.SDP_GLARE.equals(eventType)) {
-
-			} else if (SdpPortManagerEvent.SDP_NOT_ACCEPTABLE.equals(eventType)) {
-
-			} else if (SdpPortManagerEvent.UNSOLICITED_OFFER_GENERATED
-					.equals(eventType)) {
-
-			} else {
-
-			}
-		} catch (Exception e) {
-			log.error("Unable to send error response", e);
-		}
-
-	}
 }

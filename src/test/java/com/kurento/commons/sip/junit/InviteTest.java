@@ -30,6 +30,7 @@ import org.slf4j.LoggerFactory;
 import com.kurento.commons.sip.agent.UaFactory;
 import com.kurento.commons.sip.agent.UaImpl;
 import com.kurento.commons.sip.testutils.MediaSessionDummy;
+import com.kurento.commons.sip.testutils.NetworkController;
 import com.kurento.commons.sip.testutils.SipCallController;
 import com.kurento.commons.sip.testutils.SipEndPointController;
 import com.kurento.commons.sip.testutils.TestConfig;
@@ -47,13 +48,16 @@ import com.kurento.commons.ua.timer.KurentoUaTimer;
 public class InviteTest {
 
 	private final static Logger log = LoggerFactory
-			.getLogger(RegisterTest.class);
+			.getLogger(InviteTest.class);
 
 	private static UA serverUa;
 	private static UA clientUa;
 
 	private static SipEndPointController serverEndPointController;
 	private static SipEndPointController clientEndPointController;
+	
+	private static NetworkController serverNc;
+	private static NetworkController clientNc;
 
 	private static KurentoUaTimer timer;
 
@@ -106,7 +110,9 @@ public class InviteTest {
 		// "kurento.com",
 		// "", expires, serverUa, serverEndPointController, false);
 		// Create SIP stack and activate SIP EndPoints
-		serverUa.reconfigure();
+		serverNc = new NetworkController();
+		serverNc.setNetworkListener(UaFactory.getNetworkListener(serverUa));
+		serverNc.execNetworkChange();
 
 		SipConfig sConfig = new SipConfig();
 		sConfig.setProxyAddress(TestConfig.CLIENT_IP);
@@ -127,8 +133,9 @@ public class InviteTest {
 		// "kurento.com",
 		// "", expires, clientUa, clientEndPointController, false);
 		// Create SIP stack and activate SIP EndPoints
-		clientUa.reconfigure();
-
+		clientNc = new NetworkController();
+		clientNc.setNetworkListener(UaFactory.getNetworkListener(clientUa));
+		clientNc.execNetworkChange();
 	}
 
 	@AfterClass
@@ -165,7 +172,7 @@ public class InviteTest {
 		log.info(serverName + " expects incoming call from " + clientName
 				+ "...");
 		endPointEvent = serverEndPointController
-				.pollSipEndPointEvent(TestConfig.WAIT_TIME);
+				.pollSipEndPointEvent(TestConfig.WAIT_TIME );
 		assertTrue("No message received in server UA", endPointEvent != null);
 		assertTrue(
 				"Bad message received in server UA: "
@@ -380,6 +387,17 @@ public class InviteTest {
 				CallEvent.CALL_RINGING.equals(callEvent.getEventType()));
 		log.info("OK");
 
+		// CREATE NEW THREAD TO SEND ACK AND BY AT THE SAME TIME
+		Thread terminateThread = new Thread(new Runnable() {
+			public void run() {
+				try {
+					serverCallt3.terminate();
+				} catch (ServerInternalErrorException e) {
+					log.error("Unable to accept call", e);
+				}
+
+			}
+		});
 		// C:<----------200 OK --:S
 		log.info(serverName + " accepts call...");
 		SipCallController callControllerServer = new SipCallController(
@@ -392,17 +410,8 @@ public class InviteTest {
 		// Send BYE. Response will still be under process due to
 		// MediaSessionDummy sleep timer and ACK not sent
 		log.info(serverName + " hangup...");
-		
-		new Thread(new Runnable() {
-			public void run() {
-				try {
-					serverCallt3.terminate();
-				} catch (ServerInternalErrorException e) {
-					log.error("Unable to accept call", e);
-				}
+		terminateThread.start();
 
-			}
-		}).start();
 				
 		log.info(clientName + " expects accepted call from " + serverName
 				+ "...");
@@ -502,98 +511,99 @@ public class InviteTest {
 		log.info("OK");
 	}
 
-	/*
-	 * Try send invite with an empty sdp
-	 */
-	@Test
-	public void testCallWithSdpEmpty() throws Exception {
-		log.info("-------------------- Test Call With Sdp Empty --------------------");
-
-		EndPointEvent endPointEvent;
-		CallEvent callEvent;
-
-		// Set sdp empty
-		mediaSessionDummy.setSdpType(SdpPortManagerType.SDP_EMPTY);
-		UaFactory.setMediaSession(mediaSessionDummy);
-
-		// C:---INVITE---------->:S
-		log.info(clientName + " dial to " + serverName + "...");
-		SipCallController callControllerClient = new SipCallController(
-				clientName);
-		Call clientCall = clientEndPoint.dial(serverUri, callControllerClient);
-		log.info("OK");
-
-		log.info(serverName + " expects incoming call from " + clientName
-				+ "...");
-		endPointEvent = serverEndPointController
-				.pollSipEndPointEvent(TestConfig.WAIT_TIME);
-		assertTrue("No message received in server UA", endPointEvent != null);
-		assertTrue(
-				"Bad message received in server UA: "
-						+ endPointEvent.getEventType(),
-				EndPointEvent.INCOMING_CALL.equals(endPointEvent.getEventType()));
-		Call serverCall = endPointEvent.getCallSource();
-		log.info("OK");
-
-		log.info(clientName + " expects ringing from " + serverName + "...");
-		callEvent = callControllerClient
-				.pollSipEndPointEvent(TestConfig.WAIT_TIME);
-		assertTrue("No message received in client UA", callEvent != null);
-		assertTrue("Bad message received in client UA",
-				CallEvent.CALL_RINGING.equals(callEvent.getEventType()));
-		log.info("OK");
-
-		// C:<----------200 OK --:S
-		log.info(serverName + " accepts call...");
-		SipCallController callControllerServer = new SipCallController(
-				serverName);
-		serverCall.addListener(callControllerServer);
-		serverCall.accept();
-		log.info("OK");
-
-		log.info(clientName + " expects accepted call from " + serverName
-				+ "...");
-		callEvent = callControllerClient
-				.pollSipEndPointEvent(TestConfig.WAIT_TIME);
-		assertTrue("No message received in client UA", callEvent != null);
-		assertTrue("Bad message received in client UA",
-				CallEvent.CALL_SETUP.equals(callEvent.getEventType()));
-		log.info("OK");
-
-		// C:---ACK------------->:S
-		log.info(serverName + " expects ACK from " + clientName + "...");
-		callEvent = callControllerServer
-				.pollSipEndPointEvent(TestConfig.WAIT_TIME);
-		assertTrue("No message received in client UA", callEvent != null);
-		assertTrue("Bad message received in client UA",
-				CallEvent.CALL_SETUP.equals(callEvent.getEventType()));
-		log.info("OK");
-
-		// C:---BYE------------->:S
-		log.info(clientName + " hangup...");
-		clientCall.terminate();
-		log.info("OK");
-
-		log.info(serverName + " expects call hangup from " + clientName + "...");
-		callEvent = callControllerServer
-				.pollSipEndPointEvent(TestConfig.WAIT_TIME);
-		assertTrue("No message received in server UA", callEvent != null);
-		assertTrue("Bad message received in server UA",
-				CallEvent.CALL_TERMINATE.equals(callEvent.getEventType()));
-		log.info("OK");
-
-		// C:<----------200 OK --:S
-		log.info(clientName + " call terminate...");
-		callEvent = callControllerClient
-				.pollSipEndPointEvent(TestConfig.WAIT_TIME);
-		assertTrue("No message received in client UA", callEvent != null);
-		assertTrue("Bad message received in client UA",
-				CallEvent.CALL_TERMINATE.equals(callEvent.getEventType()));
-
-		log.info("OK");
-
-		log.info(" -------------------- End Test Call With Sdp Empty--------------------");
-	}
+// This test to me moved to kas-mscontrol
+//	/*
+//	 * Try send invite with an empty sdp
+//	 */
+//	@Test
+//	public void testCallWithSdpEmpty() throws Exception {
+//		log.info("-------------------- Test Call With Sdp Empty --------------------");
+//
+//		EndPointEvent endPointEvent;
+//		CallEvent callEvent;
+//
+//		// Set sdp empty
+//		mediaSessionDummy.setSdpType(SdpPortManagerType.SDP_EMPTY);
+//		UaFactory.setMediaSession(mediaSessionDummy);
+//
+//		// C:---INVITE---------->:S
+//		log.info(clientName + " dial to " + serverName + "...");
+//		SipCallController callControllerClient = new SipCallController(
+//				clientName);
+//		Call clientCall = clientEndPoint.dial(serverUri, callControllerClient);
+//		log.info("OK");
+//
+//		log.info(serverName + " expects incoming call from " + clientName
+//				+ "...");
+//		endPointEvent = serverEndPointController
+//				.pollSipEndPointEvent(TestConfig.WAIT_TIME);
+//		assertTrue("No message received in server UA", endPointEvent != null);
+//		assertTrue(
+//				"Bad message received in server UA: "
+//						+ endPointEvent.getEventType(),
+//				EndPointEvent.INCOMING_CALL.equals(endPointEvent.getEventType()));
+//		Call serverCall = endPointEvent.getCallSource();
+//		log.info("OK");
+//
+//		log.info(clientName + " expects ringing from " + serverName + "...");
+//		callEvent = callControllerClient
+//				.pollSipEndPointEvent(TestConfig.WAIT_TIME);
+//		assertTrue("No message received in client UA", callEvent != null);
+//		assertTrue("Bad message received in client UA",
+//				CallEvent.CALL_RINGING.equals(callEvent.getEventType()));
+//		log.info("OK");
+//
+//		// C:<----------200 OK --:S
+//		log.info(serverName + " accepts call...");
+//		SipCallController callControllerServer = new SipCallController(
+//				serverName);
+//		serverCall.addListener(callControllerServer);
+//		serverCall.accept();
+//		log.info("OK");
+//
+//		log.info(clientName + " expects accepted call from " + serverName
+//				+ "...");
+//		callEvent = callControllerClient
+//				.pollSipEndPointEvent(TestConfig.WAIT_TIME);
+//		assertTrue("No message received in client UA", callEvent != null);
+//		assertTrue("Bad message received in client UA",
+//				CallEvent.CALL_SETUP.equals(callEvent.getEventType()));
+//		log.info("OK");
+//
+//		// C:---ACK------------->:S
+//		log.info(serverName + " expects ACK from " + clientName + "...");
+//		callEvent = callControllerServer
+//				.pollSipEndPointEvent(TestConfig.WAIT_TIME);
+//		assertTrue("No message received in client UA", callEvent != null);
+//		assertTrue("Bad message received in client UA",
+//				CallEvent.CALL_SETUP.equals(callEvent.getEventType()));
+//		log.info("OK");
+//
+//		// C:---BYE------------->:S
+//		log.info(clientName + " hangup...");
+//		clientCall.terminate();
+//		log.info("OK");
+//
+//		log.info(serverName + " expects call hangup from " + clientName + "...");
+//		callEvent = callControllerServer
+//				.pollSipEndPointEvent(TestConfig.WAIT_TIME);
+//		assertTrue("No message received in server UA", callEvent != null);
+//		assertTrue("Bad message received in server UA",
+//				CallEvent.CALL_TERMINATE.equals(callEvent.getEventType()));
+//		log.info("OK");
+//
+//		// C:<----------200 OK --:S
+//		log.info(clientName + " call terminate...");
+//		callEvent = callControllerClient
+//				.pollSipEndPointEvent(TestConfig.WAIT_TIME);
+//		assertTrue("No message received in client UA", callEvent != null);
+//		assertTrue("Bad message received in client UA",
+//				CallEvent.CALL_TERMINATE.equals(callEvent.getEventType()));
+//
+//		log.info("OK");
+//
+//		log.info(" -------------------- End Test Call With Sdp Empty--------------------");
+//	}
 
 	/*
 	 * Try send invite with a sdp with only video
@@ -781,100 +791,102 @@ public class InviteTest {
 		log.info(" -------------------- End Test Call With Sdp Only Audio--------------------");
 	}
 
-	/*
-	 * Try send invite with a sdp without video and audio
-	 */
-	// TODO this test pass but it is incorrect
-	@Test
-	public void testCallWithSdpWithOutVideoAndAudio() throws Exception {
-		log.info("-------------------- Test Call With Sdp WithOut Video and Audio --------------------");
-
-		EndPointEvent endPointEvent;
-		CallEvent callEvent;
-
-		// Set sdp empty
-		mediaSessionDummy
-				.setSdpType(SdpPortManagerType.SDP_WITHOUT_VIDEO_AUDIO);
-		UaFactory.setMediaSession(mediaSessionDummy);
-
-		// C:---INVITE---------->:S
-		log.info(clientName + " dial to " + serverName + "...");
-		SipCallController callControllerClient = new SipCallController(
-				clientName);
-		Call clientCall = clientEndPoint.dial(serverUri, callControllerClient);
-		log.info("OK");
-
-		log.info(serverName + " expects incoming call from " + clientName
-				+ "...");
-		endPointEvent = serverEndPointController
-				.pollSipEndPointEvent(TestConfig.WAIT_TIME);
-		assertTrue("No message received in server UA", endPointEvent != null);
-		assertTrue(
-				"Bad message received in server UA: "
-						+ endPointEvent.getEventType(),
-				EndPointEvent.INCOMING_CALL.equals(endPointEvent.getEventType()));
-		Call serverCall = endPointEvent.getCallSource();
-		log.info("OK");
-
-		log.info(clientName + " expects ringing from " + serverName + "...");
-		callEvent = callControllerClient
-				.pollSipEndPointEvent(TestConfig.WAIT_TIME);
-		assertTrue("No message received in client UA", callEvent != null);
-		assertTrue("Bad message received in client UA",
-				CallEvent.CALL_RINGING.equals(callEvent.getEventType()));
-		log.info("OK");
-
-		// C:<----------200 OK --:S
-		log.info(serverName + " accepts call...");
-		SipCallController callControllerServer = new SipCallController(
-				serverName);
-		serverCall.addListener(callControllerServer);
-		serverCall.accept();
-		log.info("OK");
-
-		log.info(clientName + " expects accepted call from " + serverName
-				+ "...");
-		callEvent = callControllerClient
-				.pollSipEndPointEvent(TestConfig.WAIT_TIME);
-		assertTrue("No message received in client UA", callEvent != null);
-		assertTrue("Bad message received in client UA",
-				CallEvent.CALL_SETUP.equals(callEvent.getEventType()));
-		log.info("OK");
-
-		// C:---ACK------------->:S
-		log.info(serverName + " expects ACK from " + clientName + "...");
-		callEvent = callControllerServer
-				.pollSipEndPointEvent(TestConfig.WAIT_TIME);
-		assertTrue("No message received in client UA", callEvent != null);
-		assertTrue("Bad message received in client UA",
-				CallEvent.CALL_SETUP.equals(callEvent.getEventType()));
-		log.info("OK");
-
-		// C:---BYE------------->:S
-		log.info(clientName + " hangup...");
-		clientCall.terminate();
-		log.info("OK");
-
-		log.info(serverName + " expects call hangup from " + clientName + "...");
-		callEvent = callControllerServer
-				.pollSipEndPointEvent(TestConfig.WAIT_TIME);
-		assertTrue("No message received in server UA", callEvent != null);
-		assertTrue("Bad message received in server UA",
-				CallEvent.CALL_TERMINATE.equals(callEvent.getEventType()));
-		log.info("OK");
-
-		// C:<----------200 OK --:S
-		log.info(clientName + " call terminate...");
-		callEvent = callControllerClient
-				.pollSipEndPointEvent(TestConfig.WAIT_TIME);
-		assertTrue("No message received in client UA", callEvent != null);
-		assertTrue("Bad message received in client UA",
-				CallEvent.CALL_TERMINATE.equals(callEvent.getEventType()));
-
-		log.info("OK");
-
-		log.info(" -------------------- End Test Call With Sdp WithOut Video and Audio --------------------");
-	}
+	
+// This test can be activated as soon as it is understand how kas-mscontrol handles this erroneous SDP 
+//	/*
+//	 * Try send invite with a sdp without video and audio
+//	 */
+//	// TODO this test pass but it is incorrect
+//	@Test
+//	public void testCallWithSdpWithoutVideoAndAudio() throws Exception {
+//		log.info("-------------------- Test Call With Sdp WithOut Video and Audio --------------------");
+//
+//		EndPointEvent endPointEvent;
+//		CallEvent callEvent;
+//
+//		// Set sdp empty
+//		mediaSessionDummy
+//				.setSdpType(SdpPortManagerType.SDP_WITHOUT_VIDEO_AUDIO);
+//		UaFactory.setMediaSession(mediaSessionDummy);
+//
+//		// C:---INVITE---------->:S
+//		log.info(clientName + " dial to " + serverName + "...");
+//		SipCallController callControllerClient = new SipCallController(
+//				clientName);
+//		Call clientCall = clientEndPoint.dial(serverUri, callControllerClient);
+//		log.info("OK");
+//
+//		log.info(serverName + " expects incoming call from " + clientName
+//				+ "...");
+//		endPointEvent = serverEndPointController
+//				.pollSipEndPointEvent(TestConfig.WAIT_TIME);
+//		assertTrue("No message received in server UA", endPointEvent != null);
+//		assertTrue(
+//				"Bad message received in server UA: "
+//						+ endPointEvent.getEventType(),
+//				EndPointEvent.INCOMING_CALL.equals(endPointEvent.getEventType()));
+//		Call serverCall = endPointEvent.getCallSource();
+//		log.info("OK");
+//
+//		log.info(clientName + " expects ringing from " + serverName + "...");
+//		callEvent = callControllerClient
+//				.pollSipEndPointEvent(TestConfig.WAIT_TIME);
+//		assertTrue("No message received in client UA", callEvent != null);
+//		assertTrue("Bad message received in client UA",
+//				CallEvent.CALL_RINGING.equals(callEvent.getEventType()));
+//		log.info("OK");
+//
+//		// C:<----------200 OK --:S
+//		log.info(serverName + " accepts call...");
+//		SipCallController callControllerServer = new SipCallController(
+//				serverName);
+//		serverCall.addListener(callControllerServer);
+//		serverCall.accept();
+//		log.info("OK");
+//
+//		log.info(clientName + " expects accepted call from " + serverName
+//				+ "...");
+//		callEvent = callControllerClient
+//				.pollSipEndPointEvent(TestConfig.WAIT_TIME);
+//		assertTrue("No message received in client UA", callEvent != null);
+//		assertTrue("Bad message received in client UA",
+//				CallEvent.CALL_SETUP.equals(callEvent.getEventType()));
+//		log.info("OK");
+//
+//		// C:---ACK------------->:S
+//		log.info(serverName + " expects ACK from " + clientName + "...");
+//		callEvent = callControllerServer
+//				.pollSipEndPointEvent(TestConfig.WAIT_TIME);
+//		assertTrue("No message received in client UA", callEvent != null);
+//		assertTrue("Bad message received in client UA",
+//				CallEvent.CALL_SETUP.equals(callEvent.getEventType()));
+//		log.info("OK");
+//
+//		// C:---BYE------------->:S
+//		log.info(clientName + " hangup...");
+//		clientCall.terminate();
+//		log.info("OK");
+//
+//		log.info(serverName + " expects call hangup from " + clientName + "...");
+//		callEvent = callControllerServer
+//				.pollSipEndPointEvent(TestConfig.WAIT_TIME);
+//		assertTrue("No message received in server UA", callEvent != null);
+//		assertTrue("Bad message received in server UA",
+//				CallEvent.CALL_TERMINATE.equals(callEvent.getEventType()));
+//		log.info("OK");
+//
+//		// C:<----------200 OK --:S
+//		log.info(clientName + " call terminate...");
+//		callEvent = callControllerClient
+//				.pollSipEndPointEvent(TestConfig.WAIT_TIME);
+//		assertTrue("No message received in client UA", callEvent != null);
+//		assertTrue("Bad message received in client UA",
+//				CallEvent.CALL_TERMINATE.equals(callEvent.getEventType()));
+//
+//		log.info("OK");
+//
+//		log.info(" -------------------- End Test Call With Sdp WithOut Video and Audio --------------------");
+//	}
 
 	/*
 	 * Try send invite with a sdp that wrong wrote Sip stack fixes the this
@@ -1086,13 +1098,13 @@ public class InviteTest {
 	public void testInviteWithTwoIncomingCalls() throws InterruptedException,
 			ServerInternalErrorException {
 
+		// Create a 2nd endpoint
 		SipEndPointController clientEndPointController2 = new SipEndPointController(
 				clientName + "2");
 		Map<String, Object> cEpConfig = new HashMap<String, Object>();
 		cEpConfig.put("SIP_RECEIVE_CALL", false);
 		EndPoint clientEndPoint2 = clientUa.registerEndpoint(clientName + "2",
 				"kurento.com", clientEndPointController2, cEpConfig);
-		clientUa.reconfigure();
 
 		// C1:------- INVITE --------->:S
 		log.info(clientName + " dial to " + serverName + "...");

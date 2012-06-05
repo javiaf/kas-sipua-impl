@@ -35,6 +35,7 @@ import com.kurento.commons.sip.agent.UaFactory;
 import com.kurento.commons.sip.agent.UaImpl;
 import com.kurento.commons.sip.event.SipEvent;
 import com.kurento.commons.sip.testutils.MediaSessionDummy;
+import com.kurento.commons.sip.testutils.NetworkController;
 import com.kurento.commons.sip.testutils.SipCallController;
 import com.kurento.commons.sip.testutils.SipEndPointController;
 import com.kurento.commons.sip.testutils.SipTransactionMonitor;
@@ -61,6 +62,9 @@ public class CancelTest {
 
 	private static SipEndPointController serverEndPointController;
 	private static SipEndPointController clientEndPointController;
+	
+	private static NetworkController serverNc;
+	private static NetworkController clientNc;
 
 	private static KurentoUaTimer timer;
 
@@ -112,7 +116,9 @@ public class CancelTest {
 		// "kurento.com",
 		// "", expires, serverUa, serverEndPointController, false);
 		// Create SIP stack and activate SIP EndPoints
-		serverUa.reconfigure();
+		serverNc = new NetworkController();
+		serverNc.setNetworkListener(UaFactory.getNetworkListener(serverUa));
+		serverNc.execNetworkChange();
 		// // Listen SIP events
 		// serverSipMonitor = new SipTransactionMonitor(serverName);
 		// ((UaImpl) serverUa).addUaSipListener(serverSipMonitor);
@@ -134,7 +140,9 @@ public class CancelTest {
 		// "kurento.com",
 		// "", 10, clientUa, clientEndPointController, false);
 		// Create SIP stack and activate SIP EndPoints
-		clientUa.reconfigure();
+		clientNc = new NetworkController();
+		clientNc.setNetworkListener(UaFactory.getNetworkListener(clientUa));
+		clientNc.execNetworkChange();
 		// // Listen SIP events
 		// clientSipMonitor = new SipTransactionMonitor(clientName);
 		// ((UaImpl) clientUa).addUaSipListener(clientSipMonitor);
@@ -387,7 +395,6 @@ public class CancelTest {
 				} catch (ServerInternalErrorException e) {
 					log.error("Unable to accept call", e);
 				}
-
 			}
 		}).start();
 
@@ -395,6 +402,8 @@ public class CancelTest {
 
 		// C:------CANCEL----->:S
 		log.info(clientName + " cancel call...");
+		// Wait just a moment to assure the cancel will be issued after response
+		Thread.sleep(1);
 		clientCall.terminate();
 		log.info("OK");
 
@@ -427,7 +436,7 @@ public class CancelTest {
 				CallEvent.CALL_TERMINATE.equals(callEvent.getEventType()));
 		log.info("OK");
 
-		log.info(" -------------------- Test Cancel with simultaneous accept --------------------");
+		log.info(" -------------------- Test Cancel with simultaneous accept finished OK --------------------");
 	}
 
 	/**
@@ -469,6 +478,7 @@ public class CancelTest {
 		// Send inmediate cancel
 		// C:----CANCEL -------------->:S
 		log.info(clientName + " cancel call...");
+		Thread.sleep(1);
 		clientCall.terminate();
 		log.info("OK");
 

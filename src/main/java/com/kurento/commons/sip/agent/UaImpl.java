@@ -87,7 +87,7 @@ import de.javawi.jstun.util.UtilityException;
  * @author fjlopez
  * 
  */
-public class UaImpl implements SipListener, UaStun {
+public class UaImpl implements SipListener, UaStun, NetworkListener {
 
 	private static final Logger log = LoggerFactory.getLogger(UaImpl.class);
 	private final int NUMBER_TRY = 20;
@@ -149,14 +149,17 @@ public class UaImpl implements SipListener, UaStun {
 	}
 
 	// //////////
+	//
+	// NETWORK LISTENER INTERFACE
+	//
+	// //////////
 
-	public void reconfigure() throws ServerInternalErrorException {
+	public void networkReconfigure() throws ServerInternalErrorException {
 		log.info("Reconfigure SIP UA network connection");
 
 		// Get the address where the SIP stack will get binded
-		InetAddress localAddressNew = getLocalInterface(config
-				.getLocalAddress());
-
+		InetAddress localAddressNew;
+		localAddressNew = getLocalInterface(config.getLocalAddress());
 		// Find out if there is a change in the interface
 		if (localAddressNew != null
 				&& !localAddressNew.getHostAddress().equals(localAddress)
@@ -175,7 +178,8 @@ public class UaImpl implements SipListener, UaStun {
 				int trying = 0;
 				while (trying < NUMBER_TRY) {
 					// STUN error => give up
-					// IOError = socket already in use => try again and find a
+					// IOError = socket already in use => try again and find
+					// a
 					// free socket
 					try {
 						try {
@@ -222,17 +226,14 @@ public class UaImpl implements SipListener, UaStun {
 			configureSipStack();
 
 			for (SipEndPointImpl endpoint : endPoints.values()) {
-				// endpoint.terminate();
-				try {
-					endpoint.reconfigureEndPoint();
-				} catch (ParseException e) {
-					throw new ServerInternalErrorException(
-							"Unable to reconfigure Endpoint:"
-									+ endpoint.getUserName());
-				}
 				endpoint.register(endpoint.getExpires());
 			}
+
 		}
+	}
+
+	protected NetworkListener getNetworkListener() {
+		return this;
 	}
 
 	private void configureSipStack() throws ServerInternalErrorException {
@@ -461,14 +462,24 @@ public class UaImpl implements SipListener, UaStun {
 				expires, this, listener, receiveCall);
 
 		endPoints.put(endpoint.getAddress().toString(), endpoint);
+
+		if (sipStack != null && !publicAddress.isEmpty()) {
+			// SIP stack and STUN test must be completed to allow register
+			endpoint.register(expires);
+		}
+
 		return endpoint;
 	}
 
 	@Override
-	public void unregisterEndpoint(EndPoint endpoint) {
+	public void unregisterEndpoint(EndPoint endpoint)
+			throws ServerInternalErrorException {
 		if (!(endpoint instanceof SipEndPointImpl))
 			return;
-		endPoints.remove(((SipEndPointImpl) endpoint).getAddress().toString());
+		SipEndPointImpl ep = endPoints.remove(((SipEndPointImpl) endpoint)
+				.getAddress().toString());
+		if (ep != null && sipStack != null)
+			ep.register(0);
 	}
 
 	@Override
@@ -641,8 +652,9 @@ public class UaImpl implements SipListener, UaStun {
 	public void processTimeout(TimeoutEvent timeoutEvent) {
 		log.warn("Transaction timeout:" + timeoutEvent.toString());
 		try {
-			if (timeoutEvent.getClientTransaction() != null){
-				CTransaction cTrns = (CTransaction) timeoutEvent.getClientTransaction().getApplicationData();
+			if (timeoutEvent.getClientTransaction() != null) {
+				CTransaction cTrns = (CTransaction) timeoutEvent
+						.getClientTransaction().getApplicationData();
 				if (cTrns != null)
 					cTrns.processTimeout();
 

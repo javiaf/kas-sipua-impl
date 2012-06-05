@@ -32,6 +32,7 @@ import com.kurento.commons.sip.agent.SipEndPointImpl;
 import com.kurento.commons.sip.agent.UaFactory;
 import com.kurento.commons.sip.agent.UaImpl;
 import com.kurento.commons.sip.testutils.MediaSessionDummy;
+import com.kurento.commons.sip.testutils.NetworkController;
 import com.kurento.commons.sip.testutils.SipEndPointController;
 import com.kurento.commons.sip.testutils.TestConfig;
 import com.kurento.commons.sip.testutils.TestErrorException;
@@ -52,6 +53,10 @@ public class RegisterTest {
 
 	private static SipEndPointController serverEndPointController;
 	private static SipEndPointController clientEndPointController;
+	
+	private static NetworkController serverNc;
+	private static NetworkController clientNc;
+
 
 	private static TestTimer timer;
 
@@ -100,7 +105,9 @@ public class RegisterTest {
 		// "kurento.com",
 		// "", expires, serverUa, serverEndPointController, false);
 		// Create SIP stack and activate SIP EndPoints
-		serverUa.reconfigure();
+		serverNc = new NetworkController();
+		serverNc.setNetworkListener(UaFactory.getNetworkListener(serverUa));
+		serverNc.execNetworkChange();
 
 	}
 
@@ -150,7 +157,9 @@ public class RegisterTest {
 		// "kurento.com",
 		// "", expires, clientUa, clientEndPointController, true);
 		// Create SIP stack and activate SIP EndPoints
-		clientUa.reconfigure();
+		clientNc = new NetworkController();
+		clientNc.setNetworkListener(UaFactory.getNetworkListener(clientUa));
+		clientNc.execNetworkChange();
 
 		// TODO: Unable to monitor message reception on server side
 
@@ -276,7 +285,10 @@ public class RegisterTest {
 			// "kurento.com",
 			// "", expires, clientUa, clientEndPointController, true);
 			// Create SIP stack and activate SIP EndPoints
-			clientUa.reconfigure();
+			clientNc = new NetworkController();
+			clientNc.setNetworkListener(UaFactory.getNetworkListener(clientUa));
+			clientNc.execNetworkChange();
+
 			long tStart = System.currentTimeMillis();
 
 			// TODO: Unable to monitor message reception on server side
@@ -375,7 +387,9 @@ public class RegisterTest {
 			clientEndPoint = clientUa.registerEndpoint(clientName,
 					"kurento.com", clientEndPointController, cEpConfig);
 			// Create SIP stack and activate SIP EndPoints
-			clientUa.reconfigure();
+			clientNc = new NetworkController();
+			clientNc.setNetworkListener(UaFactory.getNetworkListener(clientUa));
+			clientNc.execNetworkChange();
 
 			// C: x------TIMEOUT---:S
 			EndPointEvent endPointEvent = clientEndPointController
@@ -441,7 +455,9 @@ public class RegisterTest {
 			// "kurento.com",
 			// "", expires, clientUa, clientEndPointController, true);
 			// Create SIP stack and activate SIP EndPoints
-			clientUa.reconfigure();
+			clientNc = new NetworkController();
+			clientNc.setNetworkListener(UaFactory.getNetworkListener(clientUa));
+			clientNc.execNetworkChange();
 
 			// Check register is successfully completed
 			EndPointEvent endPointEvent = clientEndPointController
@@ -457,7 +473,9 @@ public class RegisterTest {
 
 			// Emulate network change with the UA reconfiguration
 			log.info(clientName + " has changed network interface");
-			clientUa.reconfigure();
+			clientNc = new NetworkController();
+			clientNc.setNetworkListener(UaFactory.getNetworkListener(clientUa));
+			clientNc.execNetworkChange();
 
 			// Check un-register is successfully completed
 			// TODO: add special event to signal unregister
@@ -488,70 +506,71 @@ public class RegisterTest {
 		}
 	}
 
-	/**
-	 * Verify the User Agent properly handles register requests after SIP stack
-	 * initialization failure
-	 * 
-	 * <pre>
-	 * C:Bad initialization
-	 * C:---REGISTER(exp=0)-X   :S - throw exception
-	 * </pre>
-	 * 
-	 * Associated case: #303
-	 * 
-	 * @throws TestErrorException
-	 * 
-	 * @throws ServerInternalErrorException
-	 */
-	@Test(expected = com.kurento.commons.sip.testutils.TestErrorException.class)
-	public void testRegisterAfterUAInitializationFailure()
-			throws TestErrorException {
-
-		log.info("-------------------- Test Register after UA initialization failure --------------------");
-
-		log.info("Initialize UA for user: " + clientName + "...");
-
-		//
-		SipConfig cConfig = new SipConfig();
-		cConfig.setProxyAddress(TestConfig.PROXY_IP);
-		cConfig.setProxyPort(TestConfig.PROXY_PORT);
-		cConfig.setLocalPort(0);
-		cConfig.setLocalAddress("nonet");
-		cConfig.setTimer(timer);
-
-		clientUa = UaFactory.getInstance(cConfig);
-		clientEndPointController = new SipEndPointController(clientName);
-		Map<String, Object> cEpConfig = new HashMap<String, Object>();
-		cEpConfig.put("SIP_EXPIRES", expires);
-		cEpConfig.put("SIP_RECEIVE_CALL", true);
-		try {
-			clientEndPoint = clientUa.registerEndpoint(clientName,
-					"kurento.com", clientEndPointController, cEpConfig);
-		} catch (ServerInternalErrorException e) {
-			log.info("Unable to create Endpoint", e);
-			assertTrue("Unable to create Endpoint", false);
-		}
-
-		// Provide a bad reconfiguration
-		log.info("Forze UA bad initialization with wrong interface name");
-		try {
-			clientUa.reconfigure();
-		} catch (ServerInternalErrorException e) {
-			log.info("Expected initialization problem", e);
-		}
-
-		log.info("Try to register Endpoint with unstable SIP stack");
-		// Force UA register
-		try {
-			((SipEndPointImpl) clientEndPoint).register(expires);
-		} catch (ServerInternalErrorException e) {
-			log.info(
-					"Failure while registering on a wrong initialized SIP stack",
-					e);
-			throw new TestErrorException(
-					"Failure while registering on a wrong initialized SIP stack",
-					e);
-		}
-	}
+// This test is deprecated as register method is not part of the API anymore
+//
+//	/**
+//	 * Verify the User Agent properly handles register requests after SIP stack
+//	 * initialization failure
+//	 * 
+//	 * <pre>
+//	 * C:Bad initialization
+//	 * C:---REGISTER(exp=0)-X   :S - throw exception
+//	 * </pre>
+//	 * 
+//	 * Associated case: #303
+//	 * 
+//	 * @throws TestErrorException
+//	 * 
+//	 * @throws ServerInternalErrorException
+//	 */
+//	@Test(expected = com.kurento.commons.sip.testutils.TestErrorException.class)
+//	public void testRegisterAfterUAInitializationFailure()
+//			throws TestErrorException {
+//
+//		log.info("-------------------- Test Register after UA initialization failure --------------------");
+//
+//		log.info("Initialize UA for user: " + clientName + "...");
+//
+//		//
+//		SipConfig cConfig = new SipConfig();
+//		cConfig.setProxyAddress(TestConfig.PROXY_IP);
+//		cConfig.setProxyPort(TestConfig.PROXY_PORT);
+//		cConfig.setLocalPort(0);
+//		cConfig.setLocalAddress("nonet");
+//		cConfig.setTimer(timer);
+//
+//		clientUa = UaFactory.getInstance(cConfig);
+//		clientEndPointController = new SipEndPointController(clientName);
+//		Map<String, Object> cEpConfig = new HashMap<String, Object>();
+//		cEpConfig.put("SIP_EXPIRES", expires);
+//		cEpConfig.put("SIP_RECEIVE_CALL", true);
+//		try {
+//			clientEndPoint = clientUa.registerEndpoint(clientName,
+//					"kurento.com", clientEndPointController, cEpConfig);
+//		} catch (ServerInternalErrorException e) {
+//			log.info("Unable to create Endpoint", e);
+//			assertTrue("Unable to create Endpoint", false);
+//		}
+//
+//		// Provide a bad reconfiguration
+//		log.info("Forze UA bad initialization with wrong interface name");
+//		clientNc = new NetworkController();
+//		clientNc.setNetworkListener(UaFactory.getNetworkListener(clientUa));
+//		clientNc.execNetworkChange();
+//
+//
+//		log.info("Try to register Endpoint with unstable SIP stack");
+//		// Force UA register
+//		try {
+//			((SipEndPointImpl) clientEndPoint).;
+//		} catch (ServerInternalErrorException e) {
+//			log.info(
+//					"Failure while registering on a wrong initialized SIP stack",
+//					e);
+//			throw new TestErrorException(
+//					"Failure while registering on a wrong initialized SIP stack",
+//					e);
+//		}
+//	}
 
 }

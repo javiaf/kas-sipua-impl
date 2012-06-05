@@ -72,19 +72,6 @@ public class CInvite extends CTransaction {
 										.sessionSpec2Sdp(
 												event.getMediaServerSdp())
 										.getBytes());
-								// It has been found dialog state takes time to
-								// change state. Make sure state us EARLY before
-								// registering outgoingCall
-								while (!DialogState.EARLY
-										.equals(CInvite.this.dialog.getState())) {
-									try {
-										Thread.sleep(5);
-									} catch (InterruptedException e) {
-										log.warn(
-												"Unable to stop thread until DialogState changes to EARLY after INVITE",
-												e);
-									}
-								}
 								// Notify the SIP context the request has been
 								// sent
 								CInvite.this.sipContext

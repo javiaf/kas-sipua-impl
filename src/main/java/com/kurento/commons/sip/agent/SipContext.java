@@ -119,7 +119,7 @@ public class SipContext implements Call {
 		createSdpPortManager();
 		return sdpPortManager;
 	}
-	
+
 	public void setCallAttributes(CallAttributes callAttributes) {
 		this.callAttributes = callAttributes;
 	}
@@ -134,7 +134,7 @@ public class SipContext implements Call {
 	public CallAttributes getAttributes() {
 		return callAttributes;
 	}
-	
+
 	@Override
 	public void accept() throws ServerInternalErrorException {
 		// Accept only if there are incoming transactions
@@ -150,9 +150,9 @@ public class SipContext implements Call {
 					"Bad accept. There isn't a incoming request to be accepted");
 		}
 
-		// Accept only possible to EARLY contexts
+		// Accept: only possible for EARLY contexts
 		if (ContextState.EARLY.equals(state)) {
-			state = ContextState.CONFIRMED;
+			stateTransition(ContextState.CONFIRMED);
 			incomingInitiatingRequest.sendResponse(Response.OK, getLocalSdp());
 		} else {
 			throw new ServerInternalErrorException(
@@ -171,8 +171,6 @@ public class SipContext implements Call {
 	public void terminate(TerminateReason code)
 			throws ServerInternalErrorException {
 
-		log.info("Request to terminate call with code:" + code);
-
 		// Label this context to be terminated as soon as possible
 		request2Terminate = true;
 
@@ -190,11 +188,13 @@ public class SipContext implements Call {
 			// Send cancel request
 			localCallCancel();
 
-		} else if (ContextState.CONFIRMED.equals(dialog.getState())) {
+		} else if (ContextState.CONFIRMED.equals(state)) {
 			// Terminate request after 200 OK response. ACK might still not
 			// being received
-			log.debug("Request to terminate established call (ACK might still be pending");
-			state = ContextState.TERMINATED;
+			log.debug("Request to terminate established call (ACK might still be pending)");
+			// Change state before request to avoid concurrent BYE requests from
+			// local party
+			stateTransition(ContextState.TERMINATED);
 			new CBye(this);
 
 		} else if (ContextState.EARLY.equals(state)
@@ -204,7 +204,10 @@ public class SipContext implements Call {
 			// This code competes with the remote cancel. First one to execute
 			// will cause the other to throw an exception avoiding duplicate
 			// events
-			state = ContextState.TERMINATED;
+			// Change state before response to avoid concurrent events with
+			// remote CANCEL events
+			stateTransition(ContextState.TERMINATED);
+			log.debug("Request to reject a call with code: " + code);
 			if (TerminateReason.BUSY.equals(code)) {
 				incomingInitiatingRequest
 						.sendResponse(Response.BUSY_HERE, null);
@@ -212,12 +215,16 @@ public class SipContext implements Call {
 				incomingInitiatingRequest.sendResponse(Response.DECLINE, null);
 			}
 			rejectedCall();
+		} else if (ContextState.TERMINATED.equals(state)) {
+			log.info("Call already terminated when hangup request,"
+					+ dialog.getDialogId());
 		}
 
 		// Do not accept call to this method
 		else {
 			throw new ServerInternalErrorException(
-					"Bad hangup. Unable to hangup a call");
+					"Bad hangup. Unable to hangup a call with current state: "
+							+ state);
 		}
 
 	}
@@ -329,7 +336,6 @@ public class SipContext implements Call {
 		this.remoteParty = remoteParty;
 		log.info("Request connection from " + localEndPoint.getAddress()
 				+ " => To => " + remoteParty);
-		state = ContextState.EARLY;
 		new CInvite(this);
 		// Do not associate this CInvite to the outgoing call until the INVITE
 		// request is sent. This will be done through notification outgoingCall
@@ -349,20 +355,20 @@ public class SipContext implements Call {
 	public void remoteCallCancel() throws ServerInternalErrorException {
 		log.info("Request call Cancel from remote peer");
 		request2Terminate = true;
-		if (incomingInitiatingRequest != null) {
+		if (incomingInitiatingRequest != null
+				&& ContextState.EARLY.equals(state)) {
 			// Cancel received after SDP offer has been process
-			// Send now the response
-			// If 200OK response is already sent it will throw an exception and
-			// no cancel notification will be sent to local party. The call will
-			// progress normally
-			state = ContextState.TERMINATED;
+			// Send now the response and before 200 OK response has been sent
+			// (accept)
+			stateTransition(ContextState.TERMINATED);
 			incomingInitiatingRequest.sendResponse(Response.REQUEST_TERMINATED,
 					null);
 			canceledCall();
 			// Remove reference to the initiating request
 			incomingInitiatingRequest = null;
 		} else {
-			// Cancel received before the SDP has been processed
+			// Cancel received before the SDP has been processed. Wait
+			// incomingCall event before cancel can be performed
 			log.info("Incoming pending request to cancel not yet processed");
 		}
 	}
@@ -376,7 +382,7 @@ public class SipContext implements Call {
 		if (outgoingTransaction == null)
 			return;
 
-		state = ContextState.EARLY;
+		stateTransition(ContextState.EARLY);
 		this.dialog = outgoingTransaction.getClientTransaction().getDialog();
 		this.dialog.setApplicationData(this);
 		this.outgoingInitiatingRequest = outgoingTransaction;
@@ -398,13 +404,20 @@ public class SipContext implements Call {
 		if (incomingTransaction == null)
 			return;
 
+		// Record remote party
+		this.remoteParty = incomingTransaction.getServerTransaction()
+				.getDialog().getRemoteParty();
+		this.incomingInitiatingRequest = incomingTransaction;
+
 		if (request2Terminate) {
 			// This condition can verify when a remote CANCEL request is
 			// received before the SDP offer of incoming INVITE is still being
 			// processed
 			// Force call cancel and do not signal incoming to the controller
+			stateTransition(ContextState.TERMINATED);
 			try {
-				state = ContextState.TERMINATED;
+				// Change before transition to avoid concurrent conflict with
+				// local reject
 				incomingTransaction.sendResponse(Response.REQUEST_TERMINATED,
 						null);
 				canceledCall();
@@ -414,41 +427,38 @@ public class SipContext implements Call {
 				// anything
 			}
 			release();
-			return;
+		} else {
+			// Received INVITE request and no terminate request received in
+			// between => Transition to EARLY
+			stateTransition(ContextState.EARLY);
+
+			// Notify the incoming call to EndPoint controllers and waits for
+			// response (accept or reject)
+			// Store pending request
+			log.info("Incoming call signalled with callId:"
+					+ incomingInitiatingRequest.getServerTransaction()
+							.getDialog().getCallId());
+			localEndPoint.incomingCall(this);
 		}
-
-		// Store pending request
-		log.info("Incoming call signalled with callId:"
-				+ incomingTransaction.getServerTransaction().getDialog()
-						.getCallId());
-		this.remoteParty = incomingTransaction.getServerTransaction()
-				.getDialog().getRemoteParty();
-		// this.mediaTypesModes = getModesOfMediaTypes();
-		this.incomingInitiatingRequest = incomingTransaction;
-
-		// Notify the incoming call to EndPoint controllers and waits for
-		// response (accept or reject)
-		log.info("Notify incoming call to EndPoint listener");
-		localEndPoint.incomingCall(this);
 	}
 
 	// Used by transactions CInvite and SAck to inform when the call has set up
 	// has completed
 	public void completedCall() {
+
 		if (request2Terminate) {
 			// Call terminate request arrived between 200 OK response and ACK
 			// 1.- CANCEL request, either remote or local, arrived after 200 OK
 			// 2.- Error found.Normally associated to media
 			// 3.- Terminate request due to lack of ACK (symmetric NAT problem)
 
-			// if (DialogState.CONFIRMED.equals(dialog.getState())) {
-			if (ContextState.CONFIRMED.equals(state)) {
-				// Terminate call only if dialog is still in confirmed state
+			if (!ContextState.TERMINATED.equals(state)) {
+				// Terminate call not already terminated
 				// Use terminated variable as dialog state does not change quick
 				// enough
 				try {
 					log.debug("Inmediatelly terminate an already stablished call");
-					state = ContextState.TERMINATED;
+					stateTransition(ContextState.TERMINATED);
 					new CBye(this);
 				} catch (ServerInternalErrorException e) {
 					String msg = "Unable to terminate CALL for dialog: "
@@ -462,7 +472,7 @@ public class SipContext implements Call {
 
 		} else if (networkConnection != null) {
 			try {
-				state=ContextState.CONFIRMED;
+				stateTransition(ContextState.CONFIRMED);
 				networkConnection.confirm();
 				mediaTypesModes = getModesOfMediaTypes();
 				notifySipCallEvent(CallEvent.CALL_SETUP);
@@ -554,6 +564,20 @@ public class SipContext implements Call {
 	// Helper functions
 	//
 	// //////////////////////
+
+	private void stateTransition(ContextState newState) {
+		String local = localEndPoint.getUri();
+		String remote = remoteParty.toString();
+		String arrow;
+		if (incomingInitiatingRequest != null)
+			arrow = " <<< ";
+		else
+			arrow = " >>> ";
+		log.debug("--------- SIP CONTEXT STATE TRANSITION ");
+		log.debug("| " + local + arrow + remote + ": " + state + " ---> "
+				+ newState);
+		state = newState;
+	}
 
 	// Used internally by Context to signal internal error conditions precenting
 	// call setup
