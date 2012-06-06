@@ -138,7 +138,7 @@ public class SipContext implements Call {
 	@Override
 	public void accept() throws ServerInternalErrorException {
 		// Accept only if there are incoming transactions
-		log.debug("Accept Call: Check if there is a pending transaction");
+		log.debug("Accept Call: " + getCallInfo());
 
 		if (dialog == null) {
 			throw new ServerInternalErrorException(
@@ -178,20 +178,20 @@ public class SipContext implements Call {
 		if (state == ContextState.NULL) {
 			// State is null until INVITE request is sent.
 			// DO NOTHING. Cancel must be sent after invite is sent
-			log.debug("Request to terminate outgoing call with no INVITE transaction created yet");
+			log.debug("Request to terminate outgoing call with no INVITE transaction created yet: " + getCallInfo());
 
 		} else if (ContextState.EARLY.equals(state)
 				&& outgoingInitiatingRequest != null) {
 			// Hang out an outgoing call after INVITE request is sent and
 			// before response is received
-			log.debug("Request to terminate pending outgoing call");
+			log.debug("Request to terminate pending outgoing call: "+ getCallInfo());
 			// Send cancel request
 			localCallCancel();
 
 		} else if (ContextState.CONFIRMED.equals(state)) {
 			// Terminate request after 200 OK response. ACK might still not
 			// being received
-			log.debug("Request to terminate established call (ACK might still be pending)");
+			log.debug("Request to terminate established call (ACK might still be pending):" + getCallInfo());
 			// Change state before request to avoid concurrent BYE requests from
 			// local party
 			stateTransition(ContextState.TERMINATED);
@@ -200,7 +200,7 @@ public class SipContext implements Call {
 		} else if (ContextState.EARLY.equals(state)
 				&& incomingInitiatingRequest != null) {
 			// TU requested CALL reject
-			log.debug("Request to reject incoming call");
+			log.debug("Request to reject incoming call: " + getCallInfo());
 			// This code competes with the remote cancel. First one to execute
 			// will cause the other to throw an exception avoiding duplicate
 			// events
@@ -217,13 +217,13 @@ public class SipContext implements Call {
 			rejectedCall();
 		} else if (ContextState.TERMINATED.equals(state)) {
 			log.info("Call already terminated when hangup request,"
-					+ dialog.getDialogId());
+					+ dialog.getDialogId() +": " + getCallInfo());
 		}
 
 		// Do not accept call to this method
 		else {
 			throw new ServerInternalErrorException(
-					"Bad hangup. Unable to hangup a call with current state: "
+					"Bad hangup. Unable to hangup a call ("+ getCallInfo()+ ") with current state: "
 							+ state);
 		}
 
@@ -551,7 +551,7 @@ public class SipContext implements Call {
 	private void notifySipCallEvent(CallEventEnum eventType, String msg) {
 		// Notify call events when dialog are not complete
 		if (callListener != null) {
-			CallEvent event = new CallEvent(eventType, this);
+			CallEvent event = new CallEvent(eventType, msg, this);
 			try {
 				callListener.onEvent(event);
 			} catch (Exception e) {
@@ -566,16 +566,22 @@ public class SipContext implements Call {
 	//
 	// //////////////////////
 
-	private void stateTransition(ContextState newState) {
-		String local = localEndPoint.getUri();
-		String remote = remoteParty.toString();
+	private String getCallInfo() {
+		String local = localEndPoint!=null?localEndPoint.getUri():"???";
+		String remote = remoteParty!=null?remoteParty.toString():"???";
 		String arrow;
 		if (incomingInitiatingRequest != null)
 			arrow = " <<< ";
 		else
 			arrow = " >>> ";
+		return local + arrow + remote;
+		
+	}
+	
+	private void stateTransition(ContextState newState) {
+		
 		log.debug("--------- SIP CONTEXT STATE TRANSITION ");
-		log.debug("| " + local + arrow + remote + ": " + state + " ---> "
+		log.debug("| " + getCallInfo() + ": " + state + " ---> "
 				+ newState);
 		state = newState;
 	}

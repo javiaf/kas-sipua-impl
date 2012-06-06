@@ -46,7 +46,9 @@ import javax.sip.SipListener;
 import javax.sip.SipProvider;
 import javax.sip.SipStack;
 import javax.sip.TimeoutEvent;
+import javax.sip.TransactionAlreadyExistsException;
 import javax.sip.TransactionTerminatedEvent;
+import javax.sip.TransactionUnavailableException;
 import javax.sip.TransportNotSupportedException;
 import javax.sip.address.Address;
 import javax.sip.address.SipURI;
@@ -286,7 +288,6 @@ public class UaImpl implements SipListener, UaStun, NetworkListener {
 			listeningPoint.setSentBy(publicAddress + ":" + publicPort);
 			sipProvider = sipStack.createSipProvider(listeningPoint);
 			sipProvider.addSipListener(this);
-
 
 			if (keepAlive != null) {
 				// Disable keep alive if already active
@@ -547,6 +548,15 @@ public class UaImpl implements SipListener, UaStun, NetworkListener {
 				serverTransaction = sipProvider
 						.getNewServerTransaction(requestEvent.getRequest());
 			}
+		} catch (TransactionAlreadyExistsException e) {
+			log.warn("Request already has an active transaction. It shouldn't be delivered by SipStack");
+			return;
+		} catch (TransactionUnavailableException e) {
+			log.warn("Request is unable to get a valid transaction");
+			return;
+		}
+
+		try {
 
 			// Mainly for test purposes. Notify incoming transactions
 			for (UaMessageListener l : sipEventListeners) {
