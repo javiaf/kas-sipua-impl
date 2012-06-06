@@ -382,11 +382,11 @@ public class SipContext implements Call {
 		if (outgoingTransaction == null)
 			return;
 
-		stateTransition(ContextState.EARLY);
 		this.dialog = outgoingTransaction.getClientTransaction().getDialog();
 		this.dialog.setApplicationData(this);
 		this.outgoingInitiatingRequest = outgoingTransaction;
 
+		stateTransition(ContextState.EARLY);
 		if (request2Terminate) {
 			// Cancel request received from local party while SDP was generated.
 			try {
@@ -539,6 +539,7 @@ public class SipContext implements Call {
 	}
 
 	public void terminatedCall() {
+		stateTransition(ContextState.TERMINATED);
 		release();
 		notifySipCallEvent(CallEvent.CALL_TERMINATE);
 	}
