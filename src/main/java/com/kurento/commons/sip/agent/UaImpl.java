@@ -287,6 +287,11 @@ public class UaImpl implements SipListener, UaStun, NetworkListener {
 			sipProvider = sipStack.createSipProvider(listeningPoint);
 			sipProvider.addSipListener(this);
 
+
+			if (keepAlive != null) {
+				// Disable keep alive if already active
+				keepAlive.stop();
+			}
 			if (config.isEnableKeepAlive()) {
 				log.debug("Creating keepalive for hole punching");
 				try {
