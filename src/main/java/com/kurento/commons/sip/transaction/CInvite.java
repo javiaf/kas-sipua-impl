@@ -278,9 +278,16 @@ public class CInvite extends CTransaction {
 								// TODO: Analyze whether more detailed
 								// information
 								// is required of problem found
+								// Get error cause
+								String code;
+								if (eventType == null)
+									code = event.getError() +": " + event.getErrorText();
+								else 
+									code = eventType.toString();
+								
 								CInvite.this.sipContext
-										.callError("Unable to allocate network resources. SdpPortManager event="
-												+ eventType);
+										.callError("Unable to allocate network resources - "
+												+ code);
 							}
 
 						}

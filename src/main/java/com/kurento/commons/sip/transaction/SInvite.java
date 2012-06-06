@@ -25,6 +25,7 @@ import org.slf4j.LoggerFactory;
 
 import com.kurento.commons.media.format.conversor.SdpConversor;
 import com.kurento.commons.mscontrol.EventType;
+import com.kurento.commons.mscontrol.MediaErr;
 import com.kurento.commons.mscontrol.MediaEventListener;
 import com.kurento.commons.mscontrol.networkconnection.SdpPortManagerEvent;
 import com.kurento.commons.mscontrol.networkconnection.SdpPortManagerException;
@@ -121,8 +122,6 @@ public class SInvite extends STransaction {
 							} else {
 								// No caller listener available at this stage.
 								// Do not send any error event
-								log.debug("Unable to process SDP offer to an incoming invite. SDP Port Manager event:"
-										+ eventType);
 
 								try {
 									if (SdpPortManagerEvent.RESOURCE_UNAVAILABLE
@@ -142,6 +141,16 @@ public class SInvite extends STransaction {
 												Response.SERVER_INTERNAL_ERROR,
 												null);
 									}
+									
+									// Get error cause
+									String code;
+									if (eventType == null)
+										code = event.getError() +": " + event.getErrorText();
+									else 
+										code = eventType.toString();
+									
+									log.debug("Unable to process SDP offer to an incoming invite. SDP Port Manager event:"
+											+ code);
 								} catch (Exception e) {
 									log.error(
 											"Unable to send error response to an incoming invite",
