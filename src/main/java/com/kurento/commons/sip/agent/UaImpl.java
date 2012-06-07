@@ -396,8 +396,9 @@ public class UaImpl implements SipListener, UaStun, NetworkListener {
 			while (true) {
 				try {
 					log.info("Delete Sip listening point");
-					sipStack.deleteListeningPoint(sipProvider
-							.getListeningPoint(config.getTransport()));
+					String transport = config.getTransport();
+					ListeningPoint lp= sipProvider.getListeningPoint(transport);
+					sipStack.deleteListeningPoint(lp);
 					break;
 				} catch (ObjectInUseException e) {
 					try {
