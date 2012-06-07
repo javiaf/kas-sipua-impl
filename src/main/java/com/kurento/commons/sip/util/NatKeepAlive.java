@@ -3,6 +3,7 @@ package com.kurento.commons.sip.util;
 import gov.nist.javax.sip.ListeningPointExt;
 
 import java.io.IOException;
+
 import javax.sip.ListeningPoint;
 
 import org.slf4j.Logger;
@@ -21,12 +22,13 @@ public class NatKeepAlive {
 	private int proxyPort;
 	ListeningPointExt listeningPointImpl;
 	KurentoUaTimer timer;
-	private long delay = 5000;
+	// Hope seconds
+	private long delay = 5;
 
 	public NatKeepAlive(SipConfig config, ListeningPoint listeningPoint) throws ServerInternalErrorException {
 		proxyAddr = config.getProxyAddress();
 		proxyPort = config.getProxyPort();
-		delay = config.getKeepAlivePeriod();
+		delay = config.getKeepAlivePeriod() * 1000;
 		log.debug("Delay for hole punching setted as " + delay);
 		listeningPointImpl = (ListeningPointExt) listeningPoint;
 		timer = config.getTimer();
