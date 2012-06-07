@@ -33,6 +33,7 @@ import com.kurento.commons.media.format.SessionSpec;
 import com.kurento.commons.media.format.conversor.SdpConversor;
 import com.kurento.commons.media.format.enums.MediaType;
 import com.kurento.commons.media.format.enums.Mode;
+import com.kurento.commons.media.format.exceptions.ArgumentNotSetException;
 import com.kurento.commons.mscontrol.MsControlException;
 import com.kurento.commons.mscontrol.join.Joinable;
 import com.kurento.commons.mscontrol.join.JoinableStream.StreamType;
@@ -300,7 +301,11 @@ public class SipContext implements Call {
 
 				for (MediaSpec m : session.getMediaSpecs()) {
 					// Only it is to check that there is a rtp transport
-					m.getTransport().getRtp();
+					try {
+						m.getTransport().getRtp();
+					} catch (ArgumentNotSetException ex) {
+						continue;
+					}
 
 					// Check that Mode is Inactive
 					if (m.getMode() == Mode.INACTIVE)
