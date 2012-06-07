@@ -237,7 +237,7 @@ public class SipConfig {
 
 	/**
 	 * Configure SIP keep-alive interval. Is the period between two consecutive
-	 * SIP keep-alive packets when keep-alive is enabled
+	 * SIP keep-alive packets when keep-alive is enabled. Hope seconds
 	 * 
 	 * @return
 	 */
