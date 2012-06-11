@@ -35,8 +35,6 @@ import com.kurento.commons.media.format.enums.MediaType;
 import com.kurento.commons.media.format.enums.Mode;
 import com.kurento.commons.media.format.exceptions.ArgumentNotSetException;
 import com.kurento.commons.mscontrol.MsControlException;
-import com.kurento.commons.mscontrol.join.Joinable;
-import com.kurento.commons.mscontrol.join.JoinableStream.StreamType;
 import com.kurento.commons.mscontrol.networkconnection.NetworkConnection;
 import com.kurento.commons.mscontrol.networkconnection.SdpPortManager;
 import com.kurento.commons.sip.transaction.CBye;
@@ -241,6 +239,7 @@ public class SipContext implements Call {
 			callListener = null;
 	}
 
+	@Override
 	public NetworkConnection getNetworkConnection() {
 		return networkConnection;
 	}
@@ -270,15 +269,6 @@ public class SipContext implements Call {
 		if (remoteParty == null)
 			return null;
 		return remoteParty.toString();
-	}
-
-	@Override
-	public Joinable getJoinable(StreamType media) {
-		try {
-			return networkConnection.getJoinableStream(media);
-		} catch (MsControlException e) {
-			return null;
-		}
 	}
 
 	@Override

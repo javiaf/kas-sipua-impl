@@ -96,4 +96,10 @@ public class NetworkConnectionDummy implements NetworkConnection {
 		return sdpManager;
 	}
 
+	@Override
+	public long getBitrate(StreamType streamType, Direction direction) {
+		// TODO Auto-generated method stub
+		return 0;
+	}
+
 }
