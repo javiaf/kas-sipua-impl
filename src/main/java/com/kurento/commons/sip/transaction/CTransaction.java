@@ -372,7 +372,12 @@ public abstract class CTransaction extends Transaction {
 
 	public abstract void processResponse(ResponseEvent event);
 	
-	public void processTimeout(){}
+	public void processTimeout(){
+		log.info("Client transaction timeout");
+		if (sipContext != null) {
+			sipContext.callTimeout();
+		}
+	}
 
 
 

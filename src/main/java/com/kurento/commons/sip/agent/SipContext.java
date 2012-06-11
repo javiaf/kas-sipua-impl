@@ -542,6 +542,11 @@ public class SipContext implements Call {
 		notifySipCallEvent(CallEvent.USER_NOT_FOUND);
 		terminatedCall();
 	}
+	
+	public void callTimeout() {
+		notifySipCallEvent(CallEvent.CALL_ERROR, "Protocol transaction timeout");
+		terminatedCall();
+	}
 
 	public void terminatedCall() {
 		stateTransition(ContextState.TERMINATED);

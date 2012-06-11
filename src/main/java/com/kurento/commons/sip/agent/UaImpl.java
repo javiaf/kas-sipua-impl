@@ -397,7 +397,8 @@ public class UaImpl implements SipListener, UaStun, NetworkListener {
 				try {
 					log.info("Delete Sip listening point");
 					String transport = config.getTransport();
-					ListeningPoint lp= sipProvider.getListeningPoint(transport);
+					ListeningPoint lp = sipProvider
+							.getListeningPoint(transport);
 					sipStack.deleteListeningPoint(lp);
 					break;
 				} catch (ObjectInUseException e) {
@@ -673,9 +674,16 @@ public class UaImpl implements SipListener, UaStun, NetworkListener {
 						.getClientTransaction().getApplicationData();
 				if (cTrns != null)
 					cTrns.processTimeout();
+				timeoutEvent.getClientTransaction().terminate();
 
-			} else if (timeoutEvent.getServerTransaction() != null)
+			} else if (timeoutEvent.getServerTransaction() != null) {
+				STransaction sTrns = (STransaction) timeoutEvent
+						.getClientTransaction().getApplicationData();
+				if (sTrns != null)
+					sTrns.processTimeout();
 				timeoutEvent.getServerTransaction().terminate();
+			}
+
 		} catch (ObjectInUseException e) {
 			log.error("Unable to handle timeouts");
 		}

@@ -152,84 +152,11 @@ public abstract class STransaction extends Transaction {
 		}
 	}
 	
-//	@Override
-//	protected void processTimeOut(TimeoutEvent event) {
-//		log.warn("Timeout detected while processing Server Transaction");
-//		
-//	}
-	// ////////////////////
-	//
-	// SDP Port Manager Interface
-	//
-	// ////////////////////
-
-//	@Override
-//	public void onEvent(SdpPortManagerEvent event) {
-//		// Remove this transaction as a listener of the SDP Port Manager
-//		event.getSource().removeListener(this);
-//
-//		EventType eventType = event.getEventType();
-//		// List of events with default behavior in server transactions
-//		try {
-//			if (eventType != null) { // ok
-//				SessionSpec ss;
-//				try {
-//					ss = event.getMediaServerSdp();
-//					localSdp = SdpConversor.sessionSpec2SessionDescription(ss);
-//				} catch (SdpException e1) {
-//					// TODO Auto-generated catch block
-//					e1.printStackTrace();
-//				}
-//				if (SdpPortManagerEvent.ANSWER_GENERATED.equals(eventType)) {
-//					// Generated after processSdpOffer : SDP = response to give
-//					log.info("SDP answer successfully generated");
-//					this.sendResponse(Response.OK, localSdp);
-//				} else if (SdpPortManagerEvent.OFFER_GENERATED.equals(eventType)) {
-//					// Server INVITE with no SDP. Offer sent in 200ok response
-//					log.info("SDP offer successfully generated");
-//					this.sendResponse(Response.OK, localSdp);
-//				} else {
-//					log.error("Incorrect event received from SdpPortManager: " + eventType);
-//					this.sendResponse(Response.SERVER_INTERNAL_ERROR,null);
-//					sipContext.failedCall();
-//				}
-//			} else { // error
-//				MediaErr error = event.getError();
-//
-//				if (SdpPortManagerEvent.RESOURCE_UNAVAILABLE.equals(error)) {
-//					log.warn("SDP failed. No resources available");
-//					this.sendResponse(Response.TEMPORARILY_UNAVAILABLE, null);
-//					sipContext.failedCall();
-//				} else if (SdpPortManagerEvent.SDP_NOT_ACCEPTABLE.equals(error)) {
-//					log.warn("SDP failed. Not accepeted");
-//					this.sendResponse(Response.UNSUPPORTED_MEDIA_TYPE, null);
-//					sipContext.failedCall();
-//				} else {
-//					log.error("Incorrect event received from SdpPortManager: " + eventType);
-//					this.sendResponse(Response.SERVER_INTERNAL_ERROR,null);
-//					sipContext.failedCall();
-//				}
-//			}
-//			//TODO in SdpPortManagerEventImpl 
-//			/*
-//			if (SdpPortManagerEvent.OFFER_PARTIALLY_ACCEPTED.equals(eventType)) {
-//				// Try to initiate the connection with partial media
-//				log.warn("SDP offer partially generated");
-//				this.sendResponse(Response.OK, localSdp);
-//
-//			} else {
-//				log.error("Incorrect event received from SdpPortManager: " + eventType);
-//				this.sendResponse(Response.SERVER_INTERNAL_ERROR,null);
-//				sipContext.failedCall();
-//				
-//			}
-//			*/
-//		} catch (ServerInternalErrorException e) {
-//			log.error("Server error while managing SdpPortManagerEvent:"+ eventType, e);
-//			sipContext.failedCall();
-//		} finally {
-//			release();
-//		}
-//	}
+	public void processTimeout(){
+		log.info("Server transaction timeout");
+		if (sipContext != null) {
+			sipContext.callTimeout();
+		}
+	}
 	
 }
