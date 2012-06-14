@@ -279,6 +279,8 @@ public class RejectTest {
 
 		// Send cancel request from Client
 		// C:--- CANCEL ---X
+		// Wait just a moment to assure the cancel will be issued after response
+		Thread.sleep(1);
 		clientCall.terminate();
 
 		// Server controller expects call rejected
