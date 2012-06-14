@@ -304,13 +304,13 @@ public class UaImpl implements SipListener, UaStun, NetworkListener {
 			}
 		} catch (PeerUnavailableException e) {
 			throw new ServerInternalErrorException(
-					"Unable to instantiate a new SIP stack", e);
+					"Unable to instantiate a SIP stack", e);
 		} catch (TransportNotSupportedException e) {
 			throw new ServerInternalErrorException(
-					"Unable to create SIP listening point", e);
+					"Requested transport is not supported by SIP stack: " + config.getTransport(), e);
 		} catch (InvalidArgumentException e) {
 			throw new ServerInternalErrorException(
-					"Unable to create SIP listening point", e);
+					"Unable to instantiate a SIP stack", e);
 		} catch (ParseException e) {
 			throw new ServerInternalErrorException("Bad sent-by address: "
 					+ publicAddress + ":" + publicPort, e);
