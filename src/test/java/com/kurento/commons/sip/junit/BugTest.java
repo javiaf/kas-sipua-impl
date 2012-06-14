@@ -47,7 +47,7 @@ public class BugTest {
 	private static SipEndPointController serverEndPointController;
 	private static SipEndPointController clientEndPointController;
 	private static SipEndPointController secondClientEndPointController;
-	
+
 	private static NetworkController serverNc;
 	private static NetworkController clientNc;
 
@@ -75,6 +75,11 @@ public class BugTest {
 
 		log.info("Initialice SIP UA Cancel test");
 
+		if (System.getProperty("os.name").startsWith("Mac"))
+			localAddress = "lo0";
+		else
+			localAddress = "lo";
+
 		UaFactory.setMediaSession(new MediaSessionDummy());
 
 		SipConfig cConfig = new SipConfig();
@@ -88,10 +93,10 @@ public class BugTest {
 		serverEndPointController = new SipEndPointController(serverName);
 		serverTimer = new TestTimer();
 		// Create and register SIP EndPoint
-		Map<String,Object> sEpConfig = new HashMap<String, Object>();
+		Map<String, Object> sEpConfig = new HashMap<String, Object>();
 		sEpConfig.put("SIP_RECEIVE_CALL", false);
 		serverEndPoint = serverUa.registerEndpoint(serverName, "kurento.com",
-				serverEndPointController,sEpConfig);
+				serverEndPointController, sEpConfig);
 		// serverEndPoint = EndPointFactory.getInstance(serverName,
 		// "kurento.com",
 		// "", expires, serverUa, serverEndPointController, false);
@@ -110,7 +115,7 @@ public class BugTest {
 		clientUa = UaFactory.getInstance(sConfig);
 		clientEndPointController = new SipEndPointController("client");
 		clientTimer = new TestTimer();
-		Map<String,Object> cEpConfig = new HashMap<String, Object>();
+		Map<String, Object> cEpConfig = new HashMap<String, Object>();
 		cEpConfig.put("SIP_RECEIVE_CALL", false);
 		clientEndPoint = clientUa.registerEndpoint(clientName, "kurento.com",
 				clientEndPointController, cEpConfig);
