@@ -360,7 +360,7 @@ public class SipContext implements Call {
 					null);
 			canceledCall();
 			// Remove reference to the initiating request
-			incomingInitiatingRequest = null;
+//			incomingInitiatingRequest = null;
 		} else {
 			// Cancel received before the SDP has been processed. Wait
 			// incomingCall event before cancel can be performed
@@ -483,8 +483,8 @@ public class SipContext implements Call {
 			callFailed(msg);
 		}
 		// Remove reference to the initiating transactions (might be in or out)
-		incomingInitiatingRequest = null;
-		outgoingInitiatingRequest = null;
+//		incomingInitiatingRequest = null;
+//		outgoingInitiatingRequest = null;
 	}
 
 	// Transaction completed the call negotiation with an error that will
@@ -608,8 +608,6 @@ public class SipContext implements Call {
 	}
 
 	private void release() {
-		incomingInitiatingRequest = null;
-		outgoingInitiatingRequest = null;
 		if (networkConnection != null) {
 			networkConnection.release();
 			networkConnection = null;

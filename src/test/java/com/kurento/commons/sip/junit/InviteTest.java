@@ -387,31 +387,29 @@ public class InviteTest {
 				CallEvent.CALL_RINGING.equals(callEvent.getEventType()));
 		log.info("OK");
 
-		// CREATE NEW THREAD TO SEND ACK AND BY AT THE SAME TIME
-		Thread terminateThread = new Thread(new Runnable() {
-			public void run() {
-				try {
-					serverCallt3.terminate();
-				} catch (ServerInternalErrorException e) {
-					log.error("Unable to accept call", e);
-				}
-
-			}
-		});
 		// C:<----------200 OK --:S
 		log.info(serverName + " accepts call...");
 		SipCallController callControllerServer = new SipCallController(
 				serverName);
 		serverCallt3.addListener(callControllerServer);
-		serverCallt3.accept();
-		log.info("OK");
+		// Create a thread to allow simultaneous BYE
+		new Thread(new Runnable() {
+			public void run() {
+				try {
+					serverCallt3.accept();
+				} catch (ServerInternalErrorException e) {
+					log.error("Unable to accept call", e);
+				}
 
+			}
+		}).start();
+		
 		// C:<-------------BYE---:S
 		// Send BYE. Response will still be under process due to
 		// MediaSessionDummy sleep timer and ACK not sent
 		log.info(serverName + " hangup...");
-		terminateThread.start();
-
+		Thread.sleep(1);
+		serverCallt3.terminate();
 				
 		log.info(clientName + " expects accepted call from " + serverName
 				+ "...");

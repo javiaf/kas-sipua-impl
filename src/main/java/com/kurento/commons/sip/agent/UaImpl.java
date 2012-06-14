@@ -303,21 +303,27 @@ public class UaImpl implements SipListener, UaStun, NetworkListener {
 				}
 			}
 		} catch (PeerUnavailableException e) {
+			terminate();
 			throw new ServerInternalErrorException(
 					"Unable to instantiate a SIP stack", e);
 		} catch (TransportNotSupportedException e) {
+			terminate();
 			throw new ServerInternalErrorException(
 					"Requested transport is not supported by SIP stack: " + config.getTransport(), e);
 		} catch (InvalidArgumentException e) {
+			terminate();
 			throw new ServerInternalErrorException(
 					"Unable to instantiate a SIP stack", e);
 		} catch (ParseException e) {
+			terminate();
 			throw new ServerInternalErrorException("Bad sent-by address: "
 					+ publicAddress + ":" + publicPort, e);
 		} catch (ObjectInUseException e) {
+			terminate();
 			throw new ServerInternalErrorException(
 					"Unable to create a SIP provider", e);
 		} catch (TooManyListenersException e) {
+			terminate();
 			throw new ServerInternalErrorException("Error adding SIP listener",
 					e);
 		}
@@ -375,11 +381,12 @@ public class UaImpl implements SipListener, UaStun, NetworkListener {
 	public void terminate() {
 
 		log.info("SIP stack terminating ...");
-		log.info("Stopping registered endpoits.");
 		if (keepAlive != null) {
 			log.info("Stopping hole punching");
 			keepAlive.stop();
 		}
+		
+		log.info("Stopping registered endpoits.");
 		for (EndPoint endpoint : endPoints.values()) {
 			try {
 				endpoint.terminate();
@@ -392,12 +399,12 @@ public class UaImpl implements SipListener, UaStun, NetworkListener {
 	}
 
 	private void terminateSipStack() {
-		if (sipStack != null) {
+		if (sipStack != null && sipProvider != null) {
 			while (true) {
 				try {
 					log.info("Delete Sip listening point");
 					String transport = config.getTransport();
-					if (sipProvider != null) {
+					
 						// Sip provider might be deleted on previous loop
 						// execution
 						ListeningPoint lp = sipProvider
@@ -406,7 +413,6 @@ public class UaImpl implements SipListener, UaStun, NetworkListener {
 						// previous loop execution
 						if (lp != null)
 							sipStack.deleteListeningPoint(lp);
-					}
 
 					break;
 				} catch (ObjectInUseException e) {
@@ -434,6 +440,7 @@ public class UaImpl implements SipListener, UaStun, NetworkListener {
 			sipStack.stop();
 			log.info("SIP stack terminated");
 		}
+		sipStack=null;
 	}
 
 	// @Override
