@@ -22,7 +22,9 @@ import java.util.Set;
 
 import javax.sip.Dialog;
 import javax.sip.DialogState;
+import javax.sip.SipException;
 import javax.sip.address.Address;
+import javax.sip.message.Request;
 import javax.sip.message.Response;
 
 import org.slf4j.Logger;
@@ -539,6 +541,7 @@ public class SipContext implements Call {
 	}
 
 	public void terminatedCall() {
+		request2Terminate = true;
 		stateTransition(ContextState.TERMINATED);
 		release();
 		notifySipCallEvent(CallEvent.CALL_TERMINATE);
@@ -595,16 +598,35 @@ public class SipContext implements Call {
 	}
 
 	private void localCallCancel() throws ServerInternalErrorException {
+		
+		// Create cancel request
+		Request cancelReq;
 		try {
-			new CCancel(outgoingInitiatingRequest.getClientTransaction()
-					.createCancel(), this);
-			// Do not notify. Wait for reception of response 487
-		} catch (Exception e) {
-			// Unable to complete signalling. Notify call error
-			String msg = "Unable to create CANCEL request";
+			cancelReq = outgoingInitiatingRequest.getClientTransaction()
+					.createCancel();
+		} catch (SipException e1) {
+			String msg = "Unable to cancel call locally";
 			callFailed(msg);
-			throw new ServerInternalErrorException(msg, e);
+			throw new ServerInternalErrorException(msg,e1);
 		}
+		
+		// Send cancel request
+		try {
+			new CCancel(cancelReq, this);
+			// Do not notify. Wait for reception of response 487
+		} catch (ServerInternalErrorException e) {
+			String msg="To late to cancel: " + getCallInfo();
+			log.info(msg);
+			// Try bye
+			try {
+				new CBye(this);
+			} catch (ServerInternalErrorException e1) {
+				String msg1 = "Unable to terminate call locally canceled:" + getCallInfo();
+				callFailed(msg1);
+				throw new ServerInternalErrorException(msg,e);
+			}
+		}
+			
 	}
 
 	private void release() {

@@ -37,7 +37,9 @@ public class SdpPortManagerDummy implements SdpPortManager {
 
 	private static Logger log = LoggerFactory
 			.getLogger(SdpPortManagerDummy.class);
-	private int sleepTime;
+	private int sdpGenerateTimer;
+	private int sdpProcessTimer;
+
 	private static SdpPortManagerType sdpType;
 	MediaEventListener<SdpPortManagerEvent> listener;
 
@@ -50,8 +52,12 @@ public class SdpPortManagerDummy implements SdpPortManager {
 			sdpType = SdpPortManagerType.SDP_CORRECT;
 	}
 
-	public void setSleepTimer(int sleepTime) {
-		this.sleepTime = sleepTime;
+	public void setSdpGenerateTimer(int sdpGenerateTimer) {
+		this.sdpGenerateTimer = sdpGenerateTimer;
+	}
+
+	public void setSdpProcessTimer(int sdpProcessTimer) {
+		this.sdpProcessTimer = sdpProcessTimer;
 	}
 
 	@Override
@@ -76,8 +82,8 @@ public class SdpPortManagerDummy implements SdpPortManager {
 	public void generateSdpOffer() throws SdpPortManagerException {
 		SdpPortManagerEvent event = new SdpPortManagerEventDummy(
 				SdpPortManagerEvent.OFFER_GENERATED, this);
-		eventSleep();
-		listener.onEvent(event);
+		notifyEvent(event, sdpGenerateTimer);
+
 	}
 
 	@Override
@@ -99,8 +105,7 @@ public class SdpPortManagerDummy implements SdpPortManager {
 		// SpecTools.intersectSessionSpec(answerer, offerer);
 		SdpPortManagerEvent event = new SdpPortManagerEventDummy(
 				SdpPortManagerEvent.ANSWER_PROCESSED, this);
-		eventSleep();
-		listener.onEvent(event);
+		notifyEvent(event, sdpProcessTimer);
 	}
 
 	@Override
@@ -108,8 +113,7 @@ public class SdpPortManagerDummy implements SdpPortManager {
 			throws SdpPortManagerException {
 		SdpPortManagerEvent event = new SdpPortManagerEventDummy(
 				SdpPortManagerEvent.ANSWER_GENERATED, this);
-		eventSleep();
-		listener.onEvent(event);
+		notifyEvent(event, sdpProcessTimer);
 
 	}
 
@@ -117,18 +121,27 @@ public class SdpPortManagerDummy implements SdpPortManager {
 	public void rejectSdpOffer() throws SdpPortManagerException {
 		SdpPortManagerEvent event = new SdpPortManagerEventDummy(
 				SdpPortManagerEvent.ANSWER_GENERATED, this);
-		eventSleep();
-		listener.onEvent(event);
+		notifyEvent(event, sdpProcessTimer);
 
 	}
 
-	private void eventSleep() {
-		if (sleepTime > 0) {
-			try {
-				Thread.sleep(sleepTime);
-			} catch (InterruptedException e) {
-				log.error("Error while waiting to send SDP event");
-			}
+	private void notifyEvent(SdpPortManagerEvent event, int sleepTimer) {
+		if (sleepTimer > 0) {
+			final int sleepTimerFinal= sleepTimer;
+			final SdpPortManagerEvent eventFinal = new SdpPortManagerEventDummy(
+					event.getEventType(), this);
+			new Thread(new Runnable() {
+				public void run() {
+					try {
+						Thread.sleep(sleepTimerFinal);
+						listener.onEvent(eventFinal);
+					} catch (InterruptedException e) {
+						log.error("Error while waiting to send SDP event");
+					}
+				}
+			}).start();
+		} else {
+			listener.onEvent(event);
 		}
 	}
 

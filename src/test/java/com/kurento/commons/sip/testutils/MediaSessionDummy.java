@@ -28,11 +28,16 @@ import com.kurento.commons.sip.testutils.TestConfig.SdpPortManagerType;
 
 public class MediaSessionDummy implements MediaSession {
 	
-	private int sleepTimer;
+	private int sdpGenerateTimer;
+	private int sdpProcessTimer;
 	private SdpPortManagerType sdpType;
 
-	public void setSleepTimer (int sleepTimer) {
-		this.sleepTimer = sleepTimer;
+	public void setSdpGenerateTimer (int sdpGenerateTimer) {
+		this.sdpGenerateTimer = sdpGenerateTimer;
+	}
+	
+	public void setSdpProcessTimer(int sdpProcessTimer) {
+		this.sdpProcessTimer = sdpProcessTimer;
 	}
 	
 	public void setSdpType(SdpPortManagerType sdpType) {
@@ -42,7 +47,6 @@ public class MediaSessionDummy implements MediaSession {
 	@Override
 	public void release() {
 		// TODO Auto-generated method stub
-
 	}
 
 	@Override
@@ -58,9 +62,12 @@ public class MediaSessionDummy implements MediaSession {
 			throws MsControlException {
 		
 		NetworkConnectionDummy nc = new NetworkConnectionDummy();
-		if (sleepTimer > 0) 
-			nc.setSleepTimer(sleepTimer);
-			nc.setSdpType(sdpType);
+		if (sdpGenerateTimer > 0) 
+			nc.setSdpGenerateTimer(sdpGenerateTimer);
+		if (sdpProcessTimer > 0)
+			nc.setSdpProcessTimer(sdpProcessTimer);
+		
+		nc.setSdpType(sdpType);
 		return nc;
 	}
 

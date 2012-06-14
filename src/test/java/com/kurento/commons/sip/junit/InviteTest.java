@@ -357,6 +357,10 @@ public class InviteTest {
 	public void testCallWithAckTimeout() throws Exception {
 		log.info("-------------------- Test Call with ACK timeout --------------------");
 
+		// Add timer to delay SDP process. This will allow to send BYE request before ACK reception
+		mediaSessionDummy.setSdpProcessTimer(500);
+
+		
 		EndPointEvent endPointEvent;
 		CallEvent callEvent;
 
@@ -376,7 +380,7 @@ public class InviteTest {
 				"Bad message received in server UA: "
 						+ endPointEvent.getEventType(),
 				EndPointEvent.INCOMING_CALL.equals(endPointEvent.getEventType()));
-		final Call serverCallt3 = endPointEvent.getCallSource();
+		Call serverCall = endPointEvent.getCallSource();
 		log.info("OK");
 
 		log.info(clientName + " expects ringing from " + serverName + "...");
@@ -388,37 +392,18 @@ public class InviteTest {
 		log.info("OK");
 
 		// C:<----------200 OK --:S
+		
 		log.info(serverName + " accepts call...");
 		SipCallController callControllerServer = new SipCallController(
 				serverName);
-		serverCallt3.addListener(callControllerServer);
-		// Create a thread to allow simultaneous BYE
-		new Thread(new Runnable() {
-			public void run() {
-				try {
-					serverCallt3.accept();
-				} catch (ServerInternalErrorException e) {
-					log.error("Unable to accept call", e);
-				}
-
-			}
-		}).start();
+		serverCall.addListener(callControllerServer);
+		serverCall.accept();
 		
 		// C:<-------------BYE---:S
 		// Send BYE. Response will still be under process due to
 		// MediaSessionDummy sleep timer and ACK not sent
 		log.info(serverName + " hangup...");
-		Thread.sleep(1);
-		serverCallt3.terminate();
-				
-		log.info(clientName + " expects accepted call from " + serverName
-				+ "...");
-		callEvent = callControllerClient
-				.pollSipEndPointEvent(TestConfig.WAIT_TIME);
-		assertTrue("No message received in client UA", callEvent != null);
-		assertTrue("Bad message received in client UA",
-				CallEvent.CALL_SETUP.equals(callEvent.getEventType()));
-		log.info("OK");
+		serverCall.terminate();
 	
 		log.info(serverName + " expects call terminate...");
 		callEvent = callControllerServer
@@ -436,6 +421,8 @@ public class InviteTest {
 		assertTrue("Message received in server UA", callEvent == null);
 		log.info("OK");
 		
+		mediaSessionDummy.setSdpProcessTimer(0);
+
 		log.info("-------------------- Test Call with ACK timeout finished OK --------------------");
 
 	}

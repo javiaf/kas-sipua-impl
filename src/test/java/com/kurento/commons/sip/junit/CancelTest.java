@@ -465,7 +465,7 @@ public class CancelTest {
 		CallEvent callEvent;
 
 		// Add sleep timer to Media stack
-		((MediaSessionDummy) UaFactory.getMediaSession()).setSleepTimer(2000);
+		((MediaSessionDummy) UaFactory.getMediaSession()).setSdpProcessTimer(1000);
 
 		// C:-----INVITE-------------->:S
 		log.info(clientName + " dial to " + serverName + "...");
@@ -475,27 +475,19 @@ public class CancelTest {
 				clientCallController);
 		log.info("OK");
 
-		// Send inmediate cancel
-		// C:----CANCEL -------------->:S
-		log.info(clientName + " cancel call...");
-		Thread.sleep(1);
-		clientCall.terminate();
-		log.info("OK");
-
-		// Server controller will not receive any event. It will cancel the request silently
-		log.info(serverName + " expects no event associated to " + clientName
-				+ "...");
-		endPointEvent = serverEndPointController
-				.pollSipEndPointEvent(TestConfig.WAIT_TIME);
-		assertTrue("Message received in server UA", endPointEvent == null);
-		log.info("OK");
-
 		// Client will receive CALL_RINGING event
 		log.info(clientName + " expects call ringing  ...");
 		callEvent = clientCallController.pollSipEndPointEvent(TestConfig.WAIT_TIME);
 		assertTrue("No message received in server UA", callEvent != null);
 		assertTrue("Call terminate expected in client UA",
 						CallEvent.CALL_RINGING.equals(callEvent.getEventType()));
+		log.info("OK");
+		
+		// Send inmediate cancel
+		// C:----CANCEL -------------->:S
+		log.info(clientName + " cancel call...");
+		Thread.sleep(1);
+		clientCall.terminate();
 		log.info("OK");
 				
 		// Client will receive call cancel event
@@ -506,7 +498,6 @@ public class CancelTest {
 				CallEvent.CALL_CANCEL.equals(callEvent.getEventType()));
 		log.info("OK");
 		
-		
 		// Client will receive call terminate event
 		log.info(clientName + " expects call terminate  ...");
 		callEvent = clientCallController
@@ -514,6 +505,15 @@ public class CancelTest {
 		assertTrue("No message received in server UA", callEvent != null);
 		assertTrue("Call terminate expected in client UA",
 				CallEvent.CALL_TERMINATE.equals(callEvent.getEventType()));
+		log.info("OK");
+		
+
+		// Server controller will not receive any event. It will cancel the request silently
+		log.info(serverName + " expects no event associated to " + clientName
+				+ "...");
+		endPointEvent = serverEndPointController
+				.pollSipEndPointEvent(TestConfig.WAIT_TIME);
+		assertTrue("Message received in server UA", endPointEvent == null);
 		log.info("OK");
 	}
 	

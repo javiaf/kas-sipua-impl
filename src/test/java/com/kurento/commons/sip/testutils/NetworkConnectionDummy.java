@@ -38,8 +38,12 @@ public class NetworkConnectionDummy implements NetworkConnection {
 		sdpManager.setSdpType(sdpType);
 	}
 
-	public void setSleepTimer (int sleepTimer){
-		sdpManager.setSleepTimer(sleepTimer);
+	public void setSdpGenerateTimer (int sdpGenerateTimer){
+		sdpManager.setSdpGenerateTimer(sdpGenerateTimer);
+	}
+	
+	public void setSdpProcessTimer (int sdpProcessTimer) {
+		sdpManager.setSdpProcessTimer(sdpProcessTimer);
 	}
 
 	@Override
