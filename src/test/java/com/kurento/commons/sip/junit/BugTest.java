@@ -82,14 +82,14 @@ public class BugTest {
 
 		UaFactory.setMediaSession(new MediaSessionDummy());
 
-		SipConfig cConfig = new SipConfig();
-		cConfig.setProxyAddress(TestConfig.PROXY_IP);
-		cConfig.setProxyPort(TestConfig.PROXY_PORT);
-		cConfig.setLocalPort(TestConfig.CLIENT_PORT);
-		cConfig.setTimer(serverTimer);
-		cConfig.setLocalAddress("lo0");
+		SipConfig sConfig = new SipConfig();
+		sConfig.setProxyAddress(TestConfig.PROXY_IP);
+		sConfig.setProxyPort(TestConfig.PROXY_PORT);
+		sConfig.setLocalPort(TestConfig.CLIENT_PORT);
+		sConfig.setLocalAddress(localAddress);
+		sConfig.setTimer(serverTimer);
 
-		serverUa = UaFactory.getInstance(cConfig);
+		serverUa = UaFactory.getInstance(sConfig);
 		serverEndPointController = new SipEndPointController(serverName);
 		serverTimer = new TestTimer();
 		// Create and register SIP EndPoint
@@ -105,14 +105,14 @@ public class BugTest {
 		serverNc.setNetworkListener(UaFactory.getNetworkListener(serverUa));
 		serverNc.execNetworkChange();
 
-		SipConfig sConfig = new SipConfig();
-		sConfig.setProxyAddress(TestConfig.CLIENT_IP);
-		sConfig.setProxyPort(TestConfig.CLIENT_PORT);
-		sConfig.setLocalPort(TestConfig.PROXY_PORT);
-		sConfig.setTimer(clientTimer);
-		sConfig.setLocalAddress("lo0");
+		SipConfig cConfig = new SipConfig();
+		cConfig.setProxyAddress(TestConfig.CLIENT_IP);
+		cConfig.setProxyPort(TestConfig.CLIENT_PORT);
+		cConfig.setLocalPort(TestConfig.PROXY_PORT);
+		cConfig.setLocalAddress(localAddress);
+		cConfig.setTimer(clientTimer);
 
-		clientUa = UaFactory.getInstance(sConfig);
+		clientUa = UaFactory.getInstance(cConfig);
 		clientEndPointController = new SipEndPointController("client");
 		clientTimer = new TestTimer();
 		Map<String, Object> cEpConfig = new HashMap<String, Object>();
