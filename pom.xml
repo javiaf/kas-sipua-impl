@@ -14,10 +14,10 @@
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 
 		<!-- Dependency versions -->
-		<kcUaVersion>1.2.6-SNAPSHOT</kcUaVersion>
+		<kcUaVersion>1.2.6</kcUaVersion>
 		<kcMediaSpecVersion>2.0.0</kcMediaSpecVersion>
-		<kcMediaSpecConversorVersion>1.0.1-SNAPSHOT</kcMediaSpecConversorVersion>
-		<kcStunVersion>1.0.2-SNAPSHOT</kcStunVersion>
+		<kcMediaSpecConversorVersion>1.0.1</kcMediaSpecConversorVersion>
+		<kcStunVersion>1.0.2</kcStunVersion>
 	</properties>
 
 	<organization>
