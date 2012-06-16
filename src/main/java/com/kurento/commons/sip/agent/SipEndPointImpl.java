@@ -30,6 +30,7 @@ import com.kurento.commons.sip.transaction.CRegister;
 import com.kurento.commons.ua.Call;
 import com.kurento.commons.ua.CallAttributes;
 import com.kurento.commons.ua.CallListener;
+import com.kurento.commons.ua.ConferenceManager;
 import com.kurento.commons.ua.EndPoint;
 import com.kurento.commons.ua.EndPointListener;
 import com.kurento.commons.ua.event.EndPointEvent;
@@ -341,6 +342,11 @@ public class SipEndPointImpl implements EndPoint {
 			listener = null;
 		}
 
+	}
+
+	@Override
+	public ConferenceManager getConferenceManager() {
+		return null;
 	}
 
 }
