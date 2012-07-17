@@ -1,6 +1,6 @@
 package com.kurento.commons.sip.agent;
 
-import com.kurento.commons.ua.exception.ServerInternalErrorException;
+import com.kurento.ua.commons.ServerInternalErrorException;
 
 public interface NetworkListener {
 	

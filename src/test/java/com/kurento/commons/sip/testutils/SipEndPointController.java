@@ -16,8 +16,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
 package com.kurento.commons.sip.testutils;
 
-import com.kurento.commons.ua.EndPointListener;
-import com.kurento.commons.ua.event.EndPointEvent;
+import com.kurento.ua.commons.EndPointEvent;
+import com.kurento.ua.commons.EndPointListener;
 
 public class SipEndPointController implements EndPointListener {
 

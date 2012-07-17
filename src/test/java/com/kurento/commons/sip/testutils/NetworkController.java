@@ -1,7 +1,7 @@
 package com.kurento.commons.sip.testutils;
 
 import com.kurento.commons.sip.agent.NetworkListener;
-import com.kurento.commons.ua.exception.ServerInternalErrorException;
+import com.kurento.ua.commons.ServerInternalErrorException;
 
 public class NetworkController {
 	

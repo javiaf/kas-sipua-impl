@@ -26,7 +26,7 @@ import javax.sip.address.Address;
 import javax.sip.message.Request;
 
 import com.kurento.commons.sip.agent.SipEndPointImpl;
-import com.kurento.commons.ua.exception.ServerInternalErrorException;
+import com.kurento.ua.commons.ServerInternalErrorException;
 
 public class COptions extends CTransaction {
 

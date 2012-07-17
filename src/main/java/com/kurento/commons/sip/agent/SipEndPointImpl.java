@@ -27,17 +27,17 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.kurento.commons.sip.transaction.CRegister;
-import com.kurento.commons.ua.Call;
-import com.kurento.commons.ua.CallAttributes;
-import com.kurento.commons.ua.CallListener;
-import com.kurento.commons.ua.ConferenceManager;
-import com.kurento.commons.ua.EndPoint;
-import com.kurento.commons.ua.EndPointListener;
-import com.kurento.commons.ua.event.EndPointEvent;
-import com.kurento.commons.ua.event.EndpointEventEnum;
-import com.kurento.commons.ua.exception.ServerInternalErrorException;
-import com.kurento.commons.ua.timer.KurentoUaTimer;
-import com.kurento.commons.ua.timer.KurentoUaTimerTask;
+import com.kurento.ua.commons.Call;
+import com.kurento.ua.commons.CallAttributes;
+import com.kurento.ua.commons.CallListener;
+import com.kurento.ua.commons.ConferenceManager;
+import com.kurento.ua.commons.EndPoint;
+import com.kurento.ua.commons.EndPointEvent;
+import com.kurento.ua.commons.EndPointListener;
+import com.kurento.ua.commons.EndpointEventEnum;
+import com.kurento.ua.commons.KurentoUaTimer;
+import com.kurento.ua.commons.KurentoUaTimerTask;
+import com.kurento.ua.commons.ServerInternalErrorException;
 
 public class SipEndPointImpl implements EndPoint {
 

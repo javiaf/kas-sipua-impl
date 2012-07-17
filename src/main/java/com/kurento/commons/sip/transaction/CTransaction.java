@@ -20,7 +20,6 @@ import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.sdp.SdpException;
 import javax.sip.ClientTransaction;
 import javax.sip.DialogState;
 import javax.sip.InvalidArgumentException;
@@ -47,16 +46,12 @@ import javax.sip.message.Request;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.kurento.commons.media.format.conversor.SdpConversor;
-import com.kurento.commons.mscontrol.EventType;
-import com.kurento.commons.mscontrol.MediaErr;
-import com.kurento.commons.mscontrol.networkconnection.SdpPortManagerEvent;
 import com.kurento.commons.sip.agent.SipContext;
 import com.kurento.commons.sip.agent.SipEndPointImpl;
 import com.kurento.commons.sip.agent.UaFactory;
 import com.kurento.commons.sip.agent.UaImpl;
 import com.kurento.commons.sip.util.SipHeaderHelper;
-import com.kurento.commons.ua.exception.ServerInternalErrorException;
+import com.kurento.ua.commons.ServerInternalErrorException;
 
 /**
  * 

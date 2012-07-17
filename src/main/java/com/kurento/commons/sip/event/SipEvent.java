@@ -2,10 +2,7 @@ package com.kurento.commons.sip.event;
 
 import java.util.EventObject;
 
-import javax.sip.message.Request;
-import javax.sip.message.Response;
-
-import com.kurento.commons.ua.UA;
+import com.kurento.ua.commons.UA;
 
 public class SipEvent extends EventObject {
 

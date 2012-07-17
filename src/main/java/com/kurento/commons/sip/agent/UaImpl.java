@@ -70,11 +70,11 @@ import com.kurento.commons.sip.transaction.SRegister;
 import com.kurento.commons.sip.transaction.STransaction;
 import com.kurento.commons.sip.util.NatKeepAlive;
 import com.kurento.commons.sip.util.SipConfig;
-import com.kurento.commons.ua.EndPoint;
-import com.kurento.commons.ua.EndPointListener;
 import com.kurento.commons.ua.UaStun;
-import com.kurento.commons.ua.exception.ServerInternalErrorException;
-import com.kurento.commons.ua.timer.KurentoUaTimer;
+import com.kurento.ua.commons.EndPoint;
+import com.kurento.ua.commons.EndPointListener;
+import com.kurento.ua.commons.KurentoUaTimer;
+import com.kurento.ua.commons.ServerInternalErrorException;
 
 import de.javawi.jstun.attribute.MessageAttributeException;
 import de.javawi.jstun.attribute.MessageAttributeParsingException;

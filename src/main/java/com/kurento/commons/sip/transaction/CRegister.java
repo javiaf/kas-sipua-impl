@@ -23,7 +23,6 @@ import java.text.ParseException;
 import javax.sip.InvalidArgumentException;
 import javax.sip.PeerUnavailableException;
 import javax.sip.ResponseEvent;
-import javax.sip.TimeoutEvent;
 import javax.sip.address.URI;
 import javax.sip.header.AuthorizationHeader;
 import javax.sip.header.CSeqHeader;
@@ -36,8 +35,8 @@ import javax.sip.message.Response;
 
 import com.kurento.commons.sip.agent.SipEndPointImpl;
 import com.kurento.commons.sip.agent.UaFactory;
-import com.kurento.commons.ua.event.EndPointEvent;
-import com.kurento.commons.ua.exception.ServerInternalErrorException;
+import com.kurento.ua.commons.EndPointEvent;
+import com.kurento.ua.commons.ServerInternalErrorException;
 
 public class CRegister extends CTransaction {
 

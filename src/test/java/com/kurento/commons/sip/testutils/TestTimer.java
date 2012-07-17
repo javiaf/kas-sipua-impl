@@ -6,8 +6,8 @@ import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
 
-import com.kurento.commons.ua.timer.KurentoUaTimer;
-import com.kurento.commons.ua.timer.KurentoUaTimerTask;
+import com.kurento.ua.commons.KurentoUaTimer;
+import com.kurento.ua.commons.KurentoUaTimerTask;
 
 public class TestTimer implements KurentoUaTimer {
 

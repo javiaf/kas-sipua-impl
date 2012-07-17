@@ -16,8 +16,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
 package com.kurento.commons.sip.testutils;
 
-import com.kurento.commons.ua.CallListener;
-import com.kurento.commons.ua.event.CallEvent;
+import com.kurento.ua.commons.CallEvent;
+import com.kurento.ua.commons.CallListener;
 
 public class SipCallController implements CallListener {
 

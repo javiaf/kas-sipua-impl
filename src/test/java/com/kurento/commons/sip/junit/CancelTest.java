@@ -21,19 +21,13 @@ import static org.junit.Assert.assertTrue;
 import java.util.HashMap;
 import java.util.Map;
 
-import javax.sip.RequestEvent;
-
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-//import com.kurento.commons.sip.agent.EndPointFactory;
-import com.kurento.commons.mscontrol.EventType;
 import com.kurento.commons.sip.agent.UaFactory;
-import com.kurento.commons.sip.agent.UaImpl;
-import com.kurento.commons.sip.event.SipEvent;
 import com.kurento.commons.sip.testutils.MediaSessionDummy;
 import com.kurento.commons.sip.testutils.NetworkController;
 import com.kurento.commons.sip.testutils.SipCallController;
@@ -42,13 +36,13 @@ import com.kurento.commons.sip.testutils.SipTransactionMonitor;
 import com.kurento.commons.sip.testutils.TestConfig;
 import com.kurento.commons.sip.testutils.TestTimer;
 import com.kurento.commons.sip.util.SipConfig;
-import com.kurento.commons.ua.Call;
-import com.kurento.commons.ua.EndPoint;
-import com.kurento.commons.ua.UA;
-import com.kurento.commons.ua.event.CallEvent;
-import com.kurento.commons.ua.event.EndPointEvent;
-import com.kurento.commons.ua.exception.ServerInternalErrorException;
-import com.kurento.commons.ua.timer.KurentoUaTimer;
+import com.kurento.ua.commons.Call;
+import com.kurento.ua.commons.CallEvent;
+import com.kurento.ua.commons.EndPoint;
+import com.kurento.ua.commons.EndPointEvent;
+import com.kurento.ua.commons.KurentoUaTimer;
+import com.kurento.ua.commons.ServerInternalErrorException;
+import com.kurento.ua.commons.UA;
 
 /**
  * RFC 3261 Chapter 9. Canceling a Request.

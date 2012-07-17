@@ -20,7 +20,7 @@ import javax.sip.ResponseEvent;
 import javax.sip.message.Request;
 
 import com.kurento.commons.sip.agent.SipContext;
-import com.kurento.commons.ua.exception.ServerInternalErrorException;
+import com.kurento.ua.commons.ServerInternalErrorException;
 
 public class CCancel extends CTransaction {
 

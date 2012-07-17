@@ -37,13 +37,13 @@ import com.kurento.commons.sip.testutils.TestConfig;
 import com.kurento.commons.sip.testutils.TestConfig.SdpPortManagerType;
 import com.kurento.commons.sip.testutils.TestTimer;
 import com.kurento.commons.sip.util.SipConfig;
-import com.kurento.commons.ua.Call;
-import com.kurento.commons.ua.EndPoint;
-import com.kurento.commons.ua.UA;
-import com.kurento.commons.ua.event.CallEvent;
-import com.kurento.commons.ua.event.EndPointEvent;
-import com.kurento.commons.ua.exception.ServerInternalErrorException;
-import com.kurento.commons.ua.timer.KurentoUaTimer;
+import com.kurento.ua.commons.Call;
+import com.kurento.ua.commons.CallEvent;
+import com.kurento.ua.commons.EndPoint;
+import com.kurento.ua.commons.EndPointEvent;
+import com.kurento.ua.commons.KurentoUaTimer;
+import com.kurento.ua.commons.ServerInternalErrorException;
+import com.kurento.ua.commons.UA;
 
 public class InviteTest {
 

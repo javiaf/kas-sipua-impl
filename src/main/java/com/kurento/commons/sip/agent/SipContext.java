@@ -44,13 +44,13 @@ import com.kurento.commons.sip.transaction.CCancel;
 import com.kurento.commons.sip.transaction.CInvite;
 import com.kurento.commons.sip.transaction.CTransaction;
 import com.kurento.commons.sip.transaction.STransaction;
-import com.kurento.commons.ua.Call;
-import com.kurento.commons.ua.CallAttributes;
-import com.kurento.commons.ua.CallListener;
-import com.kurento.commons.ua.TerminateReason;
-import com.kurento.commons.ua.event.CallEvent;
-import com.kurento.commons.ua.event.CallEventEnum;
-import com.kurento.commons.ua.exception.ServerInternalErrorException;
+import com.kurento.ua.commons.Call;
+import com.kurento.ua.commons.CallAttributes;
+import com.kurento.ua.commons.CallEvent;
+import com.kurento.ua.commons.CallEventEnum;
+import com.kurento.ua.commons.CallListener;
+import com.kurento.ua.commons.ServerInternalErrorException;
+import com.kurento.ua.commons.TerminateReason;
 
 public class SipContext implements Call {
 

@@ -36,7 +36,7 @@ import com.kurento.commons.sip.agent.SipEndPointImpl;
 import com.kurento.commons.sip.agent.UaFactory;
 import com.kurento.commons.sip.exception.SipTransactionException;
 import com.kurento.commons.sip.util.SipHeaderHelper;
-import com.kurento.commons.ua.exception.ServerInternalErrorException;
+import com.kurento.ua.commons.ServerInternalErrorException;
 
 public abstract class STransaction extends Transaction {
 

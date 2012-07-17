@@ -27,21 +27,17 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-//import com.kurento.commons.sip.agent.EndPointFactory;
-import com.kurento.commons.sip.agent.SipEndPointImpl;
 import com.kurento.commons.sip.agent.UaFactory;
 import com.kurento.commons.sip.agent.UaImpl;
 import com.kurento.commons.sip.testutils.MediaSessionDummy;
 import com.kurento.commons.sip.testutils.NetworkController;
 import com.kurento.commons.sip.testutils.SipEndPointController;
 import com.kurento.commons.sip.testutils.TestConfig;
-import com.kurento.commons.sip.testutils.TestErrorException;
 import com.kurento.commons.sip.testutils.TestTimer;
 import com.kurento.commons.sip.util.SipConfig;
-import com.kurento.commons.ua.EndPoint;
-import com.kurento.commons.ua.UA;
-import com.kurento.commons.ua.event.EndPointEvent;
-import com.kurento.commons.ua.exception.ServerInternalErrorException;
+import com.kurento.ua.commons.EndPoint;
+import com.kurento.ua.commons.EndPointEvent;
+import com.kurento.ua.commons.UA;
 
 public class RegisterTest {
 

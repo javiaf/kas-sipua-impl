@@ -16,7 +16,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
 package com.kurento.commons.sip.util;
 
-import com.kurento.commons.ua.timer.KurentoUaTimer;
+import com.kurento.ua.commons.KurentoUaTimer;
 
 /**
  * The SipConfig class is the mechanism used by KAS-SIPUA to easily provide SIP

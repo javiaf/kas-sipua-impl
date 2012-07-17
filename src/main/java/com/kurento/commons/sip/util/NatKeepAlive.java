@@ -9,9 +9,9 @@ import javax.sip.ListeningPoint;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.kurento.commons.ua.exception.ServerInternalErrorException;
-import com.kurento.commons.ua.timer.KurentoUaTimer;
-import com.kurento.commons.ua.timer.KurentoUaTimerTask;
+import com.kurento.ua.commons.KurentoUaTimer;
+import com.kurento.ua.commons.KurentoUaTimerTask;
+import com.kurento.ua.commons.ServerInternalErrorException;
 
 public class NatKeepAlive {
 
