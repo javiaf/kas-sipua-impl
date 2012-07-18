@@ -231,27 +231,27 @@
 			</plugin>
 
 			<plugin>
-			    <groupId>org.apache.maven.plugins</groupId>
-			    <artifactId>maven-failsafe-plugin</artifactId>
-			    <version>2.9</version>
-			    <configuration>
-			        <includes>
-			            <include>**/KcUaTests.java</include>
-			        </includes>
-			    </configuration>
-			    <executions>
-			        <execution>
-			            <id>integration-test</id>
-			            <goals>
-			                <goal>integration-test</goal>
-			            </goals>
-				    </execution>
-				    <execution>
-				        <id>verify</id>
-				        <goals>
-				            <goal>verify</goal>
-				        </goals>
-				    </execution>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-failsafe-plugin</artifactId>
+				<version>2.9</version>
+				<configuration>
+					<includes>
+						<include>**/KcUa*</include>
+					</includes>
+				</configuration>
+				<executions>
+					<execution>
+						<id>integration-test</id>
+						<goals>
+							<goal>integration-test</goal>
+						</goals>
+					</execution>
+					<execution>
+						<id>verify</id>
+						<goals>
+							<goal>verify</goal>
+						</goals>
+					</execution>
 				</executions>
 			</plugin>
 		</plugins>
