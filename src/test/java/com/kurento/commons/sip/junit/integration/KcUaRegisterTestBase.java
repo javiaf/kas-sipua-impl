@@ -11,6 +11,7 @@ import com.kurento.commons.sip.testutils.NetworkController;
 import com.kurento.commons.sip.testutils.TestConfig;
 import com.kurento.commons.sip.testutils.TestTimer;
 import com.kurento.commons.sip.util.SipConfig;
+import com.kurento.ua.commons.KurentoUaTimer;
 import com.kurento.ua.commons.ServerInternalErrorException;
 import com.kurento.ua.commons.UA;
 
@@ -24,8 +25,7 @@ public abstract class KcUaRegisterTestBase {
 			localAddress = "lo0";
 
 		UaFactory.setMediaSession(new MediaSessionDummy());
-
-		TestTimer timer = new TestTimer();
+		KurentoUaTimer timer = new TestTimer();
 
 		SipConfig cConfig = new SipConfig();
 		cConfig.setProxyAddress(TestConfig.PROXY_IP);
@@ -56,8 +56,7 @@ public abstract class KcUaRegisterTestBase {
 			localAddress = "lo0";
 
 		UaFactory.setMediaSession(new MediaSessionDummy());
-
-		TestTimer timer = new TestTimer();
+		KurentoUaTimer timer = new TestTimer();
 
 		SipConfig sConfig = new SipConfig();
 		sConfig.setProxyAddress(TestConfig.CLIENT_IP);
