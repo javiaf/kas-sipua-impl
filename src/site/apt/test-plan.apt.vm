@@ -67,7 +67,7 @@ SIP User Agent Test Plan
 		
 		[<Step 2>] Request the client UA to terminate (hangup) the call
 	                
-	    <<Automated by>> <<<com.kurento.commons.sip.junit.InviteTest.testCallSetupAndDropFromCaller()>>>             
+	    <<Automated by>> <<<com.kurento.commons.sip.junit.SipInviteTest.testCallSetupAndDropFromCaller()>>>             
 	
 	[]
 	
