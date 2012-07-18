@@ -33,7 +33,7 @@ SIP User Agent Test Plan
 		[<Step 3>] Request the UA to terminate again the EndPoint. No further
 	               un-register request are sent.
 	               
-	    <<Automated by>> <<<com.kurento.commons.sip.junit.RegisterTest.testRegisterAndUnregister()>>>
+	    <<Automated by>> <<<com.kurento.commons.sip.junit.SipRegisterTest.testRegisterAndUnregister()>>>
 	             
 	
 	[]

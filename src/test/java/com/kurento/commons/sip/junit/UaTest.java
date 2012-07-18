@@ -18,7 +18,7 @@ import com.kurento.ua.commons.UA;
 public class UaTest {
 
 	private final static Logger log = LoggerFactory
-			.getLogger(RegisterTest.class);
+			.getLogger(SipRegisterTest.class);
 
 	private static TestTimer timer;
 

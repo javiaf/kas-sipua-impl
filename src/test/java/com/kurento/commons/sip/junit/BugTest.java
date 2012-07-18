@@ -37,7 +37,7 @@ import com.kurento.ua.commons.UA;
 
 public class BugTest {
 	private final static Logger log = LoggerFactory
-			.getLogger(RegisterTest.class);
+			.getLogger(SipRegisterTest.class);
 
 	private static UA serverUa;
 	private static UA clientUa;
@@ -187,7 +187,7 @@ public class BugTest {
 	 */
 	@Test
 	public void testSendRegisterAfterExpires() throws Exception {
-		// TODO Fixed at RegisterTest
+		// TODO Fixed at SipRegisterTest
 	}
 
 	// FIXED at Cancel Test
