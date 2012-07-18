@@ -281,7 +281,7 @@ public class UaImpl implements SipListener, UaStun, NetworkListener {
 			// Create SIP factory objects
 
 			sipStack = UaFactory.getSipFactory().createSipStack(jainProps);
-			log.info("Local Addres = " + localAddress + ":" + localPort
+			log.info("Local Address = " + localAddress + ":" + localPort
 					+ "; Transport = " + config.getTransport());
 			ListeningPoint listeningPoint = sipStack.createListeningPoint(
 					localAddress, localPort, config.getTransport());
