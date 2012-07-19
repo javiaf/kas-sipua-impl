@@ -1,4 +1,4 @@
-package com.kurento.commons.sip.junit.integration;
+package com.kurento.commons.sip.junit.api;
 
 import java.util.Map;
 
@@ -11,7 +11,7 @@ import com.kurento.ua.commons.junit.RegisterTimeOutTest;
 
 @RunWith(Suite.class)
 @Suite.SuiteClasses({ RegisterTimeOutTest.class })
-public class KcUaRegisterTimeOutTest extends KcUaRegisterTestBase {
+public class ApiRegisterTimeOutTest extends ApiRegisterTestBase {
 
 	@BeforeClass
 	public static void setupRegisterTimeOutTest() throws Exception {

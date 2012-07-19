@@ -1,4 +1,4 @@
-package com.kurento.commons.sip.junit.integration;
+package com.kurento.commons.sip.junit.api;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -23,7 +23,7 @@ import com.kurento.ua.commons.junit.DialTest;
 
 @RunWith(Suite.class)
 @Suite.SuiteClasses({ DialTest.class })
-public class KcUaDialTest {
+public class ApiDialTest {
 
 	private static final int EXPIRES = 5;
 

@@ -1,4 +1,4 @@
-package com.kurento.commons.sip.junit.integration;
+package com.kurento.commons.sip.junit.api;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -15,7 +15,7 @@ import com.kurento.ua.commons.KurentoUaTimer;
 import com.kurento.ua.commons.ServerInternalErrorException;
 import com.kurento.ua.commons.UA;
 
-public abstract class KcUaRegisterTestBase {
+public abstract class ApiRegisterTestBase {
 
 	protected static final int EXPIRES = 5;
 
