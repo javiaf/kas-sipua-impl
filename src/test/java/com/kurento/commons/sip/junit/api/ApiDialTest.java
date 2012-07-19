@@ -30,18 +30,22 @@ public class ApiDialTest {
 	private static String serverName = "server";
 	private static String clientName = "client";
 
+	private static UA clientUa = null;
+	private static int nClient = 1;
+
 	@BeforeClass
 	public static void setupRegisterAndUnregisterTest() throws Exception {
 		System.out.println("setupRegisterAndUnregisterTest");
 
-		EndPoint clientEndPoint = createClientEP();
+		EndPoint clientEndPoint1 = createClientEP();
+		EndPoint clientEndPoint2 = createClientEP();
 		EndPoint serverEndPoint = createServerEP();
-		DialTest.setClientEndPoint(clientEndPoint);
+		DialTest.setClientEndPoint1(clientEndPoint1);
+		DialTest.setClientEndPoint2(clientEndPoint2);
 		DialTest.setServerEndPoint(serverEndPoint);
 	}
 
-	private static EndPoint createClientEP()
-			throws ServerInternalErrorException {
+	private static void createClientUA() throws ServerInternalErrorException {
 		String localAddress = "lo";
 		if (System.getProperty("os.name").startsWith("Mac"))
 			localAddress = "lo0";
@@ -56,20 +60,28 @@ public class ApiDialTest {
 		cConfig.setLocalAddress(localAddress);
 		cConfig.setTimer(timer);
 
-		UA clientUa = UaFactory.getInstance(cConfig);
+		clientUa = UaFactory.getInstance(cConfig);
 		((UaImpl) clientUa).setTestMode(true);
 
 		NetworkController clientNc = new NetworkController();
 		clientNc.setNetworkListener(UaFactory.getNetworkListener(clientUa));
 		clientNc.execNetworkChange();
+	}
+
+	private static EndPoint createClientEP()
+			throws ServerInternalErrorException {
+		if (clientUa == null)
+			createClientUA();
 
 		SipEndPointController clientEndPointController = new SipEndPointController(
 				"");
 		Map<String, Object> cEpConfig = new HashMap<String, Object>();
 		cEpConfig.put("SIP_EXPIRES", EXPIRES);
 		cEpConfig.put("SIP_RECEIVE_CALL", false);
-		EndPoint clientEndPoint = clientUa.registerEndpoint(clientName,
-				"kurento.com", clientEndPointController, cEpConfig);
+		EndPoint clientEndPoint = clientUa.registerEndpoint(clientName
+				+ nClient, "kurento.com", clientEndPointController, cEpConfig);
+
+		nClient++;
 
 		return clientEndPoint;
 	}
