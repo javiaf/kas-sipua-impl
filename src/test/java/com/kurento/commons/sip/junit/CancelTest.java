@@ -21,19 +21,13 @@ import static org.junit.Assert.assertTrue;
 import java.util.HashMap;
 import java.util.Map;
 
-import javax.sip.RequestEvent;
-
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-//import com.kurento.commons.sip.agent.EndPointFactory;
-import com.kurento.commons.mscontrol.EventType;
 import com.kurento.commons.sip.agent.UaFactory;
-import com.kurento.commons.sip.agent.UaImpl;
-import com.kurento.commons.sip.event.SipEvent;
 import com.kurento.commons.sip.testutils.MediaSessionDummy;
 import com.kurento.commons.sip.testutils.NetworkController;
 import com.kurento.commons.sip.testutils.SipCallController;

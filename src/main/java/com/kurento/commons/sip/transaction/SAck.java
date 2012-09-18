@@ -23,13 +23,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.kurento.commons.media.format.conversor.SdpConversor;
-import com.kurento.commons.mscontrol.EventType;
-import com.kurento.commons.mscontrol.MediaEventListener;
-import com.kurento.commons.mscontrol.MsControlException;
-import com.kurento.commons.mscontrol.networkconnection.SdpPortManagerEvent;
 import com.kurento.commons.sip.agent.SipEndPointImpl;
 import com.kurento.commons.sip.exception.SipTransactionException;
 import com.kurento.commons.ua.exception.ServerInternalErrorException;
+import com.kurento.mscontrol.commons.EventType;
+import com.kurento.mscontrol.commons.MediaEventListener;
+import com.kurento.mscontrol.commons.networkconnection.SdpPortManagerEvent;
 
 public class SAck extends STransaction {
 

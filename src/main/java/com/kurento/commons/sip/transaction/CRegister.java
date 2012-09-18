@@ -23,7 +23,6 @@ import java.text.ParseException;
 import javax.sip.InvalidArgumentException;
 import javax.sip.PeerUnavailableException;
 import javax.sip.ResponseEvent;
-import javax.sip.TimeoutEvent;
 import javax.sip.address.URI;
 import javax.sip.header.AuthorizationHeader;
 import javax.sip.header.CSeqHeader;

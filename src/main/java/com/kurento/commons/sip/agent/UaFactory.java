@@ -29,9 +29,9 @@ import javax.sip.message.MessageFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.kurento.commons.mscontrol.MediaSession;
 import com.kurento.commons.sip.util.SipConfig;
 import com.kurento.commons.ua.UA;
+import com.kurento.mscontrol.commons.MediaSession;
 
 /**
  * The UaFactory is a singleton class able to create instances of a JAIN-SIP

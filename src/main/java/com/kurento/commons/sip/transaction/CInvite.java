@@ -29,13 +29,13 @@ import javax.sip.message.Request;
 import javax.sip.message.Response;
 
 import com.kurento.commons.media.format.conversor.SdpConversor;
-import com.kurento.commons.mscontrol.EventType;
-import com.kurento.commons.mscontrol.MediaEventListener;
-import com.kurento.commons.mscontrol.networkconnection.SdpPortManagerEvent;
-import com.kurento.commons.mscontrol.networkconnection.SdpPortManagerException;
 import com.kurento.commons.sip.agent.SipContext;
 import com.kurento.commons.sip.agent.UaFactory;
 import com.kurento.commons.ua.exception.ServerInternalErrorException;
+import com.kurento.mscontrol.commons.EventType;
+import com.kurento.mscontrol.commons.MediaEventListener;
+import com.kurento.mscontrol.commons.networkconnection.SdpPortManagerEvent;
+import com.kurento.mscontrol.commons.networkconnection.SdpPortManagerException;
 
 public class CInvite extends CTransaction {
 

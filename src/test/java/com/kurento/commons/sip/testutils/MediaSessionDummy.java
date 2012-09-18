@@ -17,14 +17,14 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
 
 
-import com.kurento.commons.mscontrol.Configuration;
-import com.kurento.commons.mscontrol.MediaSession;
-import com.kurento.commons.mscontrol.MsControlException;
-import com.kurento.commons.mscontrol.Parameters;
-import com.kurento.commons.mscontrol.mediacomponent.MediaComponent;
-import com.kurento.commons.mscontrol.mediamixer.MediaMixer;
-import com.kurento.commons.mscontrol.networkconnection.NetworkConnection;
+import com.kurento.commons.config.Parameters;
 import com.kurento.commons.sip.testutils.TestConfig.SdpPortManagerType;
+import com.kurento.mscontrol.commons.Configuration;
+import com.kurento.mscontrol.commons.MediaSession;
+import com.kurento.mscontrol.commons.MsControlException;
+import com.kurento.mscontrol.commons.mediacomponent.MediaComponent;
+import com.kurento.mscontrol.commons.mediamixer.MediaMixer;
+import com.kurento.mscontrol.commons.networkconnection.NetworkConnection;
 
 public class MediaSessionDummy implements MediaSession {
 	

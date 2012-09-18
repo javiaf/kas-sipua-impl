@@ -22,16 +22,16 @@ import javax.sdp.SdpException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.kurento.commons.media.format.SessionSpec;
 import com.kurento.commons.media.format.conversor.SdpConversor;
-import com.kurento.commons.mscontrol.EventType;
-import com.kurento.commons.mscontrol.MediaErr;
-import com.kurento.commons.mscontrol.MediaEventListener;
-import com.kurento.commons.mscontrol.networkconnection.NetworkConnection;
-import com.kurento.commons.mscontrol.networkconnection.SdpPortManager;
-import com.kurento.commons.mscontrol.networkconnection.SdpPortManagerEvent;
-import com.kurento.commons.mscontrol.networkconnection.SdpPortManagerException;
 import com.kurento.commons.sip.testutils.TestConfig.SdpPortManagerType;
+import com.kurento.mediaspec.SessionSpec;
+import com.kurento.mscontrol.commons.EventType;
+import com.kurento.mscontrol.commons.MediaErr;
+import com.kurento.mscontrol.commons.MediaEventListener;
+import com.kurento.mscontrol.commons.networkconnection.NetworkConnection;
+import com.kurento.mscontrol.commons.networkconnection.SdpPortManager;
+import com.kurento.mscontrol.commons.networkconnection.SdpPortManagerEvent;
+import com.kurento.mscontrol.commons.networkconnection.SdpPortManagerException;
 
 public class SdpPortManagerDummy implements SdpPortManager {
 

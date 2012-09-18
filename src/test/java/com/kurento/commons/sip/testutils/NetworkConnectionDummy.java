@@ -17,13 +17,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
 
 
-import com.kurento.commons.mscontrol.MsControlException;
-import com.kurento.commons.mscontrol.join.Joinable;
-import com.kurento.commons.mscontrol.join.JoinableStream;
-import com.kurento.commons.mscontrol.join.JoinableStream.StreamType;
-import com.kurento.commons.mscontrol.networkconnection.NetworkConnection;
-import com.kurento.commons.mscontrol.networkconnection.SdpPortManager;
 import com.kurento.commons.sip.testutils.TestConfig.SdpPortManagerType;
+import com.kurento.mscontrol.commons.MsControlException;
+import com.kurento.mscontrol.commons.join.Joinable;
+import com.kurento.mscontrol.commons.join.JoinableStream;
+import com.kurento.mscontrol.commons.join.JoinableStream.StreamType;
+import com.kurento.mscontrol.commons.networkconnection.NetworkConnection;
+import com.kurento.mscontrol.commons.networkconnection.SdpPortManager;
 
 public class NetworkConnectionDummy implements NetworkConnection {
 	SdpPortManagerDummy sdpManager;

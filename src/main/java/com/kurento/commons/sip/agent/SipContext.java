@@ -30,15 +30,7 @@ import javax.sip.message.Response;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.kurento.commons.media.format.MediaSpec;
-import com.kurento.commons.media.format.SessionSpec;
 import com.kurento.commons.media.format.conversor.SdpConversor;
-import com.kurento.commons.media.format.enums.MediaType;
-import com.kurento.commons.media.format.enums.Mode;
-import com.kurento.commons.media.format.exceptions.ArgumentNotSetException;
-import com.kurento.commons.mscontrol.MsControlException;
-import com.kurento.commons.mscontrol.networkconnection.NetworkConnection;
-import com.kurento.commons.mscontrol.networkconnection.SdpPortManager;
 import com.kurento.commons.sip.transaction.CBye;
 import com.kurento.commons.sip.transaction.CCancel;
 import com.kurento.commons.sip.transaction.CInvite;
@@ -51,6 +43,13 @@ import com.kurento.commons.ua.TerminateReason;
 import com.kurento.commons.ua.event.CallEvent;
 import com.kurento.commons.ua.event.CallEventEnum;
 import com.kurento.commons.ua.exception.ServerInternalErrorException;
+import com.kurento.mediaspec.Direction;
+import com.kurento.mediaspec.MediaSpec;
+import com.kurento.mediaspec.MediaType;
+import com.kurento.mediaspec.SessionSpec;
+import com.kurento.mscontrol.commons.MsControlException;
+import com.kurento.mscontrol.commons.networkconnection.NetworkConnection;
+import com.kurento.mscontrol.commons.networkconnection.SdpPortManager;
 
 public class SipContext implements Call {
 
@@ -79,7 +78,7 @@ public class SipContext implements Call {
 
 	private CallListener callListener;
 	private CallAttributes callAttributes = new CallAttributes();
-	private Map<MediaType, Mode> mediaTypesModes;
+	private Map<MediaType, Direction> mediaTypesModes;
 
 	// ////////////////////
 	//
@@ -247,7 +246,7 @@ public class SipContext implements Call {
 	}
 
 	@Override
-	public Map<MediaType, Mode> getMediaTypesModes() {
+	public Map<MediaType, Direction> getMediaTypesModes() {
 		return mediaTypesModes;
 	}
 
@@ -281,8 +280,8 @@ public class SipContext implements Call {
 			return "";
 	}
 
-	private Map<MediaType, Mode> getModesOfMediaTypes() {
-		Map<MediaType, Mode> map = new HashMap<MediaType, Mode>();
+	private Map<MediaType, Direction> getModesOfMediaTypes() {
+		Map<MediaType, Direction> map = new HashMap<MediaType, Direction>();
 		if (sdpPortManager != null) {
 			try {
 				SessionSpec session = this.sdpPortManager
@@ -291,25 +290,22 @@ public class SipContext implements Call {
 				if (session == null)
 					return map;
 
-				for (MediaSpec m : session.getMediaSpecs()) {
+				for (MediaSpec m : session.getMedias()) {
 					// Only it is to check that there is a rtp transport
-					try {
-						m.getTransport().getRtp();
-					} catch (ArgumentNotSetException ex) {
+					if (!m.getTransport().isSetRtp())
 						continue;
-					}
 
 					// Check that Mode is Inactive
-					if (m.getMode() == Mode.INACTIVE)
+					if (m.getDirection() == Direction.INACTIVE)
 						continue;
 
-					Set<MediaType> mediaTypes = m.getTypes();
+					Set<MediaType> mediaTypes = m.getType();
 
 					if (mediaTypes.size() != 1)
 						continue;
 
 					for (MediaType t : mediaTypes) {
-						map.put(t, m.getMode());
+						map.put(t, m.getDirection());
 						break;
 					}
 				}
