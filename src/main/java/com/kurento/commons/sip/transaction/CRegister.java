@@ -21,7 +21,6 @@ import java.security.NoSuchAlgorithmException;
 import java.text.ParseException;
 
 import javax.sip.InvalidArgumentException;
-import javax.sip.PeerUnavailableException;
 import javax.sip.ResponseEvent;
 import javax.sip.address.URI;
 import javax.sip.header.AuthorizationHeader;
@@ -90,7 +89,7 @@ public class CRegister extends CTransaction {
 			// Peer Authentication
 			try {
 				sendWithAuth(event);
-			} catch (KurentoException e) {
+			} catch (KurentoSipException e) {
 				String msg = "Unable to send Auth REGISTER";
 				log.error(msg, e);
 				sipUA.getRegistrationHandler().onConnectionFailure(register);
@@ -127,12 +126,11 @@ public class CRegister extends CTransaction {
 
 	@Override
 	public void processTimeout() {
-		log.warn("Register request timeout");
-		localParty.notifyEvent(EndPointEvent.REGISTER_USER_FAIL);
+		log.warn("Register request timeout for uri: " + register.getUri());
+		sipUA.getRegistrationHandler().onConnectionFailure(register);
 	}
 
-	private void sendWithAuth(ResponseEvent event)
-			throws ServerInternalErrorException {
+	private void sendWithAuth(ResponseEvent event) throws KurentoSipException {
 		Response response = event.getResponse();
 		int statusCode = response.getStatusCode();
 
@@ -140,12 +138,12 @@ public class CRegister extends CTransaction {
 
 		if (statusCode == 401 || statusCode == 407) { // 401 Peer Authentication
 			log.info("Authentication Required in REGISTER transaction for user: "
-					+ localParty.getAddress());
+					+ register.getUri());
 			AuthorizationHeader authorization = getAuthorizationHearder(response);
 			request.setHeader(authorization);
 		} else if (statusCode == 407) { // 407: Proxy Auth Required
 			log.info("Proxy Authentication Required in REGISTER transaction for user: "
-					+ localParty.getAddress());
+					+ register.getUri());
 			ProxyAuthenticateHeader proxyAuthenticateHeader;
 			proxyAuthenticateHeader = (ProxyAuthenticateHeader) response
 					.getHeader(ProxyAuthenticateHeader.NAME);
@@ -161,7 +159,7 @@ public class CRegister extends CTransaction {
 	// AuthenticationHearder RFC2617 construction for request digest without qop
 	// parameter and MD5 hash algorithm.
 	private AuthorizationHeader getAuthorizationHearder(Response response)
-			throws ServerInternalErrorException {
+			throws KurentoSipException {
 		WWWAuthenticateHeader wwwAuthenticateHeader;
 		AuthorizationHeader authorization = null;
 		try {
@@ -177,38 +175,33 @@ public class CRegister extends CTransaction {
 			log.debug("WWWAuthenticateHeader is "
 					+ wwwAuthenticateHeader.toString());
 
-			URI localUri = localParty.getAddress().getURI();
-			String user = localParty.getUserName();
+			URI localUri = sipUA.getAddressFactory().createURI(
+					register.getUri());
 
-			HeaderFactory factory = UaFactory.getSipFactory()
-					.createHeaderFactory();
+			HeaderFactory factory = sipUA.getHeaderFactory();
 			authorization = factory.createAuthorizationHeader(schema);
-			authorization.setUsername(user);
+			authorization.setUsername(register.getAuthuser());
 			authorization.setRealm(realm);
 			authorization.setNonce(nonce);
 			authorization.setURI(localUri);
-			String respon = getAuthResponse(user, realm,
-					localParty.getPassword(), this.method, localUri.toString(),
+			String respon = getAuthResponse(register.getAuthuser(),
+					register.getPassword(), realm, this.method,
+					register.getUri(),
 					nonce, alg);
 			authorization.setResponse(respon);
 			authorization.setAlgorithm(alg);
 			authorization.setOpaque(opaque);
 
-		} catch (ParseException e1) {
-			log.error(e1.toString());
-			throw new ServerInternalErrorException(
-					"Error generating authentication hearder", e1);
-		} catch (PeerUnavailableException e) {
-			log.error(e.toString());
-			throw new ServerInternalErrorException(
+		} catch (ParseException e) {
+			throw new KurentoSipException(
 					"Error generating authentication hearder", e);
 		}
 		return authorization;
 
 	}
 
-	private String getAuthResponse(String userName, String realm,
-			String password, String method, String uri, String nonce,
+	private String getAuthResponse(String userName, String password,
+			String realm, String method, String uri, String nonce,
 			String algorithm) {
 		// String cnonce = null;
 		MessageDigest messageDigest = null;

@@ -30,7 +30,6 @@ import javax.sip.message.Response;
 import com.kurento.kas.sip.ua.KurentoSipException;
 import com.kurento.kas.sip.ua.SipCall;
 import com.kurento.kas.sip.ua.SipUA;
-import com.kurento.kas.ua.KurentoException;
 
 public class CInvite extends CTransaction {
 
@@ -137,7 +136,7 @@ public class CInvite extends CTransaction {
 				try {
 					sendAck(null);
 					call.completedCallWithError("INVITE response received with no SDP");
-				} catch (KurentoException e) {
+				} catch (KurentoSipException e) {
 					String msg = "Unable to send ACK message";
 					log.error(msg, e);
 					call.callError(msg);
@@ -161,7 +160,7 @@ public class CInvite extends CTransaction {
 		}
 	}
 
-	private void sendAck(byte[] sdp) throws KurentoException {
+	private void sendAck(byte[] sdp) throws KurentoSipException {
 		// Non 2XX responses will cause the SIP Stack to send the ACK message
 		// automatically
 		if (!DialogState.CONFIRMED.equals(dialog.getState()))
@@ -185,16 +184,16 @@ public class CInvite extends CTransaction {
 		} catch (InvalidArgumentException e) {
 			String msg = "Invalid Argument Exception while sending ACK for transaction: "
 					+ this.dialog.getDialogId();
-			throw new KurentoException(msg, e);
+			throw new KurentoSipException(msg, e);
 		} catch (SipException e) {
 			String msg = "Sip Exception while sending ACK for transaction: "
 					+ this.dialog.getDialogId();
-			throw new KurentoException(msg, e);
+			throw new KurentoSipException(msg, e);
 
 		} catch (ParseException e) {
 			String msg = "Unssupported SDP while sending ACK request for transaction: "
 					+ this.dialog.getDialogId();
-			throw new KurentoException(msg, e);
+			throw new KurentoSipException(msg, e);
 
 		}
 	}
