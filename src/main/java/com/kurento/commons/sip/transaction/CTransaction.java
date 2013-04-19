@@ -21,6 +21,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import javax.sip.ClientTransaction;
+import javax.sip.Dialog;
 import javax.sip.DialogState;
 import javax.sip.InvalidArgumentException;
 import javax.sip.ResponseEvent;
@@ -46,12 +47,9 @@ import javax.sip.message.Request;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.kurento.commons.sip.agent.SipContext;
-import com.kurento.commons.sip.agent.SipEndPointImpl;
-import com.kurento.commons.sip.agent.UaFactory;
-import com.kurento.commons.sip.agent.UaImpl;
-import com.kurento.commons.sip.util.SipHeaderHelper;
-import com.kurento.commons.ua.exception.ServerInternalErrorException;
+import com.kurento.kas.sip.ua.KurentoSipException;
+import com.kurento.kas.sip.ua.SipCall;
+import com.kurento.kas.sip.ua.SipUA;
 
 /**
  * 
@@ -65,57 +63,45 @@ public abstract class CTransaction extends Transaction {
 	// General attributes
 	protected static Logger log = LoggerFactory.getLogger(CTransaction.class);
 
+	protected String method;
+	protected SipCall call;
+	protected Dialog dialog;
+	protected SipUA sipUA;
+
+	protected String localUri;
+	protected String remoteUri;
+
 	// ////////////
 	//
 	// CONSTRUCTOR
 	//
 	// ////////////
 
-	/**
-	 * Allows creation of out of dialog Client Transactions
-	 * 
-	 * @param method
-	 * @param localParty
-	 * @param remoteParty
-	 * @throws ServerInternalErrorException
-	 */
-	protected CTransaction(String method, SipEndPointImpl localParty,
-			Address remoteParty) throws ServerInternalErrorException {
-		super(method, localParty, remoteParty);
+	// Used for Non dialog transactions
+	protected CTransaction(String method, SipUA sipUA, String localUri,
+			String remoteUri) throws KurentoSipException {
+		this.sipUA = sipUA;
+		this.method = method;
+		this.localUri = localUri;
+		this.remoteUri = remoteUri;
 		createRequest();
 	}
 
-	/**
-	 * This constructor is intended to create a Client Transaction within a
-	 * dialog.
-	 * 
-	 * @param method
-	 * @param dialog
-	 * @throws ServerInternalErrorException
-	 */
-	protected CTransaction(String method, SipContext sipContext)
-			throws ServerInternalErrorException {
-		super(method, sipContext.getEndPoint(), sipContext.getRemoteParty());
-		dialog = sipContext.getDialog();
+	// Used for Dialog transactions
+	protected CTransaction(String method, SipUA sipUA, SipCall call)
+			throws KurentoSipException {
+		this.call = call;
+		this.dialog = call.getDialog();
+		this.sipUA = sipUA;
+		this.method = method;
+		this.localUri = this.dialog.getLocalParty().getURI().toString();
+		this.remoteUri = this.dialog.getRemoteParty().getURI().toString();
 		createRequest();
 	}
 
-	/**
-	 * This constructor is intented to create a Client Transaction when request
-	 * is already available (only for cancel requests)
-	 * 
-	 * @param method
-	 * @param request
-	 * @param localParty
-	 * @param remoteParty
-	 * @throws ServerInternalErrorException
-	 */
-	protected CTransaction(String method, Request request,
-			SipEndPointImpl localParty, Address remoteParty)
-			throws ServerInternalErrorException {
-		super(method, localParty, remoteParty);
-		this.request = request;
-		setClientTransaction();
+	// Used by Cancel transaction
+	protected CTransaction() {
+		// NOTHING TO DO HERE
 	}
 
 	// //////////////
@@ -123,8 +109,13 @@ public abstract class CTransaction extends Transaction {
 	// GETTERS
 	//
 	// //////////////
+
 	public ClientTransaction getClientTransaction() {
 		return clientTransaction;
+	}
+
+	public Dialog getDialog() {
+		return dialog;
 	}
 
 	// //////////////
@@ -133,7 +124,7 @@ public abstract class CTransaction extends Transaction {
 	//
 	// //////////////
 
-	protected void createRequest() throws ServerInternalErrorException {
+	protected void createRequest() throws KurentoSipException {
 		// Check if dialog exists
 		if (dialog == null) {
 			try {
@@ -146,26 +137,20 @@ public abstract class CTransaction extends Transaction {
 				UserAgentHeader userAgentHeader = buildUserAgentHeader();
 				ContactHeader contactHeader = buildContactHeader();
 
-				// AllowHeader allowHeader = buildAllowHeader();
-				// SupportedHeader supportedHeader = buildSupportedHeader();
-				// AcceptHeader acceptHeader = buildAcceptHeader();
-				// ExpiresHeader expiresHeader = buildExpiresHeader();
-				//
-				// RequireHeader requireHeader;
-
 				SipURI requestURI = buildRequestURI();
 
 				// Create Request
-				request = UaFactory.getMessageFactory().createRequest(
-						requestURI, method, callIdHeader, cSeqHeader,
-						fromHeader, toHeader, viaHeaders, maxForwardsHeader);
+				request = sipUA.getMessageFactory().createRequest(requestURI,
+						method, callIdHeader, cSeqHeader, fromHeader, toHeader,
+						viaHeaders, maxForwardsHeader);
 				request.addHeader(userAgentHeader);
 				request.addHeader(contactHeader);
+
 			} catch (ParseException e) {
-				throw new ServerInternalErrorException(
+				throw new KurentoSipException(
 						"Parse error while creating SIP client transaction", e);
 			} catch (InvalidArgumentException e) {
-				throw new ServerInternalErrorException(
+				throw new KurentoSipException(
 						"Invalid argument for SIP client transaction", e);
 			}
 		} else {
@@ -173,71 +158,57 @@ public abstract class CTransaction extends Transaction {
 				// Create Request from dialog
 				request = dialog.createRequest(method);
 			} catch (SipException e) {
-				throw new ServerInternalErrorException(
-						"Dialog is not yet established", e);
+				throw new KurentoSipException("Dialog is not yet established",
+						e);
 			}
 		}
-		setClientTransaction();
-	}
-
-	private void setClientTransaction() throws ServerInternalErrorException {
-		// Create client transaction
+		// Set client transaction
 		try {
-			clientTransaction = localParty.getUa().getSipProvider()
-					.getNewClientTransaction(request);
+			clientTransaction = sipUA.getSipProvider().getNewClientTransaction(
+					request);
 			clientTransaction.setApplicationData(this);
 
-			// Check if after request a dialog should be created
+			// get dialog again
 			dialog = clientTransaction.getDialog();
+
 		} catch (TransactionUnavailableException e) {
-			throw new ServerInternalErrorException(
+			throw new KurentoSipException(
 					"Transaction error while creating new client transaction",
 					e);
 		}
+
 	}
 
-	protected CallIdHeader buildCallIdHeader()
-			throws ServerInternalErrorException {
-		try {
-			CallIdHeader callIdHeader;
-			if (!(dialog != null && (callIdHeader = dialog.getCallId()) != null)) {
-				if (localParty.getUa() == null
-						|| localParty.getUa().getSipProvider() != null) {
-					callIdHeader = localParty.getUa().getSipProvider()
-							.getNewCallId();
-				} else {
-					throw new ServerInternalErrorException(
-							"User Agent not initialized.");
-				}
-			}
-			return callIdHeader;
-		} catch (Exception e) {
-			throw new ServerInternalErrorException("Error building hearder.", e);
-		}
+	// // ALL THIS HELPER FUNCTIONS ARE CALLED WHEN DIALOG=NULL // //
+
+	private CallIdHeader buildCallIdHeader() throws KurentoSipException {
+		// Dialog is null here. Make sure you don't use it
+		return sipUA.getSipProvider().getNewCallId();
 	}
 
 	protected FromHeader buildFromHeader() throws ParseException {
-		if (dialog != null && dialog.getLocalTag() != null) {
-			localTag = dialog.getLocalTag();
-		}
-		if (localTag == null) {
-			localTag = SipHeaderHelper.getNewRandomTag();
-		}
-		return UaFactory.getHeaderFactory().createFromHeader(
-				localParty.getAddress(), localTag);
+		// Dialog is null here. Make sure you don't use it
+		localTag = getNewRandomTag();
+		Address localAddress = sipUA.getAddressFactory()
+				.createAddress(localUri);
+		return sipUA.getHeaderFactory()
+				.createFromHeader(localAddress, localTag);
 	}
 
 	protected ToHeader buildToHeader() throws ParseException {
-		return UaFactory.getHeaderFactory().createToHeader(remoteParty, null);
+		// Dialog is null here. Make sure you don't use it
+		Address remoteAddress = sipUA.getAddressFactory().createAddress(
+				remoteUri);
+		return sipUA.getHeaderFactory().createToHeader(remoteAddress, null);
 	}
 
 	protected List<ViaHeader> buildViaHeaders() throws ParseException,
 			InvalidArgumentException {
+		// Dialog is null here. Make sure you don't use it
 		List<ViaHeader> viaHeaders = new ArrayList<ViaHeader>();
-		UaImpl ua = localParty.getUa();
-		ViaHeader viaHeader = UaFactory.getHeaderFactory().createViaHeader(
-				ua.getPublicAddress(), ua.getPublicPort(), ua.getTransport(),
-				SipHeaderHelper.getNewRandomBranch());
+		ViaHeader viaHeader = sipUA.getHeaderFactory().createViaHeader(
+				sipUA.getLocalAddress(), sipUA.getLocalPort(),
+				sipUA.getTransport(), getNewRandomBranch());
 
 		// add via headers
 		viaHeaders.add(viaHeader);
@@ -246,90 +217,84 @@ public abstract class CTransaction extends Transaction {
 
 	protected CSeqHeader buildCSeqHeader() throws ParseException,
 			InvalidArgumentException {
-		Long cSeqNumber;
-		if (!(dialog != null && (cSeqNumber = dialog.getLocalSeqNumber()) != 0)) {
-			cSeqNumber = CTransaction.cSeqNumber;
-		}
-		return UaFactory.getHeaderFactory()
-				.createCSeqHeader(cSeqNumber, method);
+		// Dialog is null here. Make sure you don't use it
+		return sipUA.getHeaderFactory().createCSeqHeader(cSeqNumber, method);
 	}
 
 	protected MaxForwardsHeader buildMaxForwardsHeader()
 			throws InvalidArgumentException {
-		return UaFactory.getHeaderFactory().createMaxForwardsHeader(
-				localParty.getUa().getMaxForwards());
+		// Dialog is null here. Make sure you don't use it
+		return sipUA.getHeaderFactory().createMaxForwardsHeader(
+				sipUA.getMaxForwards());
 	}
 
-	protected AllowHeader buildAllowHeader()
-			throws ServerInternalErrorException {
+	protected AllowHeader buildAllowHeader() throws KurentoSipException {
 		try {
-			return UaFactory.getHeaderFactory().createAllowHeader(
+			// Dialog is null here. Make sure you don't use it
+			return sipUA.getHeaderFactory().createAllowHeader(
 					"INVITE,ACK,CANCEL,BYE");
 		} catch (ParseException e) {
-			throw new ServerInternalErrorException(
+			throw new KurentoSipException(
 					"Parse Exception building Header Factory", e);
 		}
 	}
 
-	protected SupportedHeader buildSupportedHeader()
-			throws ServerInternalErrorException {
+	protected SupportedHeader buildSupportedHeader() throws KurentoSipException {
 		try {
-			return UaFactory.getHeaderFactory().createSupportedHeader("100rel");
+			// Dialog is null here. Make sure you don't use it
+			return sipUA.getHeaderFactory().createSupportedHeader("100rel");
 		} catch (ParseException e) {
-			throw new ServerInternalErrorException(
+			throw new KurentoSipException(
 					"Parse Exception building Support header", e);
 		}
 
 	}
 
 	protected ContentTypeHeader buildContentTypeHeader()
-			throws ServerInternalErrorException {
+			throws KurentoSipException {
+		// Dialog is null here. Make sure you don't use it
 		try {
-			return UaFactory.getHeaderFactory().createContentTypeHeader(
+			return sipUA.getHeaderFactory().createContentTypeHeader(
 					"application", "sdp");
 		} catch (ParseException e) {
-			throw new ServerInternalErrorException(
+			throw new KurentoSipException(
 					"ParseException building contentType header", e);
 		}
 	}
 
-	protected ContactHeader buildContactHeader() throws ServerInternalErrorException {
-		ContactHeader contact = UaFactory.getHeaderFactory().createContactHeader(
-				localParty.getContact());
-//		try {
-//			// Params from RFC5626
-//			contact.setParameter("+sip.instance", "\"<urn:uuid:"+ localParty.getUa().getInstanceId()+">\"");
-//			contact.setParameter("reg-id",String.valueOf(localParty.getUa().getRegId()));
-//		} catch (ParseException e) {
-//			throw new ServerInternalErrorException(
-//					"ParseException building contact header", e);
-//		}		
+	protected ContactHeader buildContactHeader() throws KurentoSipException {
+		// Dialog is null here. Make sure you don't use it
+		ContactHeader contact = sipUA.getHeaderFactory().createContactHeader(
+				sipUA.getContactAddress(localUri));
 		return contact;
 	}
 
 	protected AcceptHeader buildAcceptHeader() throws ParseException {
-		return UaFactory.getHeaderFactory().createAcceptHeader("application",
-				"sdp");
+		// Dialog is null here. Make sure you don't use it
+		return sipUA.getHeaderFactory()
+				.createAcceptHeader("application", "sdp");
 	}
 
-	protected ExpiresHeader buildExpiresHeader()
-			throws ServerInternalErrorException {
+	protected ExpiresHeader buildExpiresHeader() throws KurentoSipException {
 		try {
-			return UaFactory.getHeaderFactory().createExpiresHeader(
-					localParty.getExpires());
+			// Dialog is null here. Make sure you don't use it
+			return sipUA.getHeaderFactory().createExpiresHeader(
+					sipUA.getExpires());
 		} catch (InvalidArgumentException e) {
-			throw new ServerInternalErrorException(
+			throw new KurentoSipException(
 					"Invalid argument building expires header", e);
 		}
 	}
 
 	protected UserAgentHeader buildUserAgentHeader() throws ParseException {
-		return UaFactory.getUserAgentHeader();
-
+		// Dialog is null here. Make sure you don't use it
+		return sipUA.getUserAgentHeader();
 	}
 
 	protected SipURI buildRequestURI() throws ParseException {
-		return (SipURI) remoteParty.getURI();
+		// Dialog is null here. Make sure you don't use it
+		return (SipURI) sipUA.getAddressFactory().createAddress(remoteUri)
+				.getURI();
 	}
 
 	// ///////////////////
@@ -338,15 +303,15 @@ public abstract class CTransaction extends Transaction {
 	//
 	// ///////////////////
 
-	public void sendRequest(byte[] sdp) throws ServerInternalErrorException {
+	public void sendRequest(String sdp) throws KurentoSipException {
 
-		if (sdp != null && sdp.length > 0) {
+		if (sdp != null && !sdp.isEmpty()) {
 			try {
-				request.setContent(sdp, buildContentTypeHeader());
+				request.setContent(sdp.getBytes(), buildContentTypeHeader());
 			} catch (ParseException e) {
-				throw new ServerInternalErrorException(
+				throw new KurentoSipException(
 						"ParseException adding content to INVITE request:\n"
-								+ sdp.toString(), e);
+								+ sdp, e);
 			}
 		}
 		log.info("SIP send request\n"
@@ -360,20 +325,17 @@ public abstract class CTransaction extends Transaction {
 			else
 				clientTransaction.sendRequest();
 		} catch (SipException e) {
-			throw new ServerInternalErrorException(
-					"Sip Exception sending  request", e); // BYE too...
+			throw new KurentoSipException("Sip Exception sending  request", e);
 		}
 	}
 
 	public abstract void processResponse(ResponseEvent event);
-	
-	public void processTimeout(){
+
+	public void processTimeout() {
 		log.info("Client transaction timeout");
-		if (sipContext != null) {
-			sipContext.callTimeout();
+		if (call != null) {
+			call.callTimeout();
 		}
 	}
-
-
 
 }

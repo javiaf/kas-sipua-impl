@@ -16,49 +16,50 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
 package com.kurento.commons.sip.transaction;
 
-import javax.sip.Dialog;
-import javax.sip.address.Address;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.kurento.commons.sip.agent.SipContext;
-import com.kurento.commons.sip.agent.SipEndPointImpl;
+import java.security.SecureRandom;
+import java.util.Hashtable;
 
 public abstract class Transaction {
 
-	private static Logger log = LoggerFactory.getLogger(Transaction.class);
-
-	protected String method;
-
-	protected Dialog dialog;
-	protected SipContext sipContext;
-
-	protected SipEndPointImpl localParty;
-	protected Address remoteParty;
+	static Hashtable<Integer, Boolean> usedPorts = new Hashtable<Integer, Boolean>();
 
 	protected String localTag;
 	protected static long cSeqNumber = System.currentTimeMillis() % 100000000;
-
+	
+	// Protocol helper
+	private static SecureRandom rn = new SecureRandom();
+	private static final int tagLength = 10;
+	private static final int branchLength = 10;
+	
 	// ///////////////
 	//
-	// Constructor
+	// SIP HELPERS
 	//
 	// ///////////////
 
-	protected Transaction(String method, SipEndPointImpl localParty,
-			Address remoteParty) {
-		this.method = method;
-		this.remoteParty = remoteParty;
-		this.localParty = localParty;
+	protected String getNewRandomTag() {
+		byte t[] = new byte[tagLength];
+		for (int i = 0; i < tagLength; i++) {
+			t[i] = (byte) rand('a', 'z');
+		}
+		return new String(t);
 	}
 
-//	public void processTimeOut(TimeoutEvent timeoutEvent) {
-//		String msg ="Time Out while waiting for an ACK";
-//		timeoutEvent.
-//		log.error(msg);
-//		if (sipContext != null)
-//			sipContext.failedCall(msg);
-//	}
+	protected String getNewRandomBranch() {
+		byte b[] = new byte[branchLength];
+		for (int i = 0; i < branchLength; i++) {
+			b[i] = (byte) rand('a', 'z');
+		}
+		return "z9hG4bK_" + new String(b);
+	}
+
+	protected int rand(int lo, int hi) {
+		int n = hi - lo + 1;
+		int i = rn.nextInt(n);
+		if (i < 0) {
+			i = -i;
+		}
+		return lo + i;
+	}
 
 }

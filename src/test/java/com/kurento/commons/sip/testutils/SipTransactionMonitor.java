@@ -7,9 +7,9 @@ import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.kurento.commons.sip.agent.UaMessageListener;
 import com.kurento.commons.sip.event.SipEvent;
 import com.kurento.commons.sip.event.SipEventEnum;
+import com.kurento.kas.sip.ua.UaMessageListener;
 
 public class SipTransactionMonitor implements UaMessageListener {
 	

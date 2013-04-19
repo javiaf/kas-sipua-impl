@@ -27,8 +27,6 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.kurento.commons.sip.agent.UaFactory;
-import com.kurento.commons.sip.agent.UaImpl;
 import com.kurento.commons.sip.testutils.MediaSessionDummy;
 import com.kurento.commons.sip.testutils.NetworkController;
 import com.kurento.commons.sip.testutils.SipCallController;
@@ -42,13 +40,15 @@ import com.kurento.commons.ua.UA;
 import com.kurento.commons.ua.event.CallEvent;
 import com.kurento.commons.ua.event.EndPointEvent;
 import com.kurento.commons.ua.exception.ServerInternalErrorException;
+import com.kurento.kas.sip.ua.SipUA;
+import com.kurento.kas.sip.ua.UaFactory;
 
 public class RejectTest {
 
 	private final static Logger log = LoggerFactory.getLogger(RejectTest.class);
 
-	private static UA serverUa;
-	private static UA clientUa;
+	private static SipUA serverUa;
+	private static SipUA clientUa;
 
 	private static SipEndPointController serverEndPointController;
 	private static SipEndPointController clientEndPointController;
@@ -92,7 +92,7 @@ public class RejectTest {
 		sConfig.setTimer(timer);
 
 		serverUa = UaFactory.getInstance(sConfig);
-		((UaImpl) serverUa).setTestMode(true);
+		((SipUA) serverUa).setTestMode(true);
 		serverEndPointController = new SipEndPointController(serverName);
 		// Create and register SIP EndPoint
 		Map<String, Object> sEpConfig = new HashMap<String, Object>();
@@ -118,7 +118,7 @@ public class RejectTest {
 		cConfig.setTimer(timer);
 
 		clientUa = UaFactory.getInstance(cConfig);
-		((UaImpl) clientUa).setTestMode(true);
+		((SipUA) clientUa).setTestMode(true);
 		clientEndPointController = new SipEndPointController(clientName);
 		Map<String, Object> cEpConfig = new HashMap<String, Object>();
 		cEpConfig.put("SIP_RECEIVE_CALL", false);

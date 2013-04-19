@@ -19,15 +19,16 @@ package com.kurento.commons.sip.transaction;
 import javax.sip.ResponseEvent;
 import javax.sip.message.Request;
 
-import com.kurento.commons.sip.agent.SipContext;
-import com.kurento.commons.ua.exception.ServerInternalErrorException;
+import com.kurento.kas.sip.ua.KurentoSipException;
 
 public class CCancel extends CTransaction {
 
-	public CCancel(Request cancelRequest, SipContext sipContext)
-			throws ServerInternalErrorException {
-		super(Request.CANCEL, cancelRequest, sipContext.getEndPoint(),
-				sipContext.getRemoteParty());
+	public CCancel(Request cancelRequest)
+			throws KurentoSipException {
+		// Cancel transaction requires external request calculated from
+		// ClientTransaction being cancelled
+		this.request = cancelRequest;
+		// Send request with no SDP
 		sendRequest(null);
 	}
 

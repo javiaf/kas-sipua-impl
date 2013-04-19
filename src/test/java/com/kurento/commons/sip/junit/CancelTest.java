@@ -27,7 +27,6 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.kurento.commons.sip.agent.UaFactory;
 import com.kurento.commons.sip.testutils.MediaSessionDummy;
 import com.kurento.commons.sip.testutils.NetworkController;
 import com.kurento.commons.sip.testutils.SipCallController;
@@ -43,6 +42,7 @@ import com.kurento.commons.ua.event.CallEvent;
 import com.kurento.commons.ua.event.EndPointEvent;
 import com.kurento.commons.ua.exception.ServerInternalErrorException;
 import com.kurento.commons.ua.timer.KurentoUaTimer;
+import com.kurento.kas.sip.ua.UaFactory;
 
 /**
  * RFC 3261 Chapter 9. Canceling a Request.
@@ -51,8 +51,8 @@ public class CancelTest {
 
 	private final static Logger log = LoggerFactory.getLogger(CancelTest.class);
 
-	private static UA serverUa;
-	private static UA clientUa;
+	private static SipUA serverUa;
+	private static SipUA clientUa;
 
 	private static SipEndPointController serverEndPointController;
 	private static SipEndPointController clientEndPointController;

@@ -22,22 +22,17 @@ import javax.sip.message.Request;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.kurento.commons.media.format.conversor.SdpConversor;
-import com.kurento.commons.sip.agent.SipEndPointImpl;
-import com.kurento.commons.sip.exception.SipTransactionException;
-import com.kurento.commons.ua.exception.ServerInternalErrorException;
-import com.kurento.mscontrol.commons.EventType;
-import com.kurento.mscontrol.commons.MediaEventListener;
-import com.kurento.mscontrol.commons.networkconnection.SdpPortManagerEvent;
+import com.kurento.kas.sip.ua.KurentoSipException;
+import com.kurento.kas.sip.ua.SipUA;
 
 public class SAck extends STransaction {
 
 	private static Logger log = LoggerFactory.getLogger(SAck.class);
 
 	// Process ACK to a successful INVITE
-	public SAck(ServerTransaction serverTransaction, SipEndPointImpl localParty)
-			throws ServerInternalErrorException, SipTransactionException {
-		super(Request.ACK, serverTransaction, localParty);
+	public SAck(SipUA sipUA, ServerTransaction serverTransaction)
+			throws KurentoSipException {
+		super(sipUA, serverTransaction);
 
 		// Process request
 		Request request = serverTransaction.getRequest();
@@ -48,55 +43,11 @@ public class SAck extends STransaction {
 		// Process ACK request
 		if (getContentLength(request) == 0) {
 			log.debug("ACK does not provides content. Call completes successfully");
-			sipContext.completedCall();
+			call.completedCall();
 		} else {
-			log.debug("ACK contains SDP response.");
 
-			if (sipContext != null) {
-				try {
-					sipContext.getSdpPortmanager().addListener(
-							new MediaEventListener<SdpPortManagerEvent>() {
-
-								@Override
-								public void onEvent(SdpPortManagerEvent event) {
-									event.getSource().removeListener(this);
-									EventType eventType = event.getEventType();
-									if (SdpPortManagerEvent.ANSWER_PROCESSED
-											.equals(eventType)) {
-										log.debug("SdpPortManager successfully processed SDP offer sent by peer");
-										// Notify incoming call to TU
-										SAck.this.sipContext.completedCall();
-
-									} else {
-										// TODO: Analyze whether more detailed
-										// information
-										// is required of problem found
-										// Get error cause
-										String code;
-										if (eventType == null)
-											code = event.getError() +": " + event.getErrorText();
-										else 
-											code = eventType.toString();
-										
-										SAck.this.sipContext
-												.callError("Unable to allocate network resources - "
-														+ code);
-									}
-								}
-							});
-					byte[] rawContent = request.getRawContent();
-					sipContext.getSdpPortmanager().processSdpAnswer(
-							SdpConversor
-									.sdp2SessionSpec(new String(rawContent)));
-				} catch (Exception e) {
-					String msg = "Unable to process SDP response";
-					log.error(msg, e);
-					sipContext.callError(msg);
-				}
-			} else {
-				throw new ServerInternalErrorException(
-						"Unable to find SipContext associated to transaction.");
-			}
+			// TODO retrieve Descriptor offer from response
+			// TODO create Descriptor response to send in ACK
 
 		}
 	}

@@ -18,7 +18,6 @@ package com.kurento.commons.sip.transaction;
 
 import java.text.ParseException;
 
-import javax.sdp.SdpException;
 import javax.sip.DialogState;
 import javax.sip.InvalidArgumentException;
 import javax.sip.ResponseEvent;
@@ -28,22 +27,17 @@ import javax.sip.header.ContentTypeHeader;
 import javax.sip.message.Request;
 import javax.sip.message.Response;
 
-import com.kurento.commons.media.format.conversor.SdpConversor;
-import com.kurento.commons.sip.agent.SipContext;
-import com.kurento.commons.sip.agent.UaFactory;
-import com.kurento.commons.ua.exception.ServerInternalErrorException;
-import com.kurento.mscontrol.commons.EventType;
-import com.kurento.mscontrol.commons.MediaEventListener;
-import com.kurento.mscontrol.commons.networkconnection.SdpPortManagerEvent;
-import com.kurento.mscontrol.commons.networkconnection.SdpPortManagerException;
+import com.kurento.kas.sip.ua.KurentoSipException;
+import com.kurento.kas.sip.ua.SipCall;
+import com.kurento.kas.sip.ua.SipUA;
+import com.kurento.kas.ua.KurentoException;
 
 public class CInvite extends CTransaction {
 
-	public CInvite(SipContext sipContext) throws ServerInternalErrorException {
-		super(Request.INVITE, sipContext.getEndPoint(), sipContext
-				.getRemoteParty());
+	public CInvite(SipUA sipUA, SipCall call) throws KurentoSipException {
+		super(Request.INVITE, sipUA, call);
 
-		this.sipContext = sipContext;
+		this.call = call;
 
 		// INVITE REQUIRES TO INCREASE SEQUENCE NUMBER
 		CTransaction.cSeqNumber++;
@@ -55,54 +49,9 @@ public class CInvite extends CTransaction {
 		request.addHeader(buildAllowHeader()); // Allow
 		request.addHeader(buildSupportedHeader()); // SupportHeader
 
-		// Add SDP port manager listener to process SDP offer generation event
-		sipContext.getSdpPortmanager().addListener(
-				new MediaEventListener<SdpPortManagerEvent>() {
+		// Send Offer
+		sendRequest(call.getOffer());
 
-					@Override
-					public void onEvent(SdpPortManagerEvent event) {
-						event.getSource().removeListener(this);
-						EventType eventType = event.getEventType();
-						if (SdpPortManagerEvent.OFFER_GENERATED
-								.equals(eventType)) {
-							log.debug("SdpPortManager successfully generated a SDP to be send to remote peer");
-							try {
-								// Send the request
-								CInvite.this.sendRequest(SdpConversor
-										.sessionSpec2Sdp(
-												event.getMediaServerSdp())
-										.getBytes());
-								// Notify the SIP context the request has been
-								// sent
-								CInvite.this.sipContext
-										.outgoingCall(CInvite.this);
-							} catch (SdpException e) {
-								log.error("Unable to parse SDP offer", e);
-								CInvite.this.sipContext
-										.callError("Unable to convert media offer to a valid SDP string");
-							} catch (ServerInternalErrorException e) {
-								log.error("Unable to send INVITE request", e);
-								CInvite.this.sipContext
-										.callError("Unable to send INVITE request");
-							}
-
-							// No event generated with normal operation
-						} else {
-							// TODO: Analyze whether more detailed information
-							// is required of problem found
-							CInvite.this.sipContext
-									.callError("Unable to allocate network resources. SdpPortManager event="
-											+ eventType);
-						}
-
-					}
-				});
-		try {
-			sipContext.getSdpPortmanager().generateSdpOffer();
-		} catch (SdpPortManagerException e) {
-			throw new ServerInternalErrorException(
-					"Unable to generate SDP offer");
-		}
 	}
 
 	@Override
@@ -121,8 +70,7 @@ public class CInvite extends CTransaction {
 		} else if (statusCode == Response.RINGING) {
 			log.info("<<<<<<< 180 Ringing: dialog: " + this.dialog
 					+ ", state: " + dialog.getState());
-			// DO NOTHING
-			sipContext.ringingCall();
+			call.remoteRingingCall();
 
 		} else if (statusCode == Response.SESSION_PROGRESS) {
 			log.info("<<<<<<< 183 Session Progress: dialog: " + this.dialog
@@ -142,14 +90,14 @@ public class CInvite extends CTransaction {
 			log.info("<<<<<<< " + statusCode
 					+ " Session cancel confirmed by remote peer: dialog: "
 					+ this.dialog + ", state: " + dialog.getState());
-			sipContext.canceledCall();
+			call.LocalCallCancel();
 
 		} else if (	statusCode == Response.BUSY_HERE
 				|| statusCode == Response.BUSY_EVERYWHERE ) {
 			log.info("<<<<<<< " + statusCode
 					+ "Remote peer is BUSY: dialog: " + this.dialog
 					+ ", state: " + dialog.getState());
-			sipContext.busyCall();
+			call.remoteCallBusy();
 
 		} else if (statusCode == Response.TEMPORARILY_UNAVAILABLE
 
@@ -157,7 +105,7 @@ public class CInvite extends CTransaction {
 			log.info("<<<<<<< " + statusCode
 					+ "Session REJECT by remote peer: dialog: " + this.dialog
 					+ ", state: " + dialog.getState());
-			sipContext.rejectedCall();
+			call.remoteCallReject();
 
 		} else if (statusCode == Response.UNSUPPORTED_MEDIA_TYPE
 				|| statusCode == Response.NOT_ACCEPTABLE_HERE
@@ -165,14 +113,14 @@ public class CInvite extends CTransaction {
 			log.info("<<<<<<< " + statusCode
 					+ " UNSUPPORTED_MEDIA_TYPE: dialog: " + this.dialog
 					+ ", state: " + dialog.getState());
-			sipContext.unsupportedMediaType();
+			call.unsupportedMediaType();
 
 		} else if (statusCode == 476 || statusCode == Response.NOT_FOUND) {
 			// USER_NOT_FOUND. SIP/2.0 476
 			// Unresolvable destination
 			log.info("<<<<<<< " + statusCode + " USER_NOT_FOUND: dialog: "
 					+ this.dialog + ", state: " + dialog.getState());
-			sipContext.userNotFound();
+			call.userNotFound();
 
 		} else if (statusCode == Response.OK) {
 			// 200 OK
@@ -188,32 +136,32 @@ public class CInvite extends CTransaction {
 				// Send ACK to complete INVITE transaction
 				try {
 					sendAck(null);
-					sipContext.completedCallWithError("INVITE response received with no SDP");
-				} catch (ServerInternalErrorException e) {
+					call.completedCallWithError("INVITE response received with no SDP");
+				} catch (KurentoException e) {
 					String msg = "Unable to send ACK message";
 					log.error(msg, e);
-					sipContext.callError(msg);
+					call.callError(msg);
 				}
-				sipContext.completedCallWithError("Received response to INVITE with no SDP");
+				call.completedCallWithError("Received response to INVITE with no SDP");
 			}
 		} else if (statusCode > 200 && statusCode < 400) {
 			// Unsupported codes
 			log.info("<<<<<<< " + statusCode
 					+ " Response code not supported : dialog: " + this.dialog
 					+ ", state: " + dialog.getState());
-			sipContext.completedCallWithError("Unssuported code:" + statusCode);
+			call.completedCallWithError("Unssuported code:" + statusCode);
 		} else {
 			log.info("<<<<<<< " + statusCode
 					+ " Response code not supported : dialog: " + this.dialog
 					+ ", state: " + dialog.getState());
-			sipContext.callError("Unsupported status code received:"
+			call.callError("Unsupported status code received:"
 					+ statusCode);
 			// sendAck(); // ACK is automatically sent by the SIP Stack for
 			// codes >4xx
 		}
 	}
 
-	private void sendAck(byte[] sdp) throws ServerInternalErrorException {
+	private void sendAck(byte[] sdp) throws KurentoException {
 		// Non 2XX responses will cause the SIP Stack to send the ACK message
 		// automatically
 		if (!DialogState.CONFIRMED.equals(dialog.getState()))
@@ -225,7 +173,7 @@ public class CInvite extends CTransaction {
 					.getHeader(CSeqHeader.NAME)).getSeqNumber());
 
 			if (sdp != null) {
-				ContentTypeHeader contentTypeHeader = UaFactory
+				ContentTypeHeader contentTypeHeader = sipUA
 						.getHeaderFactory().createContentTypeHeader(
 								"application", "SDP");
 				ackRequest.setContent(sdp, contentTypeHeader);
@@ -237,67 +185,21 @@ public class CInvite extends CTransaction {
 		} catch (InvalidArgumentException e) {
 			String msg = "Invalid Argument Exception while sending ACK for transaction: "
 					+ this.dialog.getDialogId();
-			throw new ServerInternalErrorException(msg, e);
+			throw new KurentoException(msg, e);
 		} catch (SipException e) {
 			String msg = "Sip Exception while sending ACK for transaction: "
 					+ this.dialog.getDialogId();
-			throw new ServerInternalErrorException(msg, e);
+			throw new KurentoException(msg, e);
 
 		} catch (ParseException e) {
 			String msg = "Unssupported SDP while sending ACK request for transaction: "
 					+ this.dialog.getDialogId();
-			throw new ServerInternalErrorException(msg, e);
+			throw new KurentoException(msg, e);
 
 		}
 	}
 
 	private void processSdpAnswer(byte[] rawContent) {
-		// Add SDP port manager listener to process SDP answer event
-		try {
-			sipContext.getSdpPortmanager().addListener(
-					new MediaEventListener<SdpPortManagerEvent>() {
-
-						@Override
-						public void onEvent(SdpPortManagerEvent event) {
-							event.getSource().removeListener(this);
-							EventType eventType = event.getEventType();
-							if (SdpPortManagerEvent.ANSWER_PROCESSED
-									.equals(eventType)) {
-								log.debug("SdpPortManager successfully processed SDP offer sent by peer");
-								// Send ACK
-								try {
-									sendAck(null);
-									CInvite.this.sipContext.completedCall();
-								} catch (ServerInternalErrorException e) {
-									String msg = "Unable to send ACK message after SDP processing";
-									log.error(msg, e);
-									CInvite.this.sipContext.callError(msg);
-								}
-
-							} else {
-								// TODO: Analyze whether more detailed
-								// information
-								// is required of problem found
-								// Get error cause
-								String code;
-								if (eventType == null)
-									code = event.getError() +": " + event.getErrorText();
-								else 
-									code = eventType.toString();
-								
-								CInvite.this.sipContext
-										.callError("Unable to allocate network resources - "
-												+ code);
-							}
-
-						}
-					});
-			sipContext.getSdpPortmanager().processSdpAnswer(
-					SdpConversor.sdp2SessionSpec(new String(rawContent)));
-		} catch (Exception e) {
-			String msg = "Unable to process SDP response";
-			log.error(msg, e);
-			sipContext.callError(msg);
-		}
+		// TODO get SDP ANSWER
 	}
 }

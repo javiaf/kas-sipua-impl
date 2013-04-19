@@ -1,4 +1,5 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>com.kurento.commons</groupId>
 	<artifactId>kas-sipua-impl</artifactId>
@@ -14,10 +15,7 @@
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 
 		<!-- Dependency versions -->
-		<kcUaVersion>1.2.7-SNAPSHOT</kcUaVersion>
-		<kcMediaSpecVersion>2.0.2-SNAPSHOT</kcMediaSpecVersion>
-		<kcMediaSpecConversorVersion>1.0.2-SNAPSHOT</kcMediaSpecConversorVersion>
-		<kcStunVersion>1.0.2</kcStunVersion>
+		<android.version>4.0_r3</android.version>
 	</properties>
 
 	<organization>
@@ -52,21 +50,15 @@
 
 	<dependencies>
 		<dependency>
-			<groupId>com.kurento.commons</groupId>
-			<artifactId>kc-ua</artifactId>
-			<version>${kcUaVersion}</version>
-		</dependency>
-		
-		<dependency>
-			<groupId>com.kurento.commons</groupId>
-			<artifactId>kc-stun</artifactId>
-			<version>${kcStunVersion}</version>
-			<type>jar</type>
+			<groupId>com.kurento.kas</groupId>
+			<artifactId>android-api</artifactId>
+			<version>1.0.0-SNAPSHOT</version>
 		</dependency>
 		<dependency>
-			<groupId>com.kurento.commons</groupId>
-			<artifactId>kc-mediaspec-conversor</artifactId>
-			<version>${kcMediaSpecConversorVersion}</version>
+			<groupId>android</groupId>
+			<artifactId>android</artifactId>
+			<version>${android.version}</version>
+			<scope>provided</scope>
 		</dependency>
 
 		<dependency>
@@ -74,26 +66,19 @@
 			<artifactId>slf4j-api</artifactId>
 			<version>1.6.4</version>
 		</dependency>
-		
+
 		<dependency>
 			<groupId>javax.sip</groupId>
 			<artifactId>jain-sip-api</artifactId>
 			<version>1.2</version>
 			<scope>provided</scope>
 		</dependency>
-		
+
 		<dependency>
 			<groupId>javax.sip</groupId>
 			<artifactId>jain-sip-ri</artifactId>
 			<version>1.2.76</version>
 			<scope>provided</scope>
-		</dependency>
-		
-		<dependency>
-			<groupId>junit</groupId>
-			<artifactId>junit</artifactId>
-			<version>4.10</version>
-			<scope>test</scope>
 		</dependency>
 
 		<dependency>
@@ -102,7 +87,7 @@
 			<version>1.2.14</version>
 			<scope>test</scope>
 		</dependency>
-		
+
 		<dependency>
 			<groupId>org.slf4j</groupId>
 			<artifactId>slf4j-log4j12</artifactId>

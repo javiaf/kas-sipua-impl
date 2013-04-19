@@ -19,14 +19,14 @@ package com.kurento.commons.sip.transaction;
 import javax.sip.ResponseEvent;
 import javax.sip.message.Request;
 
-import com.kurento.commons.sip.agent.SipContext;
-import com.kurento.commons.ua.exception.ServerInternalErrorException;
+import com.kurento.kas.sip.ua.KurentoSipException;
+import com.kurento.kas.sip.ua.SipCall;
+import com.kurento.kas.sip.ua.SipUA;
 
 public class CBye extends CTransaction {
 
-	public CBye(SipContext sipContext) throws ServerInternalErrorException {
-		super(Request.BYE,  sipContext);
-		sipContext.terminatedCall();
+	public CBye(SipUA sipUA, SipCall call) throws KurentoSipException {
+		super(Request.BYE, sipUA, call);
 		sendRequest(null);
 	}
 

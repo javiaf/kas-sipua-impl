@@ -23,30 +23,23 @@ import javax.sip.message.Response;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.kurento.commons.media.format.conversor.SdpConversor;
-import com.kurento.commons.sip.agent.SipEndPointImpl;
-import com.kurento.commons.sip.exception.SipTransactionException;
-import com.kurento.commons.ua.exception.ServerInternalErrorException;
-import com.kurento.mscontrol.commons.EventType;
-import com.kurento.mscontrol.commons.MediaEventListener;
-import com.kurento.mscontrol.commons.networkconnection.SdpPortManagerEvent;
-import com.kurento.mscontrol.commons.networkconnection.SdpPortManagerException;
+import com.kurento.kas.sip.ua.KurentoSipException;
+import com.kurento.kas.sip.ua.SipUA;
 
 public class SInvite extends STransaction {
 
 	private static Logger log = LoggerFactory.getLogger(SInvite.class);
 
-	public SInvite(ServerTransaction serverTransaction,
-			SipEndPointImpl localParty) throws ServerInternalErrorException,
-			SipTransactionException {
-		super(Request.INVITE, serverTransaction, localParty);
+	public SInvite(SipUA sipUA, ServerTransaction serverTransaction)
+			throws KurentoSipException {
+		super(sipUA, serverTransaction);
 
 		// Process request
 		Request request = serverTransaction.getRequest();
-		if (request.getMethod().equals(Request.INVITE)) {
+		if (Request.INVITE.equals(method)) {
 			log.debug("Process INVITE request");
 			processInvite(request);
-		} else if (request.getMethod().equals(Request.ACK)) {
+		} else if (Request.ACK.equals(method)) {
 			log.debug("Process ACK resquest");
 			processAck();
 		} else {
@@ -56,121 +49,25 @@ public class SInvite extends STransaction {
 		}
 	}
 
-	private void processInvite(Request request)
-			throws ServerInternalErrorException, SipTransactionException {
+	private void processInvite(Request request) throws KurentoSipException {
 
 		// Send RINGING
 		sendResponse(Response.RINGING, null);
 
 		// Process INVITE request
 		if (getContentLength(request) == 0) {
-			// INVITE with no SDP. Request an offer to send with response
-			sipContext.getSdpPortmanager().addListener(
-					new MediaEventListener<SdpPortManagerEvent>() {
 
-						@Override
-						public void onEvent(SdpPortManagerEvent event) {
-							event.getSource().removeListener(this);
-							EventType eventType = event.getEventType();
-							if (SdpPortManagerEvent.OFFER_GENERATED
-									.equals(eventType)) {
-								log.debug("SdpPortManager successfully generated a SDP to be send to remote peer");
-								// Notify incoming call to TU
-								sipContext.incominCall(SInvite.this);
-							} else {
-								// No caller listener available at this stage.
-								// Do not send any error event
-								log.debug("Unable to generate SDP offer to an empty incoming invite. SDP Port Manager event:"
-										+ eventType);
-								try {
-									SInvite.this.sendResponse(
-											Response.SERVICE_UNAVAILABLE, null);
-								} catch (ServerInternalErrorException e) {
-									log.error("Unable to terminate transaction for dialog: "
-											+ dialog.getDialogId());
-								}
-							}
-
-						}
-					});
-			try {
-				sipContext.getSdpPortmanager().generateSdpOffer();
-			} catch (SdpPortManagerException e) {
-				String msg = "Unable to generate SDP offer to respond an empty incoming INVITE request";
-				log.error(msg, e);
-				sendResponse(Response.SERVICE_UNAVAILABLE, null);
-				// Do not signal incoming call to user
-			}
+			// TODO Support INVITE request with no offer ==> negotiation takes
+			// place between response and ACK
 
 		} else {
-			// INVITE with SDP. request for process
-			sipContext.getSdpPortmanager().addListener(
-					new MediaEventListener<SdpPortManagerEvent>() {
 
-						@Override
-						public void onEvent(SdpPortManagerEvent event) {
-							event.getSource().removeListener(this);
-							EventType eventType = event.getEventType();
-							if (SdpPortManagerEvent.ANSWER_GENERATED
-									.equals(eventType)) {
-								log.debug("SdpPortManager successfully processed SDP offer sent by peer");
-								// Notify incoming call to TU
-								SInvite.this.sipContext
-										.incominCall(SInvite.this);
+			// TODO Support INVITE with descriptor offer ==> negotiation takes
+			// place between INVITE and RESPONSE
 
-							} else {
-								// No caller listener available at this stage.
-								// Do not send any error event
-
-								try {
-									if (SdpPortManagerEvent.RESOURCE_UNAVAILABLE
-											.equals(eventType)) {
-										sendResponse(
-												Response.SERVICE_UNAVAILABLE,
-												null);
-
-									} else if (SdpPortManagerEvent.SDP_NOT_ACCEPTABLE
-											.equals(eventType)) {
-										sendResponse(
-												Response.UNSUPPORTED_MEDIA_TYPE,
-												null);
-
-									} else {
-										sendResponse(
-												Response.SERVER_INTERNAL_ERROR,
-												null);
-									}
-									
-									// Get error cause
-									String code;
-									if (eventType == null)
-										code = event.getError() +": " + event.getErrorText();
-									else 
-										code = eventType.toString();
-									
-									log.debug("Unable to process SDP offer to an incoming invite. SDP Port Manager event:"
-											+ code);
-								} catch (Exception e) {
-									log.error(
-											"Unable to send error response to an incoming invite",
-											e);
-								}
-							}
-
-						}
-					});
-			try {
-
-				byte[] rawContent = request.getRawContent();
-				sipContext.getSdpPortmanager().processSdpOffer(
-						SdpConversor.sdp2SessionSpec(new String(rawContent)));
-			} catch (Exception e) {
-				String msg = "Unable to process SDP offer from incoming INVITE";
-				log.error(msg, e);
-				sendResponse(Response.SERVICE_UNAVAILABLE, null);
-				// Do not signal incoming call to user
-			}
 		}
+
+		// TODO Notify incoming call
 	}
 
 	private void processAck() {

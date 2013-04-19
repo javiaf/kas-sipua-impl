@@ -13,7 +13,7 @@ GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>
-*/
+ */
 package com.kurento.commons.sip.transaction;
 
 import java.security.MessageDigest;
@@ -33,39 +33,47 @@ import javax.sip.header.WWWAuthenticateHeader;
 import javax.sip.message.Request;
 import javax.sip.message.Response;
 
-import com.kurento.commons.sip.agent.SipEndPointImpl;
-import com.kurento.commons.sip.agent.UaFactory;
-import com.kurento.commons.ua.event.EndPointEvent;
-import com.kurento.commons.ua.exception.ServerInternalErrorException;
+import com.kurento.kas.sip.ua.KurentoSipException;
+import com.kurento.kas.sip.ua.SipRegister;
+import com.kurento.kas.sip.ua.SipUA;
+import com.kurento.kas.ua.KurentoException;
 
 public class CRegister extends CTransaction {
 
-	public CRegister(SipEndPointImpl localParty)
-			throws ServerInternalErrorException {
-		super(Request.REGISTER, localParty, localParty.getAddress());
+	private SipRegister register;
 
-		// REGISTER send special request URI: RFC3261 , 10.2
-		request.setRequestURI(localParty.getAddress().getURI());
+	public CRegister(SipUA sipUA, SipRegister register)
+			throws KurentoException,
+			KurentoSipException {
+		super(Request.REGISTER, sipUA, register.getUri(), register.getUri());
 
-		// Set REGISTER CallId according to RFC3261 , 10.2 - CSeq
-		CallIdHeader registrarCallId;
-		if ((registrarCallId = localParty.getRegistrarCallId()) != null) {
+		this.register = register;
+
+		try {
+
+			// REGISTER send special request URI: RFC3261 , 10.2
+			String requestUri = "sip:" + register.getRealm();
+			request.setRequestURI(sipUA.getAddressFactory().createURI(
+					requestUri));
+
+			// Set REGISTER CallId according to RFC3261 , 10.2 - CSeq
+			CallIdHeader registrarCallId = sipUA.getSipProvider()
+					.getNewCallId();
+			registrarCallId.setCallId(register.getRegisterCallId());
+
 			request.setHeader(registrarCallId);
-		} else {
-			localParty.setRegistrarCallId((CallIdHeader) request
-					.getHeader(CallIdHeader.NAME));
+
+			// Add specific REGISTER headers RFC3261, 10.2 - RequestURI
+			request.addHeader(buildExpiresHeader());
+		} catch (ParseException e) {
+			throw new KurentoException("Unable to build REGISTER request", e);
 		}
-
-		// Add specific REGISTER headers RFC3261, 10.2 - RequestURI
-		request.addHeader(buildExpiresHeader());
-
 	}
 
 	// Override CSeqHeader according to RFC3261, 10.2 - CSeq
 	protected CSeqHeader buildCSeqHeader() throws ParseException,
 			InvalidArgumentException {
-		return UaFactory.getHeaderFactory().createCSeqHeader(
-				localParty.getcSeqNumber(), method);
+		return sipUA.getHeaderFactory().createCSeqHeader(register.getCseq(), method);
 	}
 
 	@Override
@@ -75,45 +83,45 @@ public class CRegister extends CTransaction {
 
 		if (statusCode == Response.OK) {
 			log.info("<<<<<<< 200 OK: Register sucessfull for user: "
-					+ localParty.getAddress());
-			localParty.notifyEvent(EndPointEvent.REGISTER_USER_SUCESSFUL);
+					+ register.getUri());
+			sipUA.getRegistrationHandler().onRegistrationSuccess(register);
 		} else if (statusCode == Response.UNAUTHORIZED
-				|| statusCode == Response.PROXY_AUTHENTICATION_REQUIRED) { 
+				|| statusCode == Response.PROXY_AUTHENTICATION_REQUIRED) {
 			// Peer Authentication
 			try {
 				sendWithAuth(event);
-			} catch (ServerInternalErrorException e) {
-				String msg="Unable to send Auth REGISTER";
-				log.error(msg,e);
-				localParty.notifyEvent(EndPointEvent.REGISTER_USER_FAIL);
+			} catch (KurentoException e) {
+				String msg = "Unable to send Auth REGISTER";
+				log.error(msg, e);
+				sipUA.getRegistrationHandler().onConnectionFailure(register);
 			}
-		} else if (statusCode == Response.REQUEST_TIMEOUT) { 
+		} else if (statusCode == Response.REQUEST_TIMEOUT) {
 			// 408: Request TimeOut
-			log.warn("<<<<<<< 408 REQUEST_TIMEOUT: Register Failure. Unable to contact registrar at "
-					+ localParty.getAddress());
-			localParty.notifyEvent(EndPointEvent.REGISTER_USER_FAIL);
+			log.warn("<<<<<<< 408 REQUEST_TIMEOUT: Register Failure. Unable to contact registrar from "
+					+ register.getUri());
+			sipUA.getRegistrationHandler().onConnectionFailure(register);
 		} else if (statusCode == Response.NOT_FOUND) { // 404: Not Found
 			log.warn("<<<<<<< 404 NOT_FOUND: Register Failure. User "
-					+ localParty.getAddress() + " not found");
-			localParty.notifyEvent(EndPointEvent.REGISTER_USER_NOT_FOUND);
+					+ register.getUri() + " not found");
+			sipUA.getRegistrationHandler().onConnectionFailure(register);
 		} else if (statusCode == Response.FORBIDDEN) { // Forbidden
 			log.warn("<<<<<<< 403 FORBIDDEN: Register Failure. User "
-					+ localParty.getAddress() + " forbiden");
-			localParty.notifyEvent(EndPointEvent.REGISTER_USER_FAIL);
+					+ register.getUri() + " forbiden");
+			sipUA.getRegistrationHandler().onAuthenticationFailure(register);
 		} else if (statusCode == Response.SERVER_INTERNAL_ERROR) { // server
 																	// errors
 			log.warn("<<<<<<< 500 SERVER_INTERNAL_ERROR Register: Server Error: "
 					+ response.getStatusCode());
-			localParty.notifyEvent(EndPointEvent.SERVER_INTERNAL_ERROR);
+			sipUA.getRegistrationHandler().onConnectionFailure(register);
 		} else if (statusCode == Response.SERVICE_UNAVAILABLE) { // server
 																	// errors
 			log.warn("<<<<<<< 503 SERVICE_UNAVAILABLE Register: Service unavailable: "
 					+ response.getStatusCode());
-			localParty.notifyEvent(EndPointEvent.SERVER_INTERNAL_ERROR);
+			sipUA.getRegistrationHandler().onConnectionFailure(register);
 		} else { // Non supported response code Discard
 			log.warn("Register Failure. Status code: "
 					+ response.getStatusCode());
-			localParty.notifyEvent(EndPointEvent.SERVER_INTERNAL_ERROR);
+			sipUA.getRegistrationHandler().onConnectionFailure(register);
 		}
 	}
 
@@ -122,7 +130,7 @@ public class CRegister extends CTransaction {
 		log.warn("Register request timeout");
 		localParty.notifyEvent(EndPointEvent.REGISTER_USER_FAIL);
 	}
-	
+
 	private void sendWithAuth(ResponseEvent event)
 			throws ServerInternalErrorException {
 		Response response = event.getResponse();
@@ -150,25 +158,28 @@ public class CRegister extends CTransaction {
 
 	}
 
-	//AuthenticationHearder RFC2617 construction for request digest without	qop parameter and MD5 hash algorithm.
-	private AuthorizationHeader getAuthorizationHearder(Response response) throws ServerInternalErrorException{
+	// AuthenticationHearder RFC2617 construction for request digest without qop
+	// parameter and MD5 hash algorithm.
+	private AuthorizationHeader getAuthorizationHearder(Response response)
+			throws ServerInternalErrorException {
 		WWWAuthenticateHeader wwwAuthenticateHeader;
 		AuthorizationHeader authorization = null;
 		try {
-			wwwAuthenticateHeader = (WWWAuthenticateHeader) response.getHeader(WWWAuthenticateHeader.NAME);
-	
+			wwwAuthenticateHeader = (WWWAuthenticateHeader) response
+					.getHeader(WWWAuthenticateHeader.NAME);
+
 			String schema = wwwAuthenticateHeader.getScheme();
 			String realm = wwwAuthenticateHeader.getRealm();
 			String nonce = wwwAuthenticateHeader.getNonce();
 			String alg = wwwAuthenticateHeader.getAlgorithm();
 			String opaque = wwwAuthenticateHeader.getOpaque();
-	
-			log.debug("WWWAuthenticateHeader is "+ wwwAuthenticateHeader.toString());
-			
-		
+
+			log.debug("WWWAuthenticateHeader is "
+					+ wwwAuthenticateHeader.toString());
+
 			URI localUri = localParty.getAddress().getURI();
 			String user = localParty.getUserName();
-			
+
 			HeaderFactory factory = UaFactory.getSipFactory()
 					.createHeaderFactory();
 			authorization = factory.createAuthorizationHeader(schema);
@@ -177,26 +188,29 @@ public class CRegister extends CTransaction {
 			authorization.setNonce(nonce);
 			authorization.setURI(localUri);
 			String respon = getAuthResponse(user, realm,
-					localParty.getPassword(),
-					this.method,localUri.toString(), nonce, alg);
+					localParty.getPassword(), this.method, localUri.toString(),
+					nonce, alg);
 			authorization.setResponse(respon);
 			authorization.setAlgorithm(alg);
 			authorization.setOpaque(opaque);
 
 		} catch (ParseException e1) {
 			log.error(e1.toString());
-			throw new ServerInternalErrorException("Error generating authentication hearder", e1);
+			throw new ServerInternalErrorException(
+					"Error generating authentication hearder", e1);
 		} catch (PeerUnavailableException e) {
 			log.error(e.toString());
-			throw new ServerInternalErrorException("Error generating authentication hearder", e);
+			throw new ServerInternalErrorException(
+					"Error generating authentication hearder", e);
 		}
 		return authorization;
 
 	}
 
 	private String getAuthResponse(String userName, String realm,
-			String password, String method, String uri, String nonce, String algorithm) {
-		//String cnonce = null;
+			String password, String method, String uri, String nonce,
+			String algorithm) {
+		// String cnonce = null;
 		MessageDigest messageDigest = null;
 		try {
 			messageDigest = MessageDigest.getInstance(algorithm);
@@ -207,16 +221,14 @@ public class CRegister extends CTransaction {
 		String A1 = userName + ":" + realm + ":" + password;
 		byte mdbytes[] = messageDigest.digest(A1.getBytes());
 		String HA1 = toHexString(mdbytes);
-		log.debug("DigestClientAuthenticationMethod for HA1:"
-				+ HA1 + "!");
+		log.debug("DigestClientAuthenticationMethod for HA1:" + HA1 + "!");
 		// A2
 		String A2 = method.toUpperCase() + ":" + uri;
 		mdbytes = messageDigest.digest(A2.getBytes());
 		String HA2 = toHexString(mdbytes);
-		log.debug("DigestClientAuthenticationMethod for HA2:"
-				+ HA2 + "!");
+		log.debug("DigestClientAuthenticationMethod for HA2:" + HA2 + "!");
 		// KD
-		String KD = HA1 +":" + nonce;
+		String KD = HA1 + ":" + nonce;
 		// if (cnonce != null) {
 		// if(cnonce.length()>0) KD += ":" + cnonce;
 		// }

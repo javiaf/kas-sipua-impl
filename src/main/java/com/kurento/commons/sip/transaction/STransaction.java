@@ -18,12 +18,11 @@ package com.kurento.commons.sip.transaction;
 
 import gov.nist.javax.sip.header.ContentLength;
 
-import java.text.ParseException;
-
+import javax.sip.Dialog;
 import javax.sip.ServerTransaction;
+import javax.sip.address.Address;
 import javax.sip.header.ContactHeader;
 import javax.sip.header.ContentTypeHeader;
-import javax.sip.header.FromHeader;
 import javax.sip.header.ToHeader;
 import javax.sip.message.Request;
 import javax.sip.message.Response;
@@ -31,35 +30,40 @@ import javax.sip.message.Response;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.kurento.commons.sip.agent.SipContext;
-import com.kurento.commons.sip.agent.SipEndPointImpl;
-import com.kurento.commons.sip.agent.UaFactory;
-import com.kurento.commons.sip.exception.SipTransactionException;
-import com.kurento.commons.sip.util.SipHeaderHelper;
-import com.kurento.commons.ua.exception.ServerInternalErrorException;
+import com.kurento.kas.sip.ua.KurentoSipException;
+import com.kurento.kas.sip.ua.SipCall;
+import com.kurento.kas.sip.ua.SipUA;
 
 public abstract class STransaction extends Transaction {
 
 	protected static Logger log = LoggerFactory.getLogger(STransaction.class);
 
 	protected ServerTransaction serverTransaction;
+	protected Request request;
 
-	protected STransaction(String method,ServerTransaction serverTransaction, SipEndPointImpl localParty) throws ServerInternalErrorException, SipTransactionException {
-		super(method, localParty, ((FromHeader) serverTransaction.getRequest()
-				.getHeader(FromHeader.NAME)).getAddress());
+	protected String method;
+	protected SipCall call;
+	protected Dialog dialog;
+	protected SipUA sipUA;
+
+	protected STransaction(SipUA sipUA, ServerTransaction serverTransaction)
+			throws KurentoSipException {
+
+		this.sipUA = sipUA;
 		this.serverTransaction = serverTransaction;
-				
+		this.request = serverTransaction.getRequest();
+		this.method = request.getMethod();
+		this.dialog = serverTransaction.getDialog();
+		if (dialog != null)
+			this.call = (SipCall) dialog.getApplicationData();
+
 		// Only SIP Version = 2.0 supported
 		if (!isSipVersion2()) {
 			sendResponse(Response.VERSION_NOT_SUPPORTED, null);
-			throw new SipTransactionException("Sip version not supported: " + serverTransaction.getRequest().getSIPVersion());
+			throw new KurentoSipException("Sip version not supported: "
+					+ serverTransaction.getRequest().getSIPVersion());
 		}
-		
-		// Check if there is a sipcontext
-		if ((dialog=serverTransaction.getDialog())!=null) {
-			sipContext = (SipContext) dialog.getApplicationData();
-		}
-		
+
 	}
 	
 	public ServerTransaction getServerTransaction(){
@@ -73,16 +77,16 @@ public abstract class STransaction extends Transaction {
 	 * @param sdp
 	 * @throws ServerInternalErrorException 
 	 */
-	public void sendResponse(int code, byte[] sdp) throws ServerInternalErrorException {
+	public void sendResponse(int code, byte[] sdp) throws KurentoSipException {
 		
 		Response response;
 		try {
-			response = UaFactory.getMessageFactory().createResponse(code,
+			response = sipUA.getMessageFactory().createResponse(code,
 					serverTransaction.getRequest());
 
 			// Set user agent header
-			if (UaFactory.getUserAgentHeader() != null) {
-				response.setHeader(UaFactory.getUserAgentHeader());
+			if (sipUA.getUserAgentHeader() != null) {
+				response.setHeader(sipUA.getUserAgentHeader());
 			}
 
 			// Set to tag
@@ -90,20 +94,16 @@ public abstract class STransaction extends Transaction {
 				localTag = dialog.getLocalTag();
 			}
 			if (localTag == null){
-				localTag = SipHeaderHelper.getNewRandomTag();
+				localTag = getNewRandomTag();
 			}
 			ToHeader toHeader = (ToHeader) response.getHeader(ToHeader.NAME);
 			toHeader.setTag(localTag);
 
-
-			// Set contact header
-			if (localParty != null) {
-				ContactHeader contactHeader = buildContactHeader();
-				response.setHeader(contactHeader);
-			}
+			ContactHeader contactHeader = buildContactHeader();
+			response.setHeader(contactHeader);
 
 			if (sdp != null) {
-				ContentTypeHeader contentTypeHeader = UaFactory.getHeaderFactory()
+				ContentTypeHeader contentTypeHeader = sipUA.getHeaderFactory()
 						.createContentTypeHeader("application", "SDP");
 				response.setContent(sdp, contentTypeHeader);
 			}
@@ -122,23 +122,29 @@ public abstract class STransaction extends Transaction {
 			log.error(
 					"Found problems to build and send transaction response code: "	+ code, e);
 			if (code == Response.SERVER_INTERNAL_ERROR) {
-				throw new ServerInternalErrorException("Unable to send response code 500. GIVE UP!!!", e);
+				throw new KurentoSipException(
+						"Unable to send response code 500. GIVE UP!!!", e);
 			} else {
 				sendResponse(Response.SERVER_INTERNAL_ERROR, null);
 			}
 		}
 	}
 
-	private ContactHeader buildContactHeader() throws ParseException {
-		return UaFactory.getHeaderFactory().createContactHeader(localParty.getContact());
+	private ContactHeader buildContactHeader() throws KurentoSipException {
+		String localParty = serverTransaction.getDialog().getLocalParty()
+				.getURI().toString();
+		Address contact = sipUA.getContactAddress(localParty);
+		return sipUA.getHeaderFactory().createContactHeader(contact);
 	}
 	
-	protected int getContentLength (Request request) throws ServerInternalErrorException, SipTransactionException {
+	protected int getContentLength(Request request) throws KurentoSipException,
+			KurentoSipException {
 		//Check if invites provides a SDP
 		ContentLength clHeader = (ContentLength) request.getHeader(ContentLength.NAME);
 		if (clHeader == null) {
 			sendResponse(Response.BAD_REQUEST, null);
-			throw new SipTransactionException("Unable to find Content-length in Server Request");
+			throw new KurentoSipException(
+					"Unable to find Content-length in Server Request");
 		} else {
 			return clHeader.getContentLength();
 		}
@@ -154,8 +160,8 @@ public abstract class STransaction extends Transaction {
 	
 	public void processTimeout(){
 		log.info("Server transaction timeout");
-		if (sipContext != null) {
-			sipContext.callTimeout();
+		if (call != null) {
+			call.callTimeout();
 		}
 	}
 	

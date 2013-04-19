@@ -9,10 +9,7 @@ import javax.sip.ListeningPoint;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.kurento.commons.ua.exception.ServerInternalErrorException;
-import com.kurento.commons.ua.timer.KurentoUaTimer;
-import com.kurento.commons.ua.timer.KurentoUaTimerTask;
-
+// TODO: this class must be deleted
 public class NatKeepAlive {
 
 	private static final Logger log = LoggerFactory

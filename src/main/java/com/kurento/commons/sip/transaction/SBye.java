@@ -17,24 +17,23 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>
 package com.kurento.commons.sip.transaction;
 
 import javax.sip.ServerTransaction;
-import javax.sip.message.Request;
 import javax.sip.message.Response;
 
-import com.kurento.commons.sip.agent.SipEndPointImpl;
-import com.kurento.commons.sip.exception.SipTransactionException;
-import com.kurento.commons.ua.exception.ServerInternalErrorException;
+import com.kurento.kas.sip.ua.KurentoSipException;
+import com.kurento.kas.sip.ua.SipUA;
+import com.kurento.kas.ua.Call.TerminateReason;
 
 public class SBye extends STransaction {
 
-	public SBye(ServerTransaction serverTransaction, SipEndPointImpl localParty)
-			throws ServerInternalErrorException, SipTransactionException {
-		super(Request.BYE, serverTransaction, localParty);
+	public SBye(SipUA sipUA, ServerTransaction serverTransaction)
+			throws KurentoSipException {
+		super(sipUA, serverTransaction);
 
-		if (sipContext == null)
+		if (call == null)
 			sendResponse(Response.CALL_OR_TRANSACTION_DOES_NOT_EXIST, null);
 		else {
 			sendResponse(Response.OK, null);
-			sipContext.terminatedCall();
+			call.terminatedCall(TerminateReason.REMOTE_HANGUP);
 		}
 	}
 

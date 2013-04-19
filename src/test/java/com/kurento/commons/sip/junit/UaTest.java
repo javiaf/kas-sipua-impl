@@ -4,7 +4,6 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.kurento.commons.sip.agent.UaFactory;
 import com.kurento.commons.sip.testutils.MediaSessionDummy;
 import com.kurento.commons.sip.testutils.NetworkController;
 import com.kurento.commons.sip.testutils.TestConfig;
@@ -14,6 +13,7 @@ import com.kurento.commons.sip.util.SipConfig;
 import com.kurento.commons.ua.EndPoint;
 import com.kurento.commons.ua.UA;
 import com.kurento.commons.ua.exception.ServerInternalErrorException;
+import com.kurento.kas.sip.ua.UaFactory;
 
 public class UaTest {
 
@@ -68,7 +68,7 @@ public class UaTest {
 		config.setTimer(timer);
 
 		// Get UA instance
-		UA ua = UaFactory.getInstance(config);
+		SipUA ua = UaFactory.getInstance(config);
 		NetworkController nc = new NetworkController();
 		nc.setNetworkListener(UaFactory.getNetworkListener(ua));
 
@@ -113,7 +113,7 @@ public class UaTest {
 		config.setTimer(timer);
 
 		// Get UA instance
-		UA ua = UaFactory.getInstance(config);
+		SipUA ua = UaFactory.getInstance(config);
 
 		// Initialize SIP stack
 		NetworkController nc = new NetworkController();
@@ -165,8 +165,8 @@ public class UaTest {
 		config.setTimer(timer);
 
 		// Get UA instances
-		UA ua1 = UaFactory.getInstance(config);
-		UA ua2 = UaFactory.getInstance(config);
+		SipUA ua1 = UaFactory.getInstance(config);
+		SipUA ua2 = UaFactory.getInstance(config);
 
 		// Initialize SIP stack
 		NetworkController nc1 = new NetworkController();
