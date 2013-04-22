@@ -13,7 +13,7 @@ GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>
-*/
+ */
 package com.kurento.commons.sip.transaction;
 
 import gov.nist.javax.sip.header.ContentLength;
@@ -65,8 +65,8 @@ public abstract class STransaction extends Transaction {
 		}
 
 	}
-	
-	public ServerTransaction getServerTransaction(){
+
+	public ServerTransaction getServerTransaction() {
 		return serverTransaction;
 	}
 
@@ -75,10 +75,10 @@ public abstract class STransaction extends Transaction {
 	 * 
 	 * @param code
 	 * @param sdp
-	 * @throws ServerInternalErrorException 
+	 * @throws ServerInternalErrorException
 	 */
 	public void sendResponse(int code, byte[] sdp) throws KurentoSipException {
-		
+
 		Response response;
 		try {
 			response = sipUA.getMessageFactory().createResponse(code,
@@ -90,10 +90,10 @@ public abstract class STransaction extends Transaction {
 			}
 
 			// Set to tag
-			if ( dialog != null &&  dialog.getLocalTag() != null){
+			if (dialog != null && dialog.getLocalTag() != null) {
 				localTag = dialog.getLocalTag();
 			}
-			if (localTag == null){
+			if (localTag == null) {
 				localTag = getNewRandomTag();
 			}
 			ToHeader toHeader = (ToHeader) response.getHeader(ToHeader.NAME);
@@ -112,15 +112,16 @@ public abstract class STransaction extends Transaction {
 					+ ">>>>>>> SIP response send >>>>>>>\n" + "\tTRANSACTION: "
 					+ serverTransaction.getBranchId() + "\n" + "\t CODE: "
 					+ response.getStatusCode() + "\n" + response.toString()
-					+ "\n" 
-					+ ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
-			
+					+ "\n" + ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
+
 			serverTransaction.sendResponse(response);
-			log.info("Transaction goes to state: " + serverTransaction.getState());
+			log.info("Transaction goes to state: "
+					+ serverTransaction.getState());
 
 		} catch (Exception e) {
 			log.error(
-					"Found problems to build and send transaction response code: "	+ code, e);
+					"Found problems to build and send transaction response code: "
+							+ code, e);
 			if (code == Response.SERVER_INTERNAL_ERROR) {
 				throw new KurentoSipException(
 						"Unable to send response code 500. GIVE UP!!!", e);
@@ -136,11 +137,12 @@ public abstract class STransaction extends Transaction {
 		Address contact = sipUA.getContactAddress(localParty);
 		return sipUA.getHeaderFactory().createContactHeader(contact);
 	}
-	
+
 	protected int getContentLength(Request request) throws KurentoSipException,
 			KurentoSipException {
-		//Check if invites provides a SDP
-		ContentLength clHeader = (ContentLength) request.getHeader(ContentLength.NAME);
+		// Check if invites provides a SDP
+		ContentLength clHeader = (ContentLength) request
+				.getHeader(ContentLength.NAME);
 		if (clHeader == null) {
 			sendResponse(Response.BAD_REQUEST, null);
 			throw new KurentoSipException(
@@ -157,12 +159,12 @@ public abstract class STransaction extends Transaction {
 			return false;
 		}
 	}
-	
-	public void processTimeout(){
+
+	public void processTimeout() {
 		log.info("Server transaction timeout");
 		if (call != null) {
 			call.callTimeout();
 		}
 	}
-	
+
 }

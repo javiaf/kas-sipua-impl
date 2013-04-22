@@ -30,7 +30,6 @@ import com.kurento.commons.sip.transaction.CCancel;
 import com.kurento.commons.sip.transaction.CInvite;
 import com.kurento.commons.sip.transaction.CTransaction;
 import com.kurento.commons.sip.transaction.STransaction;
-import com.kurento.kas.media.internal.Stream;
 import com.kurento.kas.ua.Call;
 import com.kurento.kas.ua.KurentoException;
 
@@ -389,16 +388,17 @@ public class SipCall implements Call {
 			// between => Transition to EARLY
 			stateTransition(State.INCOMING_RINGING);
 
-
 			log.info("Incoming call signalled with callId:"
 					+ incomingInitiatingRequest.getServerTransaction()
 							.getDialog().getCallId());
 
 			// Calculate local and remote uris
 			incomingInitiatingRequest = incomingTransaction;
-			
-			Address localAddress = incomingTransaction.getServerTransaction().getDialog().getLocalParty();
-			Address remoteAddress = incomingTransaction.getServerTransaction().getDialog().getRemoteParty();
+
+			Address localAddress = incomingTransaction.getServerTransaction()
+					.getDialog().getLocalParty();
+			Address remoteAddress = incomingTransaction.getServerTransaction()
+					.getDialog().getRemoteParty();
 
 			localUri = localAddress.getURI().toString();
 			remoteUri = remoteAddress.getURI().toString();

@@ -13,7 +13,7 @@ GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>
-*/
+ */
 package com.kurento.commons.sip.transaction;
 
 import javax.sip.ResponseEvent;
@@ -23,8 +23,7 @@ import com.kurento.kas.sip.ua.KurentoSipException;
 
 public class CCancel extends CTransaction {
 
-	public CCancel(Request cancelRequest)
-			throws KurentoSipException {
+	public CCancel(Request cancelRequest) throws KurentoSipException {
 		// Cancel transaction requires external request calculated from
 		// ClientTransaction being cancelled
 		this.request = cancelRequest;
@@ -33,6 +32,7 @@ public class CCancel extends CTransaction {
 	}
 
 	@Override
-	public void processResponse(ResponseEvent event) {}
+	public void processResponse(ResponseEvent event) {
+	}
 
 }

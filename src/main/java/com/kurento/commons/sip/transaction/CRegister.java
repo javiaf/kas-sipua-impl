@@ -42,14 +42,12 @@ public class CRegister extends CTransaction {
 	private SipRegister register;
 
 	public CRegister(SipUA sipUA, SipRegister register)
-			throws KurentoException,
-			KurentoSipException {
+			throws KurentoException, KurentoSipException {
 		super(Request.REGISTER, sipUA, register.getUri(), register.getUri());
 
 		this.register = register;
 
 		try {
-
 			// REGISTER send special request URI: RFC3261 , 10.2
 			String requestUri = "sip:" + register.getRealm();
 			request.setRequestURI(sipUA.getAddressFactory().createURI(
@@ -72,7 +70,8 @@ public class CRegister extends CTransaction {
 	// Override CSeqHeader according to RFC3261, 10.2 - CSeq
 	protected CSeqHeader buildCSeqHeader() throws ParseException,
 			InvalidArgumentException {
-		return sipUA.getHeaderFactory().createCSeqHeader(register.getCseq(), method);
+		return sipUA.getHeaderFactory().createCSeqHeader(register.getCseq(),
+				method);
 	}
 
 	@Override
@@ -186,8 +185,7 @@ public class CRegister extends CTransaction {
 			authorization.setURI(localUri);
 			String respon = getAuthResponse(register.getAuthuser(),
 					register.getPassword(), realm, this.method,
-					register.getUri(),
-					nonce, alg);
+					register.getUri(), nonce, alg);
 			authorization.setResponse(respon);
 			authorization.setAlgorithm(alg);
 			authorization.setOpaque(opaque);

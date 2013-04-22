@@ -4,13 +4,13 @@ import java.util.UUID;
 
 import com.kurento.kas.ua.Register;
 
-public class SipRegister extends Register{
+public class SipRegister extends Register {
 
 	private long cseq;
 	private UUID registerCallId;
 
 	public SipRegister(String user, String realm) {
-		super(user,realm);
+		super(user, realm);
 		// instance-id: RFC5626. Used to set the registrarCallId
 		/*
 		 * According to RFC5626 instance-id must stay the same on UA reboot or

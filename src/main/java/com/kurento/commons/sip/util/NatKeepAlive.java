@@ -22,7 +22,8 @@ public class NatKeepAlive {
 	// Hope seconds
 	private long delay = 5;
 
-	public NatKeepAlive(SipConfig config, ListeningPoint listeningPoint) throws ServerInternalErrorException {
+	public NatKeepAlive(SipConfig config, ListeningPoint listeningPoint)
+			throws ServerInternalErrorException {
 		proxyAddr = config.getProxyAddress();
 		proxyPort = config.getProxyPort();
 		delay = config.getKeepAlivePeriod() * 1000;

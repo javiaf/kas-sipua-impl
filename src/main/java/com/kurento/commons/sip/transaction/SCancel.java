@@ -13,7 +13,7 @@ GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>
-*/
+ */
 package com.kurento.commons.sip.transaction;
 
 import javax.sip.ServerTransaction;
@@ -33,7 +33,8 @@ public class SCancel extends STransaction {
 			// No matching transaction ==> null SipContext & 481 response code
 			sendResponse(Response.CALL_OR_TRANSACTION_DOES_NOT_EXIST, null);
 		else {
-			// Matching transaction found ==> send 200 code regardless of dialog status
+			// Matching transaction found ==> send 200 code regardless of dialog
+			// status
 			sendResponse(Response.OK, null);
 			call.remoteCallCancel();
 		}

@@ -91,16 +91,15 @@ public class CInvite extends CTransaction {
 					+ this.dialog + ", state: " + dialog.getState());
 			call.LocalCallCancel();
 
-		} else if (	statusCode == Response.BUSY_HERE
-				|| statusCode == Response.BUSY_EVERYWHERE ) {
-			log.info("<<<<<<< " + statusCode
-					+ "Remote peer is BUSY: dialog: " + this.dialog
-					+ ", state: " + dialog.getState());
+		} else if (statusCode == Response.BUSY_HERE
+				|| statusCode == Response.BUSY_EVERYWHERE) {
+			log.info("<<<<<<< " + statusCode + "Remote peer is BUSY: dialog: "
+					+ this.dialog + ", state: " + dialog.getState());
 			call.remoteCallBusy();
 
 		} else if (statusCode == Response.TEMPORARILY_UNAVAILABLE
 
-				|| statusCode == Response.DECLINE) {
+		|| statusCode == Response.DECLINE) {
 			log.info("<<<<<<< " + statusCode
 					+ "Session REJECT by remote peer: dialog: " + this.dialog
 					+ ", state: " + dialog.getState());
@@ -153,8 +152,7 @@ public class CInvite extends CTransaction {
 			log.info("<<<<<<< " + statusCode
 					+ " Response code not supported : dialog: " + this.dialog
 					+ ", state: " + dialog.getState());
-			call.callError("Unsupported status code received:"
-					+ statusCode);
+			call.callError("Unsupported status code received:" + statusCode);
 			// sendAck(); // ACK is automatically sent by the SIP Stack for
 			// codes >4xx
 		}
@@ -172,9 +170,8 @@ public class CInvite extends CTransaction {
 					.getHeader(CSeqHeader.NAME)).getSeqNumber());
 
 			if (sdp != null) {
-				ContentTypeHeader contentTypeHeader = sipUA
-						.getHeaderFactory().createContentTypeHeader(
-								"application", "SDP");
+				ContentTypeHeader contentTypeHeader = sipUA.getHeaderFactory()
+						.createContentTypeHeader("application", "SDP");
 				ackRequest.setContent(sdp, contentTypeHeader);
 			}
 			dialog.sendAck(ackRequest);

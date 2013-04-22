@@ -25,12 +25,12 @@ public abstract class Transaction {
 
 	protected String localTag;
 	protected static long cSeqNumber = System.currentTimeMillis() % 100000000;
-	
+
 	// Protocol helper
 	private static SecureRandom rn = new SecureRandom();
 	private static final int tagLength = 10;
 	private static final int branchLength = 10;
-	
+
 	// ///////////////
 	//
 	// SIP HELPERS
