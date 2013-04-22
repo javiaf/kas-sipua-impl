@@ -207,8 +207,8 @@ public abstract class CTransaction extends Transaction {
 		// Dialog is null here. Make sure you don't use it
 		List<ViaHeader> viaHeaders = new ArrayList<ViaHeader>();
 		ViaHeader viaHeader = sipUA.getHeaderFactory().createViaHeader(
-				sipUA.getLocalAddress(), sipUA.getLocalPort(),
-				sipUA.getTransport(), getNewRandomBranch());
+				sipUA.getLocalAddress(), sipUA.getLocalPort(), SipUA.TRANSPORT,
+				getNewRandomBranch());
 
 		// add via headers
 		viaHeaders.add(viaHeader);
@@ -224,7 +224,7 @@ public abstract class CTransaction extends Transaction {
 	MaxForwardsHeader buildMaxForwardsHeader() throws InvalidArgumentException {
 		// Dialog is null here. Make sure you don't use it
 		return sipUA.getHeaderFactory().createMaxForwardsHeader(
-				sipUA.getMaxForwards());
+				SipUA.MAX_FORWARDS);
 	}
 
 	AllowHeader buildAllowHeader() throws KurentoSipException {
@@ -276,8 +276,7 @@ public abstract class CTransaction extends Transaction {
 	ExpiresHeader buildExpiresHeader() throws KurentoSipException {
 		try {
 			// Dialog is null here. Make sure you don't use it
-			return sipUA.getHeaderFactory().createExpiresHeader(
-					sipUA.getExpires());
+			return sipUA.getHeaderFactory().createExpiresHeader(SipUA.EXPIRES);
 		} catch (InvalidArgumentException e) {
 			throw new KurentoSipException(
 					"Invalid argument building expires header", e);

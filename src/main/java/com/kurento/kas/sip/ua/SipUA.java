@@ -70,6 +70,7 @@ import com.kurento.kas.ua.CallTerminatedHandler;
 import com.kurento.kas.ua.ErrorHandler;
 import com.kurento.kas.ua.Register;
 import com.kurento.kas.ua.RegisterHandler;
+import com.kurento.kas.ua.UA;
 
 /**
  * This class provides a SIP UA implementation of UA interface
@@ -77,9 +78,11 @@ import com.kurento.kas.ua.RegisterHandler;
  * @author fjlopez
  * 
  */
-public class SipUA implements SipListener {
+public class SipUA extends UA {
 
 	private static final Logger log = LoggerFactory.getLogger(SipUA.class);
+
+	private SipListenerImpl sipListenerImpl = new SipListenerImpl();
 
 	// User agent name
 	private static final String USER_AGENT = "KurentoAndroidUa/1.0.0";
@@ -113,11 +116,11 @@ public class SipUA implements SipListener {
 	private int stunServerPort;
 
 	// SIP configuration
-	private String transport = "UDP";
-	private String proxyServerAddress = "127.0.0.1";
-	private int proxyServerPort = 5060;
-	private int maxForwards = 70;
-	private int expires = 3600;
+	public static final String TRANSPORT = "tls";
+	private static final String PROXY_SERVER_ADDRESS = "127.0.0.1";
+	private static final int PROXY_SERVER_PORT = 5060;
+	public static final int MAX_FORWARDS = 70;
+	public static final int EXPIRES = 3600;
 
 	// Other config
 	private boolean testMode = false;
@@ -132,6 +135,7 @@ public class SipUA implements SipListener {
 	// /////////////////////////
 
 	protected SipUA(Context context) throws KurentoSipException {
+		super(context);
 
 		// Create SIP stack infrastructure
 		sipFactory = SipFactory.getInstance();
@@ -142,11 +146,13 @@ public class SipUA implements SipListener {
 		} catch (PeerUnavailableException e) {
 			log.error("Address Factory initialization error", e);
 		}
+
 		try {
 			headerFactory = sipFactory.createHeaderFactory();
 		} catch (PeerUnavailableException e) {
 			log.error("Header Factory initialization error", e);
 		}
+
 		try {
 			messageFactory = sipFactory.createMessageFactory();
 		} catch (PeerUnavailableException e) {
@@ -168,7 +174,6 @@ public class SipUA implements SipListener {
 
 		// Create SIP stack
 		configureSipStack();
-
 	}
 
 	// //////////
@@ -193,18 +198,6 @@ public class SipUA implements SipListener {
 	public int getLocalPort() {
 		// TODO Return local port depending on STUN config
 		return 0;
-	}
-
-	public String getTransport() {
-		return transport;
-	}
-
-	public int getMaxForwards() {
-		return maxForwards;
-	}
-
-	public int getExpires() {
-		return expires;
 	}
 
 	// ////////////////
@@ -287,8 +280,8 @@ public class SipUA implements SipListener {
 
 			Properties jainProps = new Properties();
 
-			String outboundProxy = proxyServerAddress + ":" + proxyServerPort
-					+ "/" + transport;
+			String outboundProxy = PROXY_SERVER_ADDRESS + ":"
+					+ PROXY_SERVER_PORT + "/" + TRANSPORT;
 			jainProps.setProperty("javax.sip.OUTBOUND_PROXY", outboundProxy);
 
 			jainProps.setProperty("javax.sip.STACK_NAME",
@@ -296,17 +289,15 @@ public class SipUA implements SipListener {
 			jainProps.setProperty("gov.nist.javax.sip.REENTRANT_LISTENER",
 					"true");
 
-			// Drop the client connection after we are done with the
-			// transaction.
-			jainProps.setProperty(
-					"gov.nist.javax.sip.CACHE_CLIENT_CONNECTIONS", "true");
 			jainProps.setProperty("gov.nist.javax.sip.THREAD_POOL_SIZE", "100");
 			jainProps.setProperty("gov.nist.javax.sip.THREAD_POOL_SIZE", "100");
 
+			jainProps.setProperty("gov.nist.javax.sip.TLS_SECURITY_POLICY",
+					this.getClass().getName());
+
 			// Set to 0 (or NONE) in your production code for max speed.
 			// You need 16 (or TRACE) for logging traces. 32 (or DEBUG) for
-			// debug +
-			// traces.
+			// debug + traces.
 			// Your code will limp at 32 but it is best for debugging.
 			// jainProps.setProperty("gov.nist.javax.sip.TRACE_LEVEL", "16");
 
@@ -327,16 +318,16 @@ public class SipUA implements SipListener {
 			// Create a listening point per interface
 			InetAddress addr = getLocalInterface(localAddressPattern);
 			ListeningPoint listeningPoint = sipStack.createListeningPoint(
-					addr.getHostAddress(), localPort, transport);
+					addr.getHostAddress(), localPort, TRANSPORT);
 			log.info("Create listening point at: " + addr.getHostAddress()
-					+ ":" + localPort + "/" + transport);
+					+ ":" + localPort + "/" + TRANSPORT);
 			// listeningPoint.setSentBy(publicAddress + ":" + publicPort);
 
 			// Create SIP PROVIDER and add listening points
 			sipProvider = sipStack.createSipProvider(listeningPoint);
 
 			// Add User Agent as listener for the SIP provider
-			sipProvider.addSipListener(this);
+			sipProvider.addSipListener(sipListenerImpl);
 
 			// TODO Re-register all local contacts
 
@@ -348,7 +339,6 @@ public class SipUA implements SipListener {
 	}
 
 	private void terminateSipStack() {
-
 		if (sipStack != null && sipProvider != null) {
 			log.info("Delete SIP listening points");
 
@@ -361,7 +351,7 @@ public class SipUA implements SipListener {
 				}
 			}
 
-			sipProvider.removeSipListener(this);
+			sipProvider.removeSipListener(sipListenerImpl);
 			try {
 				sipStack.deleteSipProvider(sipProvider);
 			} catch (ObjectInUseException e) {
@@ -429,170 +419,6 @@ public class SipUA implements SipListener {
 		return null;
 	}
 
-	// /////////////////////////
-	//
-	// SIP LISTENER
-	//
-	// /////////////////////////
-
-	@Override
-	public void processDialogTerminated(DialogTerminatedEvent arg0) {
-		// Nothing to do here
-		log.info("Dialog Terminated. Perform clean up operations");
-	}
-
-	@Override
-	public void processIOException(IOExceptionEvent arg0) {
-		// Nothing to do here
-		log.info("IO Exception");
-	}
-
-	@Override
-	public void processRequest(RequestEvent requestEvent) {
-		log.info("SIP request received\n"
-				+ "<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<\n"
-				+ requestEvent.getRequest().toString() + "\n"
-				+ "<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<");
-
-		ServerTransaction serverTransaction;
-		try {
-			if ((serverTransaction = requestEvent.getServerTransaction()) == null) {
-				// Create transaction
-				serverTransaction = sipProvider
-						.getNewServerTransaction(requestEvent.getRequest());
-			}
-		} catch (TransactionAlreadyExistsException e) {
-			log.warn("Request already has an active transaction. It shouldn't be delivered by SipStack to the SIPU-UA");
-			return;
-		} catch (TransactionUnavailableException e) {
-			log.warn("Unable to get ServerTransaction for request");
-			return;
-		}
-
-		try {
-
-			// Check if this transaction addressed to this UA
-			String requestUri = requestEvent.getRequest().getRequestURI()
-					.toString();
-			if (!localUris.containsKey(requestUri)) {
-				// Request is addressed to unknown URI
-				log.info("SIP transaction for unknown URI: " + requestUri);
-				Response response = messageFactory.createResponse(
-						Response.NOT_FOUND, serverTransaction.getRequest());
-				serverTransaction.sendResponse(response);
-				return;
-			}
-
-			// Check if the SIPCALL has to be created
-			Dialog dialog;
-			if ((dialog = serverTransaction.getDialog()) != null
-					&& dialog.getApplicationData() == null) {
-				log.debug("Create SipCall for transaction: "
-						+ serverTransaction.getBranchId());
-				SipCall call = new SipCall(this, dialog);
-				dialog.setApplicationData(call);
-			} else {
-				log.debug("Transaccion already has an associated SipCall");
-			}
-
-			// Get Request method to create a proper transaction record
-			STransaction sTrns;
-			if ((sTrns = (STransaction) serverTransaction.getApplicationData()) == null) {
-				String reqMethod = requestEvent.getRequest().getMethod();
-				if (reqMethod.equals(Request.ACK)) {
-					log.info("Detected ACK request");
-					sTrns = new SAck(this, serverTransaction);
-				} else if (reqMethod.equals(Request.INVITE)) {
-					log.info("Detected INVITE request");
-					sTrns = new SInvite(this, serverTransaction);
-				} else if (reqMethod.equals(Request.BYE)) {
-					log.info("Detected BYE request");
-					sTrns = new SBye(this, serverTransaction);
-				} else if (reqMethod.equals(Request.CANCEL)) {
-					log.info("Detected CANCEL request");
-					sTrns = new SCancel(this, serverTransaction);
-				} else {
-					log.error("Unsupported method on request: " + reqMethod);
-					Response response = messageFactory
-							.createResponse(Response.NOT_IMPLEMENTED,
-									requestEvent.getRequest());
-					serverTransaction.sendResponse(response);
-				}
-				// Insert application data into server transaction
-				serverTransaction.setApplicationData(sTrns);
-			}
-
-		} catch (Exception e) {
-			log.warn("Unable to process server transaction", e);
-		}
-
-	}
-
-	@Override
-	public void processResponse(ResponseEvent responseEvent) {
-		log.info("\n" + "<<<<<<<< SIP response received <<<<<<\n"
-				+ responseEvent.getResponse().toString()
-				+ "<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<");
-
-		// Get transaction record for this response and process response
-		// SipProvider searches a proper client transaction to each response.
-		// if any is found it gives without any transaction
-		ClientTransaction clientTransaction = responseEvent
-				.getClientTransaction();
-		if (clientTransaction == null) {
-			// SIP JAIN was unable to find a proper transaction for this
-			// response. The UAC will discard silently the request as stated by
-			// RFC3261 18.1.2
-			log.error("Unable to find a proper transaction matching response");
-			return;
-		}
-
-		// Get the transaction application record and process response.
-		CTransaction cTrns = (CTransaction) clientTransaction
-				.getApplicationData();
-		if (cTrns == null) {
-			log.error("Server Internal Error (500): Empty application data for response transaction");
-		}
-		cTrns.processResponse(responseEvent);
-
-	}
-
-	@Override
-	public void processTimeout(TimeoutEvent timeoutEvent) {
-		log.warn("Transaction timeout:" + timeoutEvent.toString());
-		try {
-			if (timeoutEvent.getClientTransaction() != null) {
-				CTransaction cTrns = (CTransaction) timeoutEvent
-						.getClientTransaction().getApplicationData();
-				if (cTrns != null)
-					cTrns.processTimeout();
-				timeoutEvent.getClientTransaction().terminate();
-
-			} else if (timeoutEvent.getServerTransaction() != null) {
-				STransaction sTrns = (STransaction) timeoutEvent
-						.getClientTransaction().getApplicationData();
-				if (sTrns != null)
-					sTrns.processTimeout();
-				timeoutEvent.getServerTransaction().terminate();
-			}
-
-		} catch (ObjectInUseException e) {
-			log.error("Unable to handle timeouts");
-		}
-	}
-
-	@Override
-	public void processTransactionTerminated(
-			TransactionTerminatedEvent trnsTerminatedEv) {
-		if (trnsTerminatedEv.isServerTransaction()) {
-			log.info("Server Transaction terminated with ID: "
-					+ trnsTerminatedEv.getServerTransaction().getBranchId());
-		} else {
-			log.info("Client Transaction terminated with ID: "
-					+ trnsTerminatedEv.getClientTransaction().getBranchId());
-		}
-	}
-
 	// ////////////////
 	//
 	// URI & REGISTER MANAGEMENT
@@ -650,4 +476,169 @@ public class SipUA implements SipListener {
 	public CallTerminatedHandler getCallTerminatedHandler() {
 		return terminatedHandler;
 	}
+
+	private class SipListenerImpl implements SipListener {
+
+		@Override
+		public void processDialogTerminated(DialogTerminatedEvent arg0) {
+			// Nothing to do here
+			log.info("Dialog Terminated. Perform clean up operations");
+		}
+
+		@Override
+		public void processIOException(IOExceptionEvent arg0) {
+			// Nothing to do here
+			log.info("IO Exception");
+		}
+
+		@Override
+		public void processRequest(RequestEvent requestEvent) {
+			log.info("SIP request received\n"
+					+ "<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<\n"
+					+ requestEvent.getRequest().toString() + "\n"
+					+ "<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<");
+
+			ServerTransaction serverTransaction;
+			try {
+				if ((serverTransaction = requestEvent.getServerTransaction()) == null) {
+					// Create transaction
+					serverTransaction = sipProvider
+							.getNewServerTransaction(requestEvent.getRequest());
+				}
+			} catch (TransactionAlreadyExistsException e) {
+				log.warn("Request already has an active transaction. It shouldn't be delivered by SipStack to the SIPU-UA");
+				return;
+			} catch (TransactionUnavailableException e) {
+				log.warn("Unable to get ServerTransaction for request");
+				return;
+			}
+
+			try {
+
+				// Check if this transaction addressed to this UA
+				String requestUri = requestEvent.getRequest().getRequestURI()
+						.toString();
+				if (!localUris.containsKey(requestUri)) {
+					// Request is addressed to unknown URI
+					log.info("SIP transaction for unknown URI: " + requestUri);
+					Response response = messageFactory.createResponse(
+							Response.NOT_FOUND, serverTransaction.getRequest());
+					serverTransaction.sendResponse(response);
+					return;
+				}
+
+				// Check if the SIPCALL has to be created
+				Dialog dialog;
+				if ((dialog = serverTransaction.getDialog()) != null
+						&& dialog.getApplicationData() == null) {
+					log.debug("Create SipCall for transaction: "
+							+ serverTransaction.getBranchId());
+					SipCall call = new SipCall(SipUA.this, dialog);
+					dialog.setApplicationData(call);
+				} else {
+					log.debug("Transaccion already has an associated SipCall");
+				}
+
+				// Get Request method to create a proper transaction record
+				STransaction sTrns;
+				if ((sTrns = (STransaction) serverTransaction
+						.getApplicationData()) == null) {
+					String reqMethod = requestEvent.getRequest().getMethod();
+					if (reqMethod.equals(Request.ACK)) {
+						log.info("Detected ACK request");
+						sTrns = new SAck(SipUA.this, serverTransaction);
+					} else if (reqMethod.equals(Request.INVITE)) {
+						log.info("Detected INVITE request");
+						sTrns = new SInvite(SipUA.this, serverTransaction);
+					} else if (reqMethod.equals(Request.BYE)) {
+						log.info("Detected BYE request");
+						sTrns = new SBye(SipUA.this, serverTransaction);
+					} else if (reqMethod.equals(Request.CANCEL)) {
+						log.info("Detected CANCEL request");
+						sTrns = new SCancel(SipUA.this, serverTransaction);
+					} else {
+						log.error("Unsupported method on request: " + reqMethod);
+						Response response = messageFactory.createResponse(
+								Response.NOT_IMPLEMENTED,
+								requestEvent.getRequest());
+						serverTransaction.sendResponse(response);
+					}
+					// Insert application data into server transaction
+					serverTransaction.setApplicationData(sTrns);
+				}
+
+			} catch (Exception e) {
+				log.warn("Unable to process server transaction", e);
+			}
+
+		}
+
+		@Override
+		public void processResponse(ResponseEvent responseEvent) {
+			log.info("\n" + "<<<<<<<< SIP response received <<<<<<\n"
+					+ responseEvent.getResponse().toString()
+					+ "<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<");
+
+			// Get transaction record for this response and process response
+			// SipProvider searches a proper client transaction to each
+			// response.
+			// if any is found it gives without any transaction
+			ClientTransaction clientTransaction = responseEvent
+					.getClientTransaction();
+			if (clientTransaction == null) {
+				// SIP JAIN was unable to find a proper transaction for this
+				// response. The UAC will discard silently the request as stated
+				// by
+				// RFC3261 18.1.2
+				log.error("Unable to find a proper transaction matching response");
+				return;
+			}
+
+			// Get the transaction application record and process response.
+			CTransaction cTrns = (CTransaction) clientTransaction
+					.getApplicationData();
+			if (cTrns == null) {
+				log.error("Server Internal Error (500): Empty application data for response transaction");
+			}
+			cTrns.processResponse(responseEvent);
+
+		}
+
+		@Override
+		public void processTimeout(TimeoutEvent timeoutEvent) {
+			log.warn("Transaction timeout:" + timeoutEvent.toString());
+			try {
+				if (timeoutEvent.getClientTransaction() != null) {
+					CTransaction cTrns = (CTransaction) timeoutEvent
+							.getClientTransaction().getApplicationData();
+					if (cTrns != null)
+						cTrns.processTimeout();
+					timeoutEvent.getClientTransaction().terminate();
+
+				} else if (timeoutEvent.getServerTransaction() != null) {
+					STransaction sTrns = (STransaction) timeoutEvent
+							.getClientTransaction().getApplicationData();
+					if (sTrns != null)
+						sTrns.processTimeout();
+					timeoutEvent.getServerTransaction().terminate();
+				}
+
+			} catch (ObjectInUseException e) {
+				log.error("Unable to handle timeouts");
+			}
+		}
+
+		@Override
+		public void processTransactionTerminated(
+				TransactionTerminatedEvent trnsTerminatedEv) {
+			if (trnsTerminatedEv.isServerTransaction()) {
+				log.info("Server Transaction terminated with ID: "
+						+ trnsTerminatedEv.getServerTransaction().getBranchId());
+			} else {
+				log.info("Client Transaction terminated with ID: "
+						+ trnsTerminatedEv.getClientTransaction().getBranchId());
+			}
+		}
+	}
+
 }
