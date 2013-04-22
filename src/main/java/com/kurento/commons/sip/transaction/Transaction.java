@@ -23,8 +23,8 @@ public abstract class Transaction {
 
 	static Hashtable<Integer, Boolean> usedPorts = new Hashtable<Integer, Boolean>();
 
-	protected String localTag;
-	protected static long cSeqNumber = System.currentTimeMillis() % 100000000;
+	String localTag;
+	static long cSeqNumber = System.currentTimeMillis() % 100000000;
 
 	// Protocol helper
 	private static SecureRandom rn = new SecureRandom();
@@ -37,7 +37,7 @@ public abstract class Transaction {
 	//
 	// ///////////////
 
-	protected String getNewRandomTag() {
+	String getNewRandomTag() {
 		byte t[] = new byte[tagLength];
 		for (int i = 0; i < tagLength; i++) {
 			t[i] = (byte) rand('a', 'z');
@@ -45,7 +45,7 @@ public abstract class Transaction {
 		return new String(t);
 	}
 
-	protected String getNewRandomBranch() {
+	String getNewRandomBranch() {
 		byte b[] = new byte[branchLength];
 		for (int i = 0; i < branchLength; i++) {
 			b[i] = (byte) rand('a', 'z');
@@ -53,7 +53,7 @@ public abstract class Transaction {
 		return "z9hG4bK_" + new String(b);
 	}
 
-	protected int rand(int lo, int hi) {
+	int rand(int lo, int hi) {
 		int n = hi - lo + 1;
 		int i = rn.nextInt(n);
 		if (i < 0) {

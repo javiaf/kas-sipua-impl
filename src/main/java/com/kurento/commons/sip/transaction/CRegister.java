@@ -68,7 +68,8 @@ public class CRegister extends CTransaction {
 	}
 
 	// Override CSeqHeader according to RFC3261, 10.2 - CSeq
-	protected CSeqHeader buildCSeqHeader() throws ParseException,
+	@Override
+	CSeqHeader buildCSeqHeader() throws ParseException,
 			InvalidArgumentException {
 		return sipUA.getHeaderFactory().createCSeqHeader(register.getCseq(),
 				method);

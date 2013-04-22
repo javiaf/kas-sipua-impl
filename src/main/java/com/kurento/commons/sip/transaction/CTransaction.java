@@ -57,19 +57,19 @@ import com.kurento.kas.sip.ua.SipUA;
  */
 public abstract class CTransaction extends Transaction {
 
-	protected ClientTransaction clientTransaction;
-	protected Request request;
+	ClientTransaction clientTransaction;
+	Request request;
 
 	// General attributes
-	protected static Logger log = LoggerFactory.getLogger(CTransaction.class);
+	static Logger log = LoggerFactory.getLogger(CTransaction.class);
 
-	protected String method;
-	protected SipCall call;
-	protected Dialog dialog;
-	protected SipUA sipUA;
+	String method;
+	SipCall call;
+	Dialog dialog;
+	SipUA sipUA;
 
-	protected String localUri;
-	protected String remoteUri;
+	String localUri;
+	String remoteUri;
 
 	// ////////////
 	//
@@ -78,8 +78,8 @@ public abstract class CTransaction extends Transaction {
 	// ////////////
 
 	// Used for Non dialog transactions
-	protected CTransaction(String method, SipUA sipUA, String localUri,
-			String remoteUri) throws KurentoSipException {
+	CTransaction(String method, SipUA sipUA, String localUri, String remoteUri)
+			throws KurentoSipException {
 		this.sipUA = sipUA;
 		this.method = method;
 		this.localUri = localUri;
@@ -88,7 +88,7 @@ public abstract class CTransaction extends Transaction {
 	}
 
 	// Used for Dialog transactions
-	protected CTransaction(String method, SipUA sipUA, SipCall call)
+	CTransaction(String method, SipUA sipUA, SipCall call)
 			throws KurentoSipException {
 		this.call = call;
 		this.dialog = call.getDialog();
@@ -100,7 +100,7 @@ public abstract class CTransaction extends Transaction {
 	}
 
 	// Used by Cancel transaction
-	protected CTransaction() {
+	CTransaction() {
 		// NOTHING TO DO HERE
 	}
 
@@ -124,7 +124,7 @@ public abstract class CTransaction extends Transaction {
 	//
 	// //////////////
 
-	protected void createRequest() throws KurentoSipException {
+	void createRequest() throws KurentoSipException {
 		// Check if dialog exists
 		if (dialog == null) {
 			try {
@@ -186,7 +186,7 @@ public abstract class CTransaction extends Transaction {
 		return sipUA.getSipProvider().getNewCallId();
 	}
 
-	protected FromHeader buildFromHeader() throws ParseException {
+	FromHeader buildFromHeader() throws ParseException {
 		// Dialog is null here. Make sure you don't use it
 		localTag = getNewRandomTag();
 		Address localAddress = sipUA.getAddressFactory()
@@ -195,14 +195,14 @@ public abstract class CTransaction extends Transaction {
 				.createFromHeader(localAddress, localTag);
 	}
 
-	protected ToHeader buildToHeader() throws ParseException {
+	ToHeader buildToHeader() throws ParseException {
 		// Dialog is null here. Make sure you don't use it
 		Address remoteAddress = sipUA.getAddressFactory().createAddress(
 				remoteUri);
 		return sipUA.getHeaderFactory().createToHeader(remoteAddress, null);
 	}
 
-	protected List<ViaHeader> buildViaHeaders() throws ParseException,
+	List<ViaHeader> buildViaHeaders() throws ParseException,
 			InvalidArgumentException {
 		// Dialog is null here. Make sure you don't use it
 		List<ViaHeader> viaHeaders = new ArrayList<ViaHeader>();
@@ -215,20 +215,19 @@ public abstract class CTransaction extends Transaction {
 		return viaHeaders;
 	}
 
-	protected CSeqHeader buildCSeqHeader() throws ParseException,
+	CSeqHeader buildCSeqHeader() throws ParseException,
 			InvalidArgumentException {
 		// Dialog is null here. Make sure you don't use it
 		return sipUA.getHeaderFactory().createCSeqHeader(cSeqNumber, method);
 	}
 
-	protected MaxForwardsHeader buildMaxForwardsHeader()
-			throws InvalidArgumentException {
+	MaxForwardsHeader buildMaxForwardsHeader() throws InvalidArgumentException {
 		// Dialog is null here. Make sure you don't use it
 		return sipUA.getHeaderFactory().createMaxForwardsHeader(
 				sipUA.getMaxForwards());
 	}
 
-	protected AllowHeader buildAllowHeader() throws KurentoSipException {
+	AllowHeader buildAllowHeader() throws KurentoSipException {
 		try {
 			// Dialog is null here. Make sure you don't use it
 			return sipUA.getHeaderFactory().createAllowHeader(
@@ -239,7 +238,7 @@ public abstract class CTransaction extends Transaction {
 		}
 	}
 
-	protected SupportedHeader buildSupportedHeader() throws KurentoSipException {
+	SupportedHeader buildSupportedHeader() throws KurentoSipException {
 		try {
 			// Dialog is null here. Make sure you don't use it
 			return sipUA.getHeaderFactory().createSupportedHeader("100rel");
@@ -250,8 +249,7 @@ public abstract class CTransaction extends Transaction {
 
 	}
 
-	protected ContentTypeHeader buildContentTypeHeader()
-			throws KurentoSipException {
+	ContentTypeHeader buildContentTypeHeader() throws KurentoSipException {
 		// Dialog is null here. Make sure you don't use it
 		try {
 			return sipUA.getHeaderFactory().createContentTypeHeader(
@@ -262,20 +260,20 @@ public abstract class CTransaction extends Transaction {
 		}
 	}
 
-	protected ContactHeader buildContactHeader() throws KurentoSipException {
+	ContactHeader buildContactHeader() throws KurentoSipException {
 		// Dialog is null here. Make sure you don't use it
 		ContactHeader contact = sipUA.getHeaderFactory().createContactHeader(
 				sipUA.getContactAddress(localUri));
 		return contact;
 	}
 
-	protected AcceptHeader buildAcceptHeader() throws ParseException {
+	AcceptHeader buildAcceptHeader() throws ParseException {
 		// Dialog is null here. Make sure you don't use it
 		return sipUA.getHeaderFactory()
 				.createAcceptHeader("application", "sdp");
 	}
 
-	protected ExpiresHeader buildExpiresHeader() throws KurentoSipException {
+	ExpiresHeader buildExpiresHeader() throws KurentoSipException {
 		try {
 			// Dialog is null here. Make sure you don't use it
 			return sipUA.getHeaderFactory().createExpiresHeader(
@@ -286,12 +284,12 @@ public abstract class CTransaction extends Transaction {
 		}
 	}
 
-	protected UserAgentHeader buildUserAgentHeader() throws ParseException {
+	UserAgentHeader buildUserAgentHeader() throws ParseException {
 		// Dialog is null here. Make sure you don't use it
 		return sipUA.getUserAgentHeader();
 	}
 
-	protected SipURI buildRequestURI() throws ParseException {
+	SipURI buildRequestURI() throws ParseException {
 		// Dialog is null here. Make sure you don't use it
 		return (SipURI) sipUA.getAddressFactory().createAddress(remoteUri)
 				.getURI();

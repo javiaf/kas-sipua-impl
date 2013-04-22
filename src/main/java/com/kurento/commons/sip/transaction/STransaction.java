@@ -36,17 +36,17 @@ import com.kurento.kas.sip.ua.SipUA;
 
 public abstract class STransaction extends Transaction {
 
-	protected static Logger log = LoggerFactory.getLogger(STransaction.class);
+	static Logger log = LoggerFactory.getLogger(STransaction.class);
 
-	protected ServerTransaction serverTransaction;
-	protected Request request;
+	ServerTransaction serverTransaction;
+	Request request;
 
-	protected String method;
-	protected SipCall call;
-	protected Dialog dialog;
-	protected SipUA sipUA;
+	String method;
+	SipCall call;
+	Dialog dialog;
+	SipUA sipUA;
 
-	protected STransaction(SipUA sipUA, ServerTransaction serverTransaction)
+	STransaction(SipUA sipUA, ServerTransaction serverTransaction)
 			throws KurentoSipException {
 
 		this.sipUA = sipUA;
@@ -138,7 +138,7 @@ public abstract class STransaction extends Transaction {
 		return sipUA.getHeaderFactory().createContactHeader(contact);
 	}
 
-	protected int getContentLength(Request request) throws KurentoSipException,
+	int getContentLength(Request request) throws KurentoSipException,
 			KurentoSipException {
 		// Check if invites provides a SDP
 		ContentLength clHeader = (ContentLength) request
