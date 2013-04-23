@@ -35,7 +35,6 @@ import javax.sip.header.CSeqHeader;
 import javax.sip.header.CallIdHeader;
 import javax.sip.header.ContactHeader;
 import javax.sip.header.ContentTypeHeader;
-import javax.sip.header.ExpiresHeader;
 import javax.sip.header.FromHeader;
 import javax.sip.header.MaxForwardsHeader;
 import javax.sip.header.SupportedHeader;
@@ -283,16 +282,6 @@ public abstract class CTransaction extends Transaction {
 				.createAcceptHeader("application", "sdp");
 	}
 
-	ExpiresHeader buildExpiresHeader() throws KurentoSipException {
-		try {
-			// Dialog is null here. Make sure you don't use it
-			return sipUA.getHeaderFactory().createExpiresHeader(SipUA.EXPIRES);
-		} catch (InvalidArgumentException e) {
-			throw new KurentoSipException(
-					"Invalid argument building expires header", e);
-		}
-	}
-
 	UserAgentHeader buildUserAgentHeader() throws ParseException {
 		// Dialog is null here. Make sure you don't use it
 		return sipUA.getUserAgentHeader();
@@ -309,6 +298,10 @@ public abstract class CTransaction extends Transaction {
 	// MANAGE TRANSACTION
 	//
 	// ///////////////////
+
+	public void sendRequest() throws KurentoSipException {
+		sendRequest(null);
+	}
 
 	public void sendRequest(String sdp) throws KurentoSipException {
 

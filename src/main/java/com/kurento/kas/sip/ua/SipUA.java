@@ -23,9 +23,9 @@ import java.net.NetworkInterface;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Enumeration;
-import java.util.HashMap;
+import java.util.Map;
 import java.util.Properties;
-import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 import javax.sip.ClientTransaction;
 import javax.sip.Dialog;
@@ -47,7 +47,6 @@ import javax.sip.TransactionTerminatedEvent;
 import javax.sip.TransactionUnavailableException;
 import javax.sip.address.Address;
 import javax.sip.address.AddressFactory;
-import javax.sip.header.CallIdHeader;
 import javax.sip.header.HeaderFactory;
 import javax.sip.header.UserAgentHeader;
 import javax.sip.message.MessageFactory;
@@ -107,6 +106,7 @@ public class SipUA extends UA {
 
 	// Handlers
 	private ErrorHandler errorHandler;
+	private RegisterHandler registerHandler;
 	private CallDialingHandler dialingHandler;
 	private CallEstablishedHandler establishedHandler;
 	private CallRingingHandler ringingHandler;
@@ -123,7 +123,7 @@ public class SipUA extends UA {
 	private int stunServerPort;
 
 	// SIP configuration
-	public static final String TRANSPORT = "UDP";
+	public static final String TRANSPORT = "TCP";
 	private static final String PROXY_SERVER_ADDRESS = "193.147.51.13"; // "10.0.0.107";
 																		// "193.147.51.13";
 	private static final int PROXY_SERVER_PORT = 5060;
@@ -133,16 +133,13 @@ public class SipUA extends UA {
 	// Other config
 	private boolean testMode = false;
 
-	private UUID instanceId;
-
-	private CallIdHeader registrarCallId;
 	private Address contactAddress = null;
 	private boolean isRegistered = false;
 	private KurentoUaTimer timer;
 	private RegisterTimerTask registerTimerTask;
 
 	// List of managed URIs
-	private HashMap<String, Address> localUris = new HashMap<String, Address>();
+	private Map<String, SipRegister> localUris = new ConcurrentHashMap<String, SipRegister>();
 
 	// /////////////////////////
 	//
@@ -153,6 +150,7 @@ public class SipUA extends UA {
 	public SipUA(Context context) throws KurentoSipException {
 		super(context);
 
+		instantiateDefaultHandlers();
 		// Create SIP stack infrastructure
 		sipFactory = SipFactory.getInstance();
 
@@ -188,18 +186,13 @@ public class SipUA extends UA {
 			log.error("User Agent header initialization error", e);
 		}
 
-		this.instanceId = UUID.randomUUID();
-		this.timer = new AlarmUaTimer(context);
-		InetAddress addr;
-		try {
-			addr = getLocalInterface(localAddressPattern, onlyIPv4);
-			this.localAddress = addr.getHostAddress();
-		} catch (IOException e) {
-			log.error("Unable to get locas interface.", e);
-		}
-
-		// Create SIP stack
+		this.timer = new AlarmUaTimer(context); // TODO: complete timer impl
 		configureSipStack();
+	}
+
+	@Override
+	public void terminate() {
+		terminateSipStack();
 	}
 
 	// //////////
@@ -307,6 +300,16 @@ public class SipUA extends UA {
 		try {
 			terminateSipStack(); // Just in case
 
+			InetAddress addr;
+			try {
+				addr = getLocalInterface(localAddressPattern, onlyIPv4);
+				this.localAddress = addr.getHostAddress();
+			} catch (IOException e) {
+				log.error("Unable to get local interface.", e);
+				throw new KurentoSipException("Unable to get local interface.",
+						e);
+			}
+
 			// TODO Find configuration that supports TLS / DTLS
 			// TODO Find configuration that supports TCP with persistent
 			// connection
@@ -368,10 +371,10 @@ public class SipUA extends UA {
 
 			// TODO Re-register all local contacts
 
-		} catch (Exception e) {
+		} catch (Throwable t) {
 			terminateSipStack();
 			throw new KurentoSipException("Unable to instantiate a SIP stack",
-					e);
+					t);
 		}
 	}
 
@@ -408,7 +411,7 @@ public class SipUA extends UA {
 	// ////////////////
 
 	@Override
-	public void register(Register register, RegisterHandler registerHandler) {
+	public void register(Register register) {
 		// TODO Implement URI register
 		// TODO Create contact address on register "sip:userName@address:port"
 		// TODO Implement STUN in order to get public transport address. This
@@ -418,58 +421,65 @@ public class SipUA extends UA {
 
 		try {
 			log.debug("Request to register: " + register.getUri());
-			Address contactAddress;
-			try {
-				// TODO: only once
-				InetAddress addr = getLocalInterface(localAddressPattern,
-						onlyIPv4);
-				contactAddress = addressFactory.createAddress("sip:"
-						+ register.getUser() + "@" + addr.getHostAddress()
-						+ ":" + localPort);
-				localUris.put(register.getUri(), contactAddress);
-			} catch (ParseException e) {
-				throw new KurentoSipException(
-						"Unable to create contact address while registering", e);
-			} catch (IOException e) {
-				throw new KurentoSipException("Unable to get local address", e);
-			}
 
-			if (sipProvider == null)
-				throw new KurentoSipException(
-						"SipProvider is null when trying to register Endpoint: "
-								+ register.getUri());
-
-			this.registrarCallId = sipProvider.getNewCallId();
-
-			try {
-				this.registrarCallId.setCallId(instanceId.toString());
-			} catch (ParseException e) {
-				log.warn("Unable to set callid for REGISTER request. Continue anyway");
-			}
+			// TODO: only once
+			Address contactAddress = addressFactory
+					.createAddress("sip:" + register.getUser() + "@"
+							+ localAddress + ":" + localPort);
+			SipRegister sipRegister = new SipRegister(register, contactAddress);
+			log.debug("Add into localUris ", register.getUri());
+			localUris.put(register.getUri(), sipRegister);
 
 			// Before registration remove previous timers
+			// FIXME:
 			timer.cancel(registerTimerTask);
-			registerTimerTask = new RegisterTimerTask(register, registerHandler);
 
-			CRegister creg;
-			try {
-				creg = new CRegister(this, new SipRegister(register.getUser(),
-						register.getRealm()), registerHandler);
-				creg.sendRequest(null);
-			} catch (KurentoException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} catch (KurentoSipException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
+			CRegister creg = new CRegister(this, sipRegister, EXPIRES);
+			creg.sendRequest();
+			registerTimerTask = new RegisterTimerTask(register, registerHandler);
+		} catch (ParseException e) {
+			log.error("Unable to create contact address", e);
+			registerHandler.onConnectionFailure(register);
 		} catch (KurentoSipException e) {
-			log.error("Unable to register");
+			log.error("Unable to register", e);
+			registerHandler.onConnectionFailure(register);
+		} catch (KurentoException e) {
+			log.error("Unable to create CRegister", e);
+			registerHandler.onConnectionFailure(register);
 		}
 	}
 
+	@Override
+	public void setRegisterHandler(RegisterHandler registerHandler) {
+		this.registerHandler = registerHandler;
+	}
+
+	@Override
 	public void unregister(Register register) {
-		// TODO Implement URI unregister
+		try {
+			log.debug("Request to unregister: " + register.getUri());
+
+			SipRegister sipReg = localUris.get(register.getUri());
+			if (sipReg == null) {
+				log.warn("There is not a previous register for "
+						+ register.getUri());
+				registerHandler.onRegistrationSuccess(register);
+				return;
+			}
+
+			SipRegister sipRegister = new SipRegister(register, contactAddress);
+			CRegister creg = new CRegister(this, sipRegister, 0);
+			creg.sendRequest();
+			// FIXME: finish timer
+			timer.cancel(registerTimerTask);
+			localUris.remove(register.getUri());
+		} catch (KurentoSipException e) {
+			log.error("Unable to register", e);
+			registerHandler.onConnectionFailure(register);
+		} catch (KurentoException e) {
+			log.error("Unable to create CRegister", e);
+			registerHandler.onConnectionFailure(register);
+		}
 	}
 
 	// TODO Implement re-register timer (expires time enabled by configuration)
@@ -477,7 +487,10 @@ public class SipUA extends UA {
 	// TODO Implement keep-alive timer (enabled by configuration)
 
 	public Address getContactAddress(String localUri) {
-		return localUris.get(localUri);
+		SipRegister sipReg = localUris.get(localUri);
+		if (sipReg != null)
+			return sipReg.getAddress();
+		return null;
 	}
 
 	// ////////////////
@@ -488,6 +501,10 @@ public class SipUA extends UA {
 
 	public ErrorHandler getErrorHandler() {
 		return errorHandler;
+	}
+
+	public RegisterHandler getRegisterHandler() {
+		return registerHandler;
 	}
 
 	public CallDialingHandler getCallDialingHandler() {
@@ -630,7 +647,6 @@ public class SipUA extends UA {
 				log.error("Server Internal Error (500): Empty application data for response transaction");
 			}
 			cTrns.processResponse(responseEvent);
-
 		}
 
 		@Override
@@ -684,7 +700,7 @@ public class SipUA extends UA {
 		@Override
 		public void run() {
 			log.debug("sipEndpointTimerTask register");
-			register(register, registerHandler);
+			register(register);
 		}
 
 	}
@@ -720,9 +736,7 @@ public class SipUA extends UA {
 							|| inetAddress.getHostAddress().equals(pattern)) {
 						return inetAddress;
 					}
-
 				} else {
-
 					// By default do not return multicast addresses (224...)
 					if (inetAddress.isMulticastAddress()) {
 						continue;
@@ -743,6 +757,29 @@ public class SipUA extends UA {
 			}
 		}
 		return null;
+	}
+
+	private void instantiateDefaultHandlers() {
+		registerHandler = new RegisterHandler() {
+
+			@Override
+			public void onRegistrationSuccess(Register register) {
+				// TODO Auto-generated method stub
+
+			}
+
+			@Override
+			public void onConnectionFailure(Register register) {
+				// TODO Auto-generated method stub
+
+			}
+
+			@Override
+			public void onAuthenticationFailure(Register register) {
+				// TODO Auto-generated method stub
+
+			}
+		};
 	}
 
 }

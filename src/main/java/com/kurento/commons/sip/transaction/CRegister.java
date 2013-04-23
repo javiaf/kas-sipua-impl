@@ -20,6 +20,7 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.text.ParseException;
 
+import javax.sip.InvalidArgumentException;
 import javax.sip.ResponseEvent;
 import javax.sip.address.URI;
 import javax.sip.header.AuthorizationHeader;
@@ -34,21 +35,20 @@ import com.kurento.kas.sip.ua.KurentoSipException;
 import com.kurento.kas.sip.ua.SipRegister;
 import com.kurento.kas.sip.ua.SipUA;
 import com.kurento.kas.ua.KurentoException;
-import com.kurento.kas.ua.RegisterHandler;
+import com.kurento.kas.ua.Register;
 
 public class CRegister extends CTransaction {
 
-	private SipRegister register;
-	private RegisterHandler registerHandler;
+	private SipRegister sipRegister;
+	private Register register;
 
-	public CRegister(SipUA sipUA, SipRegister register,
-			RegisterHandler registerHandler)
+	public CRegister(SipUA sipUA, SipRegister sipRegister, int expires)
 			throws KurentoException, KurentoSipException {
-		super(Request.REGISTER, sipUA, register.getUri(), register.getUri(),
-				register.getCseq());
+		super(Request.REGISTER, sipUA, sipRegister.getRegister().getUri(),
+				sipRegister.getRegister().getUri(), sipRegister.getCseq());
 
-		this.register = register;
-		this.registerHandler = registerHandler;
+		this.sipRegister = sipRegister;
+		this.register = sipRegister.getRegister();
 
 		try {
 			// REGISTER send special request URI: RFC3261 , 10.2
@@ -59,14 +59,18 @@ public class CRegister extends CTransaction {
 			// Set REGISTER CallId according to RFC3261 , 10.2 - CSeq
 			CallIdHeader registrarCallId = sipUA.getSipProvider()
 					.getNewCallId();
-			registrarCallId.setCallId(register.getRegisterCallId());
+			registrarCallId.setCallId(sipRegister.getRegisterCallId());
 
 			request.setHeader(registrarCallId);
 
 			// Add specific REGISTER headers RFC3261, 10.2 - RequestURI
-			request.addHeader(buildExpiresHeader());
+			request.addHeader(sipUA.getHeaderFactory().createExpiresHeader(
+					expires));
 		} catch (ParseException e) {
 			throw new KurentoException("Unable to build REGISTER request", e);
+		} catch (InvalidArgumentException e) {
+			throw new KurentoSipException(
+					"Invalid argument building expires header", e);
 		}
 	}
 
@@ -78,7 +82,7 @@ public class CRegister extends CTransaction {
 		if (statusCode == Response.OK) {
 			log.info("<<<<<<< 200 OK: Register sucessfull for user: "
 					+ register.getUri());
-			registerHandler.onRegistrationSuccess(register);
+			sipUA.getRegisterHandler().onRegistrationSuccess(register);
 		} else if (statusCode == Response.UNAUTHORIZED
 				|| statusCode == Response.PROXY_AUTHENTICATION_REQUIRED) {
 			// Peer Authentication
@@ -87,42 +91,42 @@ public class CRegister extends CTransaction {
 			} catch (KurentoSipException e) {
 				String msg = "Unable to send Auth REGISTER";
 				log.error(msg, e);
-				registerHandler.onConnectionFailure(register);
+				sipUA.getRegisterHandler().onConnectionFailure(register);
 			}
 		} else if (statusCode == Response.REQUEST_TIMEOUT) {
 			// 408: Request TimeOut
 			log.warn("<<<<<<< 408 REQUEST_TIMEOUT: Register Failure. Unable to contact registrar from "
 					+ register.getUri());
-			registerHandler.onConnectionFailure(register);
+			sipUA.getRegisterHandler().onConnectionFailure(register);
 		} else if (statusCode == Response.NOT_FOUND) { // 404: Not Found
 			log.warn("<<<<<<< 404 NOT_FOUND: Register Failure. User "
 					+ register.getUri() + " not found");
-			registerHandler.onConnectionFailure(register);
+			sipUA.getRegisterHandler().onConnectionFailure(register);
 		} else if (statusCode == Response.FORBIDDEN) { // Forbidden
 			log.warn("<<<<<<< 403 FORBIDDEN: Register Failure. User "
 					+ register.getUri() + " forbiden");
-			registerHandler.onAuthenticationFailure(register);
+			sipUA.getRegisterHandler().onAuthenticationFailure(register);
 		} else if (statusCode == Response.SERVER_INTERNAL_ERROR) { // server
 																	// errors
 			log.warn("<<<<<<< 500 SERVER_INTERNAL_ERROR Register: Server Error: "
 					+ response.getStatusCode());
-			registerHandler.onConnectionFailure(register);
+			sipUA.getRegisterHandler().onConnectionFailure(register);
 		} else if (statusCode == Response.SERVICE_UNAVAILABLE) { // server
 																	// errors
 			log.warn("<<<<<<< 503 SERVICE_UNAVAILABLE Register: Service unavailable: "
 					+ response.getStatusCode());
-			registerHandler.onConnectionFailure(register);
+			sipUA.getRegisterHandler().onConnectionFailure(register);
 		} else { // Non supported response code Discard
 			log.warn("Register Failure. Status code: "
 					+ response.getStatusCode());
-			registerHandler.onConnectionFailure(register);
+			sipUA.getRegisterHandler().onConnectionFailure(register);
 		}
 	}
 
 	@Override
 	public void processTimeout() {
 		log.warn("Register request timeout for uri: " + register.getUri());
-		registerHandler.onConnectionFailure(register);
+		sipUA.getRegisterHandler().onConnectionFailure(register);
 	}
 
 	private void sendWithAuth(ResponseEvent event) throws KurentoSipException {
