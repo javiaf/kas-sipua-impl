@@ -25,6 +25,7 @@ import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Properties;
+import java.util.UUID;
 
 import javax.sip.ClientTransaction;
 import javax.sip.Dialog;
@@ -46,6 +47,7 @@ import javax.sip.TransactionTerminatedEvent;
 import javax.sip.TransactionUnavailableException;
 import javax.sip.address.Address;
 import javax.sip.address.AddressFactory;
+import javax.sip.header.CallIdHeader;
 import javax.sip.header.HeaderFactory;
 import javax.sip.header.UserAgentHeader;
 import javax.sip.message.MessageFactory;
@@ -57,17 +59,22 @@ import org.slf4j.LoggerFactory;
 
 import android.content.Context;
 
+import com.kurento.commons.sip.transaction.CRegister;
 import com.kurento.commons.sip.transaction.CTransaction;
 import com.kurento.commons.sip.transaction.SAck;
 import com.kurento.commons.sip.transaction.SBye;
 import com.kurento.commons.sip.transaction.SCancel;
 import com.kurento.commons.sip.transaction.SInvite;
 import com.kurento.commons.sip.transaction.STransaction;
+import com.kurento.commons.sip.util.AlarmUaTimer;
+import com.kurento.commons.sip.util.KurentoUaTimer;
+import com.kurento.commons.sip.util.KurentoUaTimerTask;
 import com.kurento.kas.ua.CallDialingHandler;
 import com.kurento.kas.ua.CallEstablishedHandler;
 import com.kurento.kas.ua.CallRingingHandler;
 import com.kurento.kas.ua.CallTerminatedHandler;
 import com.kurento.kas.ua.ErrorHandler;
+import com.kurento.kas.ua.KurentoException;
 import com.kurento.kas.ua.Register;
 import com.kurento.kas.ua.RegisterHandler;
 import com.kurento.kas.ua.UA;
@@ -96,11 +103,10 @@ public class SipUA extends UA {
 
 	// Sip Stack
 	private SipProvider sipProvider;
-	private SipStack sipStack;
+	private SipStack sipStack; // SipStackImpl
 
 	// Handlers
 	private ErrorHandler errorHandler;
-	private RegisterHandler registerHandler;
 	private CallDialingHandler dialingHandler;
 	private CallEstablishedHandler establishedHandler;
 	private CallRingingHandler ringingHandler;
@@ -110,14 +116,16 @@ public class SipUA extends UA {
 	// Network coniguration
 	private String localAddressPattern;
 	private boolean onlyIPv4 = true;
-	private int localPort = 5060;
+	private int localPort = 6060;
+	private String localAddress;
 
 	private String stunServerAddress;
 	private int stunServerPort;
 
 	// SIP configuration
-	public static final String TRANSPORT = "tls";
-	private static final String PROXY_SERVER_ADDRESS = "127.0.0.1";
+	public static final String TRANSPORT = "UDP";
+	private static final String PROXY_SERVER_ADDRESS = "193.147.51.13"; // "10.0.0.107";
+																		// "193.147.51.13";
 	private static final int PROXY_SERVER_PORT = 5060;
 	public static final int MAX_FORWARDS = 70;
 	public static final int EXPIRES = 3600;
@@ -125,8 +133,16 @@ public class SipUA extends UA {
 	// Other config
 	private boolean testMode = false;
 
+	private UUID instanceId;
+
+	private CallIdHeader registrarCallId;
+	private Address contactAddress = null;
+	private boolean isRegistered = false;
+	private KurentoUaTimer timer;
+	private RegisterTimerTask registerTimerTask;
+
 	// List of managed URIs
-	private HashMap<String, SipRegister> localUris = new HashMap<String, SipRegister>();
+	private HashMap<String, Address> localUris = new HashMap<String, Address>();
 
 	// /////////////////////////
 	//
@@ -134,7 +150,7 @@ public class SipUA extends UA {
 	//
 	// /////////////////////////
 
-	protected SipUA(Context context) throws KurentoSipException {
+	public SipUA(Context context) throws KurentoSipException {
 		super(context);
 
 		// Create SIP stack infrastructure
@@ -172,6 +188,16 @@ public class SipUA extends UA {
 			log.error("User Agent header initialization error", e);
 		}
 
+		this.instanceId = UUID.randomUUID();
+		this.timer = new AlarmUaTimer(context);
+		InetAddress addr;
+		try {
+			addr = getLocalInterface(localAddressPattern, onlyIPv4);
+			this.localAddress = addr.getHostAddress();
+		} catch (IOException e) {
+			log.error("Unable to get locas interface.", e);
+		}
+
 		// Create SIP stack
 		configureSipStack();
 	}
@@ -192,12 +218,20 @@ public class SipUA extends UA {
 
 	public String getLocalAddress() {
 		// TODO Return local address depending on STUN config
-		return null;
+		return localAddress;
 	}
 
 	public int getLocalPort() {
 		// TODO Return local port depending on STUN config
-		return 0;
+		return localPort;
+	}
+
+	private synchronized void setIsRegistered(boolean isRegistered) {
+		this.isRegistered = isRegistered;
+	}
+
+	private synchronized boolean isRegistered() {
+		return this.isRegistered;
 	}
 
 	// ////////////////
@@ -289,11 +323,12 @@ public class SipUA extends UA {
 			jainProps.setProperty("gov.nist.javax.sip.REENTRANT_LISTENER",
 					"true");
 
-			jainProps.setProperty("gov.nist.javax.sip.THREAD_POOL_SIZE", "100");
+			jainProps.setProperty(
+					"gov.nist.javax.sip.CACHE_CLIENT_CONNECTIONS", "true");
 			jainProps.setProperty("gov.nist.javax.sip.THREAD_POOL_SIZE", "100");
 
-			jainProps.setProperty("gov.nist.javax.sip.TLS_SECURITY_POLICY",
-					this.getClass().getName());
+			// jainProps.setProperty("gov.nist.javax.sip.TLS_SECURITY_POLICY",
+			// this.getClass().getName());
 
 			// Set to 0 (or NONE) in your production code for max speed.
 			// You need 16 (or TRACE) for logging traces. 32 (or DEBUG) for
@@ -311,16 +346,18 @@ public class SipUA extends UA {
 			log.info("Stack properties: " + jainProps);
 
 			// Create SIP STACK
-			sipStack = sipFactory.createSipStack(jainProps);
+			sipStack = sipFactory.createSipStack(jainProps); // new
+			// SipStackImpl(jainProps);
 			// TODO get socket from SipStackExt to perform STUN test
 			// TODO Verify socket transport to see if it is compatible with STUN
 
+			// sipStack.getLocalAddressForTlsDst(arg0, arg1, arg2)
+
 			// Create a listening point per interface
-			InetAddress addr = getLocalInterface(localAddressPattern);
+			log.info("Create listening point at: " + localAddress + ":"
+					+ localPort + "/" + TRANSPORT);
 			ListeningPoint listeningPoint = sipStack.createListeningPoint(
-					addr.getHostAddress(), localPort, TRANSPORT);
-			log.info("Create listening point at: " + addr.getHostAddress()
-					+ ":" + localPort + "/" + TRANSPORT);
+					localAddress, localPort, TRANSPORT);
 			// listeningPoint.setSentBy(publicAddress + ":" + publicPort);
 
 			// Create SIP PROVIDER and add listening points
@@ -364,67 +401,13 @@ public class SipUA extends UA {
 		}
 	}
 
-	/*
-	 * Get the first reachable address matching parameter pattern
-	 */
-	private InetAddress getLocalInterface(String pattern) throws IOException {
-
-		Enumeration<NetworkInterface> intfEnum = NetworkInterface
-				.getNetworkInterfaces();
-
-		while (intfEnum.hasMoreElements()) {
-			NetworkInterface intf = intfEnum.nextElement();
-			Enumeration<InetAddress> addrEnum = intf.getInetAddresses();
-			while (addrEnum.hasMoreElements()) {
-				InetAddress inetAddress = addrEnum.nextElement();
-				log.debug("Found interface: IFNAME=" + intf.getDisplayName()
-						+ "; ADDR=" + inetAddress.getHostAddress());
-
-				// Check if only IPV4 is requested
-				if (onlyIPv4 && !(inetAddress instanceof Inet4Address)) {
-					continue;
-				}
-
-				// If address matches pattern return it. No matter what kind of
-				// address it is
-				if (pattern != null && !"".equals(pattern)) {
-
-					if (intf.getDisplayName().equals(pattern)
-							|| inetAddress.getHostAddress().equals(pattern)
-							|| inetAddress.getHostAddress().equals(pattern)) {
-						return inetAddress;
-					}
-
-				} else {
-
-					// By default do not return multicast addresses (224...)
-					if (inetAddress.isMulticastAddress()) {
-						continue;
-					}
-					// By default do not return loopback addresses (127...)
-					if (inetAddress.isLoopbackAddress()) {
-						continue;
-					}
-					// By default do not return link local address (169...)
-					if (inetAddress.isLinkLocalAddress()) {
-						continue;
-					}
-					if (inetAddress.isReachable(3000)) {
-						// Return only reachable interfaces
-						return inetAddress;
-					}
-				}
-			}
-		}
-		return null;
-	}
-
 	// ////////////////
 	//
 	// URI & REGISTER MANAGEMENT
 	//
 	// ////////////////
 
+	@Override
 	public void register(Register register, RegisterHandler registerHandler) {
 		// TODO Implement URI register
 		// TODO Create contact address on register "sip:userName@address:port"
@@ -433,6 +416,56 @@ public class SipUA extends UA {
 		// TODO STUN enabled then use public, STUN disabled then use private.
 		// Do not check NAT type.
 
+		try {
+			log.debug("Request to register: " + register.getUri());
+			Address contactAddress;
+			try {
+				// TODO: only once
+				InetAddress addr = getLocalInterface(localAddressPattern,
+						onlyIPv4);
+				contactAddress = addressFactory.createAddress("sip:"
+						+ register.getUser() + "@" + addr.getHostAddress()
+						+ ":" + localPort);
+				localUris.put(register.getUri(), contactAddress);
+			} catch (ParseException e) {
+				throw new KurentoSipException(
+						"Unable to create contact address while registering", e);
+			} catch (IOException e) {
+				throw new KurentoSipException("Unable to get local address", e);
+			}
+
+			if (sipProvider == null)
+				throw new KurentoSipException(
+						"SipProvider is null when trying to register Endpoint: "
+								+ register.getUri());
+
+			this.registrarCallId = sipProvider.getNewCallId();
+
+			try {
+				this.registrarCallId.setCallId(instanceId.toString());
+			} catch (ParseException e) {
+				log.warn("Unable to set callid for REGISTER request. Continue anyway");
+			}
+
+			// Before registration remove previous timers
+			timer.cancel(registerTimerTask);
+			registerTimerTask = new RegisterTimerTask(register, registerHandler);
+
+			CRegister creg;
+			try {
+				creg = new CRegister(this, new SipRegister(register.getUser(),
+						register.getRealm()), registerHandler);
+				creg.sendRequest(null);
+			} catch (KurentoException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (KurentoSipException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		} catch (KurentoSipException e) {
+			log.error("Unable to register");
+		}
 	}
 
 	public void unregister(Register register) {
@@ -443,8 +476,8 @@ public class SipUA extends UA {
 
 	// TODO Implement keep-alive timer (enabled by configuration)
 
-	public Address getContactAddress(String localParty) {
-		return null;
+	public Address getContactAddress(String localUri) {
+		return localUris.get(localUri);
 	}
 
 	// ////////////////
@@ -455,10 +488,6 @@ public class SipUA extends UA {
 
 	public ErrorHandler getErrorHandler() {
 		return errorHandler;
-	}
-
-	public RegisterHandler getRegistrationHandler() {
-		return registerHandler;
 	}
 
 	public CallDialingHandler getCallDialingHandler() {
@@ -639,6 +668,81 @@ public class SipUA extends UA {
 						+ trnsTerminatedEv.getClientTransaction().getBranchId());
 			}
 		}
+	}
+
+	private class RegisterTimerTask extends KurentoUaTimerTask {
+
+		private Register register;
+		private RegisterHandler registerHandler;
+
+		public RegisterTimerTask(Register register,
+				RegisterHandler registerHandler) {
+			this.register = register;
+			this.registerHandler = registerHandler;
+		}
+
+		@Override
+		public void run() {
+			log.debug("sipEndpointTimerTask register");
+			register(register, registerHandler);
+		}
+
+	}
+
+	/*
+	 * Get the first reachable address matching parameter pattern
+	 */
+	private InetAddress getLocalInterface(String pattern, boolean onlyIPv4)
+			throws IOException {
+
+		Enumeration<NetworkInterface> intfEnum = NetworkInterface
+				.getNetworkInterfaces();
+
+		while (intfEnum.hasMoreElements()) {
+			NetworkInterface intf = intfEnum.nextElement();
+			Enumeration<InetAddress> addrEnum = intf.getInetAddresses();
+			while (addrEnum.hasMoreElements()) {
+				InetAddress inetAddress = addrEnum.nextElement();
+				log.debug("Found interface: IFNAME=" + intf.getDisplayName()
+						+ "; ADDR=" + inetAddress.getHostAddress());
+
+				// Check if only IPV4 is requested
+				if (onlyIPv4 && !(inetAddress instanceof Inet4Address)) {
+					continue;
+				}
+
+				// If address matches pattern return it. No matter what kind of
+				// address it is
+				if (pattern != null && !"".equals(pattern)) {
+
+					if (intf.getDisplayName().equals(pattern)
+							|| inetAddress.getHostAddress().equals(pattern)
+							|| inetAddress.getHostAddress().equals(pattern)) {
+						return inetAddress;
+					}
+
+				} else {
+
+					// By default do not return multicast addresses (224...)
+					if (inetAddress.isMulticastAddress()) {
+						continue;
+					}
+					// By default do not return loopback addresses (127...)
+					if (inetAddress.isLoopbackAddress()) {
+						continue;
+					}
+					// By default do not return link local address (169...)
+					if (inetAddress.isLinkLocalAddress()) {
+						continue;
+					}
+					if (inetAddress.isReachable(3000)) {
+						// Return only reachable interfaces
+						return inetAddress;
+					}
+				}
+			}
+		}
+		return null;
 	}
 
 }

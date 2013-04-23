@@ -78,6 +78,16 @@ public abstract class CTransaction extends Transaction {
 	// ////////////
 
 	// Used for Non dialog transactions
+	CTransaction(String method, SipUA sipUA, String localUri, String remoteUri,
+			long cSeqNumber) throws KurentoSipException {
+		this.sipUA = sipUA;
+		this.method = method;
+		this.localUri = localUri;
+		this.remoteUri = remoteUri;
+		CTransaction.cSeqNumber = cSeqNumber;
+		createRequest();
+	}
+
 	CTransaction(String method, SipUA sipUA, String localUri, String remoteUri)
 			throws KurentoSipException {
 		this.sipUA = sipUA;

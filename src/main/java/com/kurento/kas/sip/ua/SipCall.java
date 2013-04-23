@@ -51,7 +51,7 @@ public class SipCall implements Call {
 	private Boolean request2Terminate = false;
 
 	// MEDIA DATA
-	private Stream stream;
+	// private Stream stream;
 
 	// ////////////////////
 	//
@@ -92,18 +92,18 @@ public class SipCall implements Call {
 		}
 
 		// Accept: only possible for INCOMING RINIGING call
-		if (State.INCOMING_RINGING.equals(state)) {
-			stateTransition(State.CONFIRMED);
-			try {
-				incomingInitiatingRequest.sendResponse(Response.OK, stream
-						.getSessionDescriptor().getBytes());
-				incomingInitiatingRequest = null;
-			} catch (KurentoSipException e) {
-				// SIP failures are noti
-				callFailed(new KurentoException("Unable to send SIP response",
-						e));
-			}
-		}
+		// if (State.INCOMING_RINGING.equals(state)) {
+		// stateTransition(State.CONFIRMED);
+		// try {
+		// incomingInitiatingRequest.sendResponse(Response.OK, stream
+		// .getSessionDescriptor().getBytes());
+		// incomingInitiatingRequest = null;
+		// } catch (KurentoSipException e) {
+		// // SIP failures are noti
+		// callFailed(new KurentoException("Unable to send SIP response",
+		// e));
+		// }
+		// }
 	}
 
 	@Override
@@ -235,10 +235,10 @@ public class SipCall implements Call {
 	}
 
 	private void release() {
-		if (stream != null) {
-			stream.release();
-			stream = null;
-		}
+		// if (stream != null) {
+		// stream.release();
+		// stream = null;
+		// }
 	}
 
 	private void localCallCancel() {
