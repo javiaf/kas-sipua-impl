@@ -4,16 +4,25 @@ import java.util.UUID;
 
 import javax.sip.address.Address;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.kurento.commons.sip.util.KurentoUaTimerTask;
 import com.kurento.kas.ua.Register;
 
 public class SipRegister {
 
+	private static final Logger log = LoggerFactory
+			.getLogger(SipRegister.class);
+
+	private SipUA sipUA;
 	private Register register;
 	private long cseq;
 	private UUID registerCallId;
 	private Address address;
+	private SipRegisterTimerTask sipRegisterTimerTask;
 
-	public SipRegister(Register register, Address address) {
+	public SipRegister(SipUA sipUA, Register register, Address address) {
 		// instance-id: RFC5626. Used to set the registrarCallId
 		/*
 		 * According to RFC5626 instance-id must stay the same on UA reboot or
@@ -21,10 +30,12 @@ public class SipRegister {
 		 * same during UA's life cycle
 		 */
 
+		this.sipUA = sipUA;
 		this.register = register;
 		this.address = address;
 		this.registerCallId = UUID.randomUUID();
 		this.cseq = 1;
+		this.sipRegisterTimerTask = new SipRegisterTimerTask();
 	}
 
 	public Register getRegister() {
@@ -41,6 +52,18 @@ public class SipRegister {
 
 	public String getRegisterCallId() {
 		return registerCallId.toString();
+	}
+
+	public SipRegisterTimerTask getSipRegisterTimerTask() {
+		return sipRegisterTimerTask;
+	}
+
+	private class SipRegisterTimerTask extends KurentoUaTimerTask {
+		@Override
+		public void run() {
+			log.debug("SipRegisterTimerTask register");
+			sipUA.register(register);
+		}
 	}
 
 }

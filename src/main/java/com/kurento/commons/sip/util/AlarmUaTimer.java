@@ -1,9 +1,11 @@
 package com.kurento.commons.sip.util;
 
-import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Random;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import android.app.AlarmManager;
 import android.app.PendingIntent;
@@ -12,29 +14,30 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.os.SystemClock;
 
-public class AlarmUaTimer implements KurentoUaTimer {
-	private String LOG = AlarmUaTimer.class.getName();
+public class AlarmUaTimer {
+
+	private static final Logger log = LoggerFactory
+			.getLogger(AlarmUaTimer.class);
 
 	private AlarmManager alarmManager;
-	private Intent serviceIntent;
+	// private Intent serviceIntent;
 	private Context context;
-	private PendingIntent pendingIntent;
 
 	private static HashMap<Integer, KurentoUaTimerTask> taskTable = new HashMap<Integer, KurentoUaTimerTask>();
 
 	public AlarmUaTimer(Context context) {
 		this.context = context;
-		alarmManager = (AlarmManager) this.context
+		alarmManager = (AlarmManager) context
 				.getSystemService(Context.ALARM_SERVICE);
-		serviceIntent = new Intent(this.context, RegisterService.class);
+
 	}
 
 	public static HashMap<Integer, KurentoUaTimerTask> getTaskTable() {
 		return taskTable;
 	}
 
-	@Override
 	public void cancel(KurentoUaTimerTask task) {
+		log.debug("cancel task: " + task);
 		Integer uuid = -1;
 		for (Iterator<Integer> i = taskTable.keySet().iterator(); i.hasNext();) {
 			Integer key = (Integer) i.next();
@@ -42,38 +45,33 @@ public class AlarmUaTimer implements KurentoUaTimer {
 				uuid = key;
 			}
 		}
-		pendingIntent = PendingIntent.getService(this.context, uuid,
+		Intent serviceIntent = new Intent();
+		serviceIntent.setClass(context.getApplicationContext(),
+				RegisterService.class);
+		PendingIntent pendingIntent = PendingIntent.getService(context, uuid,
 				serviceIntent, 0);
 		alarmManager.cancel(pendingIntent);
 		taskTable.remove(uuid);
 	}
 
-	@Override
-	public void purge() {
-		// TODO Auto-generated method stub
-
-	}
-
-	@Override
-	public void schedule(KurentoUaTimerTask task, Date when, long period) {
-		// TODO Auto-generated method stub
-
-	}
-
-	@Override
 	public void schedule(final KurentoUaTimerTask task, long delay, long period) {
-		Integer uuid;
+		log.debug("schedule task: " + task + " (" + delay + ", " + period + ")");
 		if (!taskTable.containsValue(task)) {
 			// The new Random().nextInt is necessary because we need that
 			// pendingIntent will be differents.
-			uuid = new Random().nextInt();
+			Integer uuid = new Random().nextInt();
 			taskTable.put(uuid, task);
 
 			Bundle extras = new Bundle();
 			extras.putInt("uuid", uuid);
+
+			Intent serviceIntent = new Intent();
+			serviceIntent.setClass(context.getApplicationContext(),
+					RegisterService.class);
 			serviceIntent.putExtras(extras);
 
-			pendingIntent = PendingIntent.getService(this.context, uuid,
+			PendingIntent pendingIntent = PendingIntent.getService(
+					this.context, uuid,
 					serviceIntent, 0);
 
 			alarmManager.setRepeating(AlarmManager.ELAPSED_REALTIME_WAKEUP,
@@ -81,31 +79,4 @@ public class AlarmUaTimer implements KurentoUaTimer {
 					pendingIntent);
 		}
 	}
-
-	@Override
-	public void schedule(KurentoUaTimerTask task, Date when) {
-		// TODO Auto-generated method stub
-
-	}
-
-	@Override
-	public void schedule(KurentoUaTimerTask task, long delay) {
-		// TODO Auto-generated method stub
-
-	}
-
-	@Override
-	public void scheduleAtFixedRate(KurentoUaTimerTask task, long delay,
-			long period) {
-		// TODO Auto-generated method stub
-
-	}
-
-	@Override
-	public void scheduleAtFixedRate(KurentoUaTimerTask task, Date when,
-			long period) {
-		// TODO Auto-generated method stub
-
-	}
-
 }

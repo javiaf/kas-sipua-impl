@@ -60,7 +60,8 @@ public abstract class CTransaction extends Transaction {
 	Request request;
 
 	// General attributes
-	static Logger log = LoggerFactory.getLogger(CTransaction.class);
+	final static Logger log = LoggerFactory
+			.getLogger(CTransaction.class.getSimpleName());
 
 	String method;
 	SipCall call;
@@ -219,6 +220,7 @@ public abstract class CTransaction extends Transaction {
 				sipUA.getLocalAddress(), sipUA.getLocalPort(), SipUA.TRANSPORT,
 				getNewRandomBranch());
 
+		viaHeader.setRPort();
 		// add via headers
 		viaHeaders.add(viaHeader);
 		return viaHeaders;

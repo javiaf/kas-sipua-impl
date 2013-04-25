@@ -1,28 +1,32 @@
 package com.kurento.commons.sip.util;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import android.app.Service;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.IBinder;
-import android.util.Log;
 
 public class RegisterService extends Service {
 
-	private final static String LOG_TAG = RegisterService.class.getName();
+	private static final Logger log = LoggerFactory
+			.getLogger(RegisterService.class);
 
 	@Override
 	public IBinder onBind(Intent intent) {
-		// Bundle boundel = intent.getExtras();
 		return null;
 	}
 
 	@Override
 	public void onCreate() {
-		Log.d(LOG_TAG, "on create Service.");
+		log.debug("RegisterService onCreate");
+		super.onCreate();
 	}
 
 	@Override
 	public void onStart(Intent intent, int startId) {
+		log.debug("RegisterService onStart");
 		if (intent != null) {
 			Bundle b = intent.getExtras();
 
@@ -35,11 +39,6 @@ public class RegisterService extends Service {
 				}
 			}
 		}
-	}
-
-	@Override
-	public void onDestroy() {
-		Log.d(LOG_TAG, "On destroy method.");
 	}
 
 }

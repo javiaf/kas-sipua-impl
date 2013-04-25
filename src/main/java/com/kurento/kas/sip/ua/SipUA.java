@@ -16,6 +16,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
 package com.kurento.kas.sip.ua;
 
+import gov.nist.javax.sip.SipStackImpl;
+
 import java.io.IOException;
 import java.net.Inet4Address;
 import java.net.InetAddress;
@@ -66,8 +68,6 @@ import com.kurento.commons.sip.transaction.SCancel;
 import com.kurento.commons.sip.transaction.SInvite;
 import com.kurento.commons.sip.transaction.STransaction;
 import com.kurento.commons.sip.util.AlarmUaTimer;
-import com.kurento.commons.sip.util.KurentoUaTimer;
-import com.kurento.commons.sip.util.KurentoUaTimerTask;
 import com.kurento.kas.ua.CallDialingHandler;
 import com.kurento.kas.ua.CallEstablishedHandler;
 import com.kurento.kas.ua.CallRingingHandler;
@@ -88,6 +88,8 @@ public class SipUA extends UA {
 
 	private static final Logger log = LoggerFactory.getLogger(SipUA.class);
 
+	private Context context;
+
 	private SipListenerImpl sipListenerImpl = new SipListenerImpl();
 
 	// User agent name
@@ -102,7 +104,7 @@ public class SipUA extends UA {
 
 	// Sip Stack
 	private SipProvider sipProvider;
-	private SipStack sipStack; // SipStackImpl
+	private SipStackImpl sipStack; // SipStackImpl
 
 	// Handlers
 	private ErrorHandler errorHandler;
@@ -128,15 +130,13 @@ public class SipUA extends UA {
 																		// "193.147.51.13";
 	private static final int PROXY_SERVER_PORT = 5060;
 	public static final int MAX_FORWARDS = 70;
-	public static final int EXPIRES = 3600;
+	public static final int EXPIRES = 10; // TODO: restore to 3600
 
 	// Other config
 	private boolean testMode = false;
 
-	private Address contactAddress = null;
 	private boolean isRegistered = false;
-	private KurentoUaTimer timer;
-	private RegisterTimerTask registerTimerTask;
+	private AlarmUaTimer timer;
 
 	// List of managed URIs
 	private Map<String, SipRegister> localUris = new ConcurrentHashMap<String, SipRegister>();
@@ -150,6 +150,7 @@ public class SipUA extends UA {
 	public SipUA(Context context) throws KurentoSipException {
 		super(context);
 
+		this.context = context;
 		instantiateDefaultHandlers();
 		// Create SIP stack infrastructure
 		sipFactory = SipFactory.getInstance();
@@ -186,7 +187,7 @@ public class SipUA extends UA {
 			log.error("User Agent header initialization error", e);
 		}
 
-		this.timer = new AlarmUaTimer(context); // TODO: complete timer impl
+		this.timer = new AlarmUaTimer(context);
 		configureSipStack();
 	}
 
@@ -290,6 +291,10 @@ public class SipUA extends UA {
 		return sipStack;
 	}
 
+	public AlarmUaTimer getTimer() {
+		return timer;
+	}
+
 	// ////////////////////////////
 	//
 	// SIP STACK & INITIALIZATION
@@ -300,15 +305,8 @@ public class SipUA extends UA {
 		try {
 			terminateSipStack(); // Just in case
 
-			InetAddress addr;
-			try {
-				addr = getLocalInterface(localAddressPattern, onlyIPv4);
-				this.localAddress = addr.getHostAddress();
-			} catch (IOException e) {
-				log.error("Unable to get local interface.", e);
-				throw new KurentoSipException("Unable to get local interface.",
-						e);
-			}
+			InetAddress addr = getLocalInterface(localAddressPattern, onlyIPv4);
+			this.localAddress = addr.getHostAddress();
 
 			// TODO Find configuration that supports TLS / DTLS
 			// TODO Find configuration that supports TCP with persistent
@@ -327,7 +325,11 @@ public class SipUA extends UA {
 					"true");
 
 			jainProps.setProperty(
-					"gov.nist.javax.sip.CACHE_CLIENT_CONNECTIONS", "true");
+					"gov.nist.javax.sip.CACHE_CLIENT_CONNECTIONS", "true"); // By
+																			// default
+			jainProps.setProperty(
+					"gov.nist.javax.sip.CACHE_SERVER_CONNECTIONS", "true"); // By
+																			// default
 			jainProps.setProperty("gov.nist.javax.sip.THREAD_POOL_SIZE", "100");
 
 			// jainProps.setProperty("gov.nist.javax.sip.TLS_SECURITY_POLICY",
@@ -338,6 +340,9 @@ public class SipUA extends UA {
 			// debug + traces.
 			// Your code will limp at 32 but it is best for debugging.
 			// jainProps.setProperty("gov.nist.javax.sip.TRACE_LEVEL", "16");
+			// jainProps.setProperty("gov.nist.javax.sip.TRACE_LEVEL", "LOG4J");
+			// jainProps.setProperty("gov.nist.javax.sip.LOG4J_LOGGER_NAME",
+			// "SIPStackLogger");
 
 			if (testMode) {
 				// jainProps.setProperty("gov.nist.javax.sip.EARLY_DIALOG_TIMEOUT_SECONDS",
@@ -349,12 +354,16 @@ public class SipUA extends UA {
 			log.info("Stack properties: " + jainProps);
 
 			// Create SIP STACK
-			sipStack = sipFactory.createSipStack(jainProps); // new
+			sipStack = new SipStackImpl(jainProps); // sipFactory.createSipStack(jainProps);
+													// // new
+													// SipStackImpl(jainProps);
 			// SipStackImpl(jainProps);
 			// TODO get socket from SipStackExt to perform STUN test
 			// TODO Verify socket transport to see if it is compatible with STUN
 
-			// sipStack.getLocalAddressForTlsDst(arg0, arg1, arg2)
+			// sipStack.getLocalAddressForTcpDst(
+			// InetAddress.getAllByName("193.147.51.13")[0], 5060, addr,
+			// 8989);
 
 			// Create a listening point per interface
 			log.info("Create listening point at: " + localAddress + ":"
@@ -420,23 +429,26 @@ public class SipUA extends UA {
 		// Do not check NAT type.
 
 		try {
-			log.debug("Request to register: " + register.getUri());
+			log.debug("Request to register: " + register.getUri() + " for "
+					+ EXPIRES + " seconds.");
 
-			// TODO: only once
-			Address contactAddress = addressFactory
-					.createAddress("sip:" + register.getUser() + "@"
-							+ localAddress + ":" + localPort);
-			SipRegister sipRegister = new SipRegister(register, contactAddress);
-			log.debug("Add into localUris ", register.getUri());
-			localUris.put(register.getUri(), sipRegister);
+			SipRegister sipReg = localUris.get(register.getUri());
+			if (sipReg == null) {
+				log.debug("There is not a previous register for "
+						+ register.getUri() + ". Create new register.");
+				Address contactAddress = addressFactory.createAddress("sip:"
+						+ register.getUser() + "@" + localAddress + ":"
+						+ localPort);
+				sipReg = new SipRegister(this, register, contactAddress);
+				log.debug("Add into localUris ", register.getUri());
+				localUris.put(register.getUri(), sipReg);
+			}
 
 			// Before registration remove previous timers
-			// FIXME:
-			timer.cancel(registerTimerTask);
+			timer.cancel(sipReg.getSipRegisterTimerTask());
 
-			CRegister creg = new CRegister(this, sipRegister, EXPIRES);
+			CRegister creg = new CRegister(this, sipReg, EXPIRES);
 			creg.sendRequest();
-			registerTimerTask = new RegisterTimerTask(register, registerHandler);
 		} catch (ParseException e) {
 			log.error("Unable to create contact address", e);
 			registerHandler.onConnectionFailure(register);
@@ -467,11 +479,9 @@ public class SipUA extends UA {
 				return;
 			}
 
-			SipRegister sipRegister = new SipRegister(register, contactAddress);
-			CRegister creg = new CRegister(this, sipRegister, 0);
+			timer.cancel(sipReg.getSipRegisterTimerTask());
+			CRegister creg = new CRegister(this, sipReg, 0);
 			creg.sendRequest();
-			// FIXME: finish timer
-			timer.cancel(registerTimerTask);
 			localUris.remove(register.getUri());
 		} catch (KurentoSipException e) {
 			log.error("Unable to register", e);
@@ -684,25 +694,6 @@ public class SipUA extends UA {
 						+ trnsTerminatedEv.getClientTransaction().getBranchId());
 			}
 		}
-	}
-
-	private class RegisterTimerTask extends KurentoUaTimerTask {
-
-		private Register register;
-		private RegisterHandler registerHandler;
-
-		public RegisterTimerTask(Register register,
-				RegisterHandler registerHandler) {
-			this.register = register;
-			this.registerHandler = registerHandler;
-		}
-
-		@Override
-		public void run() {
-			log.debug("sipEndpointTimerTask register");
-			register(register);
-		}
-
 	}
 
 	/*

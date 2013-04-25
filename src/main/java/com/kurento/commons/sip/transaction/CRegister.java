@@ -31,6 +31,9 @@ import javax.sip.header.WWWAuthenticateHeader;
 import javax.sip.message.Request;
 import javax.sip.message.Response;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.kurento.kas.sip.ua.KurentoSipException;
 import com.kurento.kas.sip.ua.SipRegister;
 import com.kurento.kas.sip.ua.SipUA;
@@ -39,8 +42,12 @@ import com.kurento.kas.ua.Register;
 
 public class CRegister extends CTransaction {
 
+	private static final Logger log = LoggerFactory.getLogger(CRegister.class
+			.getSimpleName());
+
 	private SipRegister sipRegister;
 	private Register register;
+	private int expires;
 
 	public CRegister(SipUA sipUA, SipRegister sipRegister, int expires)
 			throws KurentoException, KurentoSipException {
@@ -49,6 +56,7 @@ public class CRegister extends CTransaction {
 
 		this.sipRegister = sipRegister;
 		this.register = sipRegister.getRegister();
+		this.expires = expires;
 
 		try {
 			// REGISTER send special request URI: RFC3261 , 10.2
@@ -82,6 +90,12 @@ public class CRegister extends CTransaction {
 		if (statusCode == Response.OK) {
 			log.info("<<<<<<< 200 OK: Register sucessfull for user: "
 					+ register.getUri());
+			if (expires > 0) {
+				long period = (long) (expires * 1000 * 0.5);
+				log.debug("Period = " + expires);
+				sipUA.getTimer().schedule(
+						sipRegister.getSipRegisterTimerTask(), period, period);
+			}
 			sipUA.getRegisterHandler().onRegistrationSuccess(register);
 		} else if (statusCode == Response.UNAUTHORIZED
 				|| statusCode == Response.PROXY_AUTHENTICATION_REQUIRED) {
