@@ -25,33 +25,49 @@ import java.util.Properties;
 import java.util.concurrent.ConcurrentHashMap;
 
 import javax.sip.ClientTransaction;
+import javax.sip.Dialog;
 import javax.sip.DialogTerminatedEvent;
 import javax.sip.IOExceptionEvent;
 import javax.sip.ListeningPoint;
 import javax.sip.ObjectInUseException;
 import javax.sip.RequestEvent;
 import javax.sip.ResponseEvent;
+import javax.sip.ServerTransaction;
 import javax.sip.SipFactory;
 import javax.sip.SipListener;
 import javax.sip.SipProvider;
 import javax.sip.SipStack;
 import javax.sip.TimeoutEvent;
+import javax.sip.TransactionAlreadyExistsException;
 import javax.sip.TransactionTerminatedEvent;
+import javax.sip.TransactionUnavailableException;
 import javax.sip.address.Address;
 import javax.sip.address.AddressFactory;
 import javax.sip.header.HeaderFactory;
 import javax.sip.header.UserAgentHeader;
 import javax.sip.message.MessageFactory;
+import javax.sip.message.Request;
+import javax.sip.message.Response;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.webrtc.PeerConnectionFactory;
 
 import android.content.Context;
 
+import com.kurento.kas.sip.transaction.CInvite;
 import com.kurento.kas.sip.transaction.CRegister;
 import com.kurento.kas.sip.transaction.CTransaction;
+import com.kurento.kas.sip.transaction.SInvite;
+import com.kurento.kas.sip.transaction.STransaction;
 import com.kurento.kas.sip.util.AlarmUaTimer;
 import com.kurento.kas.sip.util.NetworkUtilities;
+import com.kurento.kas.ua.Call;
+import com.kurento.kas.ua.CallDialingHandler;
+import com.kurento.kas.ua.CallEstablishedHandler;
+import com.kurento.kas.ua.CallRingingHandler;
+import com.kurento.kas.ua.CallTerminatedHandler;
+import com.kurento.kas.ua.ErrorHandler;
 import com.kurento.kas.ua.KurentoException;
 import com.kurento.kas.ua.Register;
 import com.kurento.kas.ua.RegisterHandler;
@@ -61,8 +77,6 @@ public class SipUA extends UA {
 
 	private static final Logger log = LoggerFactory.getLogger(SipUA.class
 			.getSimpleName());
-
-	private Context context;
 
 	private static final String USER_AGENT = "KurentoAndroidUa/1.0.0";
 	private UserAgentHeader userAgentHeader;
@@ -82,7 +96,12 @@ public class SipUA extends UA {
 	private InetAddress localAddress;
 
 	// Handlers
+	private ErrorHandler errorHandler;
 	private RegisterHandler registerHandler;
+	private CallDialingHandler callDialingHandler;
+	private CallEstablishedHandler callEstablishedHandler;
+	private CallRingingHandler callRingingHandler;
+	private CallTerminatedHandler callTerminatedHandler;
 
 	private Map<String, SipRegister> localUris = new ConcurrentHashMap<String, SipRegister>();
 
@@ -92,7 +111,6 @@ public class SipUA extends UA {
 		super(context);
 
 		try {
-			this.context = context;
 			sipPreferences = new SipPreferences(context);
 			sipFactory = SipFactory.getInstance();
 			addressFactory = sipFactory.createAddressFactory();
@@ -109,6 +127,8 @@ public class SipUA extends UA {
 
 			this.timer = new AlarmUaTimer(context);
 			configureSipStack();
+
+			PeerConnectionFactory.initializeAndroidGlobals(context);
 		} catch (Throwable t) {
 			log.error("SipUA initialization error", t);
 			throw new KurentoSipException("SipUA initialization error", t);
@@ -164,8 +184,8 @@ public class SipUA extends UA {
 		return sipProvider;
 	}
 
-	public Address getContactAddress(String localUri) {
-		SipRegister sipReg = localUris.get(localUri);
+	public Address getContactAddress(String contactUri) {
+		SipRegister sipReg = localUris.get(contactUri);
 		if (sipReg != null)
 			return sipReg.getAddress();
 		return null;
@@ -182,8 +202,55 @@ public class SipUA extends UA {
 		this.registerHandler = registerHandler;
 	}
 
+	@Override
+	public void setExceptionHandler(ErrorHandler errorHandler) {
+		this.errorHandler = errorHandler;
+	}
+
+	@Override
+	public void setCallDialingHandler(CallDialingHandler callDialingHandler) {
+		this.callDialingHandler = callDialingHandler;
+	}
+
+	@Override
+	public void setCallRingingHandler(CallRingingHandler callRingingHandler) {
+		this.callRingingHandler = callRingingHandler;
+	}
+
+	@Override
+	public void setCallEstablishedHandler(
+			CallEstablishedHandler callEstablishedHandler) {
+		this.callEstablishedHandler = callEstablishedHandler;
+	}
+
+	@Override
+	public void setCallTerminatedHander(
+			CallTerminatedHandler callTerminatedHandler) {
+		this.callTerminatedHandler = callTerminatedHandler;
+	}
+
+	public ErrorHandler getErrorHandler() {
+		return errorHandler;
+	}
+
 	public RegisterHandler getRegisterHandler() {
 		return registerHandler;
+	}
+
+	public CallDialingHandler getCallDialingHandler() {
+		return callDialingHandler;
+	}
+
+	public CallEstablishedHandler getCallEstablishedHandler() {
+		return callEstablishedHandler;
+	}
+
+	public CallRingingHandler getCallRingingHandler() {
+		return callRingingHandler;
+	}
+
+	public CallTerminatedHandler getCallTerminatedHandler() {
+		return callTerminatedHandler;
 	}
 
 	// ////////////////////////////
@@ -314,7 +381,7 @@ public class SipUA extends UA {
 						+ localAddress.getHostAddress() + ":"
 						+ sipPreferences.getLocalPort());
 				sipReg = new SipRegister(this, register, contactAddress);
-				log.debug("Add into localUris ", register.getUri());
+				log.debug("Add into localUris " + register.getUri());
 				localUris.put(register.getUri(), sipReg);
 			}
 
@@ -362,6 +429,26 @@ public class SipUA extends UA {
 		}
 	}
 
+	@Override
+	public Call dial(String fromUri, String remoteUri) {
+		SipCall call = null;
+
+		if (remoteUri != null) {
+			log.debug("Creating new SipCall");
+			try {
+				call = new SipCall(this, fromUri, remoteUri);
+				new CInvite(this, call);
+			} catch (KurentoSipException e) {
+				errorHandler.onCallError(call, new KurentoException(e));
+			}
+		} else {
+			errorHandler.onCallError(null, new KurentoException(
+					"Request to call NULL uri."));
+		}
+
+		return call;
+	}
+
 	private class SipListenerImpl implements SipListener {
 
 		@Override
@@ -382,7 +469,82 @@ public class SipUA extends UA {
 					+ "<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<\n"
 					+ requestEvent.getRequest().toString() + "\n"
 					+ "<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<");
-			// TODO: complete
+
+			ServerTransaction serverTransaction;
+			try {
+				if ((serverTransaction = requestEvent.getServerTransaction()) == null) {
+					// Create transaction
+					serverTransaction = sipProvider
+							.getNewServerTransaction(requestEvent.getRequest());
+				}
+			} catch (TransactionAlreadyExistsException e) {
+				log.warn("Request already has an active transaction. It shouldn't be delivered by SipStack to the SIPU-UA");
+				return;
+			} catch (TransactionUnavailableException e) {
+				log.warn("Unable to get ServerTransaction for request");
+				return;
+			}
+
+			try {
+				// Check if this transaction addressed to this UA
+				Dialog dialog = serverTransaction.getDialog();
+				if (dialog != null) {
+					String requestUri = serverTransaction.getDialog()
+							.getLocalParty().getURI().toString();
+					if (!localUris.containsKey(requestUri)) {
+						// Request is addressed to unknown URI
+						log.info("SIP transaction for unknown URI: "
+								+ requestUri);
+						Response response = messageFactory.createResponse(
+								Response.NOT_FOUND,
+								serverTransaction.getRequest());
+						serverTransaction.sendResponse(response);
+						return;
+					}
+				}
+
+				// Check if the SipCAll has to be created
+				if (dialog != null && dialog.getApplicationData() == null) {
+					log.debug("Create SipCall for transaction: "
+							+ serverTransaction.getBranchId());
+					SipCall call = new SipCall(SipUA.this, dialog);
+					dialog.setApplicationData(call);
+				} else {
+					log.debug("Transaccion already has an associated SipCall");
+				}
+
+				// Get Request method to create a proper transaction record
+				STransaction sTrns = (STransaction) serverTransaction
+						.getApplicationData();
+				log.debug("sTrns: " + sTrns);
+				if (sTrns == null) {
+					String reqMethod = requestEvent.getRequest().getMethod();
+					// if (reqMethod.equals(Request.ACK)) {
+					// log.info("Detected ACK request");
+					// sTrns = new SAck(SipUA.this, serverTransaction);
+					// } else if (reqMethod.equals(Request.INVITE)) {
+					if (reqMethod.equals(Request.INVITE)) {
+						log.info("Detected INVITE request");
+						sTrns = new SInvite(SipUA.this, serverTransaction);
+						// } else if (reqMethod.equals(Request.BYE)) {
+						// log.info("Detected BYE request");
+						// sTrns = new SBye(SipUA.this, serverTransaction);
+						// } else if (reqMethod.equals(Request.CANCEL)) {
+						// log.info("Detected CANCEL request");
+						// sTrns = new SCancel(SipUA.this, serverTransaction);
+					} else {
+						log.error("Unsupported method on request: " + reqMethod);
+						Response response = messageFactory.createResponse(
+								Response.NOT_IMPLEMENTED,
+								requestEvent.getRequest());
+						serverTransaction.sendResponse(response);
+					}
+					// Insert application data into server transaction
+					serverTransaction.setApplicationData(sTrns);
+				}
+			} catch (Exception e) {
+				log.warn("Unable to process server transaction", e);
+			}
 		}
 
 		@Override

@@ -47,6 +47,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.kurento.kas.sip.ua.KurentoSipException;
+import com.kurento.kas.sip.ua.SipCall;
 import com.kurento.kas.sip.ua.SipUA;
 
 public abstract class CTransaction extends Transaction {
@@ -63,6 +64,7 @@ public abstract class CTransaction extends Transaction {
 	String method;
 	Dialog dialog;
 	SipUA sipUA;
+	SipCall call;
 
 	String localUri;
 	String remoteUri;
@@ -83,6 +85,28 @@ public abstract class CTransaction extends Transaction {
 		CTransaction.cSeqNumber = cSeqNumber;
 		createRequest();
 	}
+
+	CTransaction(String method, SipUA sipUA, SipCall call)
+			throws KurentoSipException {
+		this.method = method;
+		this.sipUA = sipUA;
+		this.call = call;
+		this.localUri = call.getLocalUri();
+		this.remoteUri = call.getRemoteUri();
+		createRequest();
+	}
+
+	// // Used for Dialog transactions
+	// CTransaction(String method, SipUA sipUA, SipCall call)
+	// throws KurentoSipException {
+	// this.call = call;
+	// this.dialog = call.getDialog();
+	// this.sipUA = sipUA;
+	// this.method = method;
+	// this.localUri = this.dialog.getLocalParty().getURI().toString();
+	// this.remoteUri = this.dialog.getRemoteParty().getURI().toString();
+	// createRequest();
+	// }
 
 	// //////////////
 	//
@@ -156,7 +180,6 @@ public abstract class CTransaction extends Transaction {
 					"Transaction error while creating new client transaction",
 					e);
 		}
-
 	}
 
 	// // ALL THIS HELPER FUNCTIONS ARE CALLED WHEN DIALOG=NULL // //
@@ -275,7 +298,6 @@ public abstract class CTransaction extends Transaction {
 	}
 
 	public void sendRequest(String sdp) throws KurentoSipException {
-
 		if (sdp != null && !sdp.isEmpty()) {
 			try {
 				request.setContent(sdp.getBytes(), buildContentTypeHeader());
