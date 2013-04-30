@@ -69,7 +69,6 @@ public class CInvite extends CTransaction {
 				try {
 					log.info("onSdpOfferCreated SDP: " + sdp);
 					CInvite.this.sendRequest(sdp);
-					// CInvite.this.sendRequest();
 					CInvite.this.call.outgoingCall(CInvite.this);
 				} catch (KurentoSipException e) {
 					CInvite.this.sipUA.getErrorHandler().onCallError(

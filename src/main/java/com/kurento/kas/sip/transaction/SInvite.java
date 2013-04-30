@@ -22,10 +22,6 @@ import javax.sip.message.Response;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.webrtc.MediaConstraints;
-import org.webrtc.PeerConnection;
-import org.webrtc.SdpObserver;
-import org.webrtc.SessionDescription;
 
 import com.kurento.kas.sip.ua.KurentoSipException;
 import com.kurento.kas.sip.ua.SipCall.CreateSdpAnswerObserver;
@@ -64,36 +60,8 @@ public class SInvite extends STransaction {
 			// TODO Support INVITE request with no offer ==> negotiation takes
 			// place between response and ACK
 
-			// INVITE with no SDP. Request an offer to send with response
-			log.debug("Creating offer...");
-			PeerConnection pc = call.getPeerConnection();
-			MediaConstraints constraints = new MediaConstraints();
-			constraints.mandatory.add(new MediaConstraints.KeyValuePair(
-					"OfferToReceiveAudio", "true"));
-			constraints.mandatory.add(new MediaConstraints.KeyValuePair(
-					"OfferToReceiveVideo", "true"));
-			pc.createOffer(new SdpObserver() {
-				@Override
-				public void onSuccess(SessionDescription sdp) {
-					log.debug("createOffer onSuccess. sdp: " + sdp);
-				}
-
-				@Override
-				public void onSuccess() {
-					log.debug("createOffer onSuccess");
-				}
-
-				@Override
-				public void onFailure(String error) {
-					log.debug("createOffer onFailure: " + error);
-				}
-			}, constraints);
-
 		} else {
-			// TODO Support INVITE with descriptor offer ==> negotiation takes
-			// place between INVITE and RESPONSE
 			// INVITE with SDP. request for process
-
 			log.debug("Process offer...");
 
 			String sdpOffer = new String(request.getRawContent());
@@ -120,8 +88,6 @@ public class SInvite extends STransaction {
 			call.addCreateSdpAnswerObserver(o);
 			call.createSdpAnswer(sdpOffer, o);
 		}
-
-		// TODO Notify incoming call
 
 	}
 
