@@ -23,6 +23,8 @@
 		<log4j.version>1.2.8</log4j.version>
 		<slf4j-android.version>1.6.1-RC1</slf4j-android.version>
 		<jain-sip-ri.version>1.2.167</jain-sip-ri.version>
+		<kas-webrtc-jar.version>0.0.1-SNAPSHOT</kas-webrtc-jar.version>
+		<kas-webrtc-native.version>0.0.1-SNAPSHOT</kas-webrtc-native.version>
 	</properties>
 
 	<organization>
@@ -59,21 +61,21 @@
 		</dependency>
 
 		<dependency>
+			<groupId>com.kurento.kas</groupId>
+			<artifactId>kas-webrtc-jar</artifactId>
+			<version>${kas-webrtc-jar.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>com.kurento.kas</groupId>
+			<artifactId>libjingle_peerconnection_so</artifactId>
+			<version>${kas-webrtc-native.version}</version>
+			<type>so</type>
+		</dependency>
+
+		<dependency>
 			<groupId>com.google.android</groupId>
 			<artifactId>android</artifactId>
 			<version>${android.version}</version>
-			<scope>provided</scope>
-		</dependency>
-		<dependency>
-			<groupId>org.slf4j</groupId>
-			<artifactId>slf4j-api</artifactId>
-			<version>${slf4j.version}</version>
-			<scope>provided</scope>
-		</dependency>
-		<dependency>
-			<groupId>log4j</groupId>
-			<artifactId>log4j</artifactId>
-			<version>${log4j.version}</version>
 			<scope>provided</scope>
 		</dependency>
 		<dependency>
