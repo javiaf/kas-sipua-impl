@@ -449,22 +449,18 @@ public class SipCall implements Call {
 	}
 
 	public void callError(String msg) {
-		// TODO NOTIFY SIPUA
 		terminatedCall(TerminateReason.ERROR);
 	}
 
 	public void LocalCallCancel() {
-		// TODO NOTIFY SIPUA
 		terminatedCall(TerminateReason.LOCAL_HANGUP);
 	}
 
 	public void remoteCallBusy() {
-		// TODO NOTIFY SIPUA
 		terminatedCall(TerminateReason.BUSY);
 	}
 
 	public void remoteCallReject() {
-		// TODO NOTIFY UA
 		terminatedCall(TerminateReason.REMOTE_HANGUP);
 	}
 
@@ -473,17 +469,14 @@ public class SipCall implements Call {
 	}
 
 	public void userNotFound() {
-		// TODO NOTIFY SIPUA
 		terminatedCall(TerminateReason.USER_NOT_FOUND);
 	}
 
 	public void unsupportedMediaType() {
-		// TODO NOTIFY SIPUA
 		terminatedCall(TerminateReason.ERROR);
 	}
 
 	public void unsupportedCode() {
-		// TODO NOTIFY SIPUA
 		terminatedCall(TerminateReason.ERROR);
 	}
 
