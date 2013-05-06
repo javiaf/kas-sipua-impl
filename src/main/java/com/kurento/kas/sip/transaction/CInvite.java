@@ -99,22 +99,18 @@ public class CInvite extends CTransaction {
 			log.info("<<<<<<< 100 TRYING: dialog: " + this.dialog + ", state: "
 					+ dialog.getState());
 			// DO NOTHING
-
 		} else if (statusCode == Response.RINGING) {
 			log.info("<<<<<<< 180 Ringing: dialog: " + this.dialog
 					+ ", state: " + dialog.getState());
 			call.remoteRingingCall();
-
 		} else if (statusCode == Response.SESSION_PROGRESS) {
 			log.info("<<<<<<< 183 Session Progress: dialog: " + this.dialog
 					+ ", state: " + dialog.getState());
 			// DO NOTHING
-
 		} else if (statusCode < 200) {
 			log.info("<<<<<<< " + statusCode + " 1xx: dialog: " + this.dialog
 					+ ", state: " + dialog.getState());
 			// DO NOTHING
-
 		} else if (statusCode == Response.REQUEST_TERMINATED) {
 			log.info("<<<<<<< " + statusCode + " TERMINATED: dialog: "
 					+ this.dialog.getDialogId() + ", state: "
@@ -124,7 +120,6 @@ public class CInvite extends CTransaction {
 					+ " Session cancel confirmed by remote peer: dialog: "
 					+ this.dialog + ", state: " + dialog.getState());
 			call.LocalCallCancel();
-
 		} else if (statusCode == Response.BUSY_HERE
 				|| statusCode == Response.BUSY_EVERYWHERE) {
 			log.info("<<<<<<< " + statusCode + "Remote peer is BUSY: dialog: "
@@ -146,14 +141,12 @@ public class CInvite extends CTransaction {
 					+ " UNSUPPORTED_MEDIA_TYPE: dialog: " + this.dialog
 					+ ", state: " + dialog.getState());
 			call.unsupportedMediaType();
-
 		} else if (statusCode == 476 || statusCode == Response.NOT_FOUND) {
 			// USER_NOT_FOUND. SIP/2.0 476
 			// Unresolvable destination
 			log.info("<<<<<<< " + statusCode + " USER_NOT_FOUND: dialog: "
 					+ this.dialog + ", state: " + dialog.getState());
 			call.userNotFound();
-
 		} else if (statusCode == Response.OK) {
 			// 200 OK
 			log.info("<<<<<<< 200 OK: dialog: " + this.dialog.getDialogId()

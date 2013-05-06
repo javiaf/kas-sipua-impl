@@ -41,6 +41,7 @@ import org.webrtc.SdpObserver;
 import org.webrtc.SessionDescription;
 
 import com.kurento.kas.sip.transaction.CBye;
+import com.kurento.kas.sip.transaction.CCancel;
 import com.kurento.kas.sip.transaction.CTransaction;
 import com.kurento.kas.sip.transaction.STransaction;
 import com.kurento.kas.ua.Call;
@@ -139,7 +140,7 @@ public class SipCall implements Call {
 		request2Terminate = true;
 
 		// Check valid states where a call can be canceled
-		if (state == State.IDLE) {
+		if (State.IDLE.equals(state)) {
 			// State is idle until INVITE request is sent.
 			// DO NOTHING. Cancel must be sent after invite is sent
 			log.debug("Request to terminate outgoing call with no INVITE transaction created yet: "
@@ -175,7 +176,6 @@ public class SipCall implements Call {
 			}
 			rejectCall();
 		} else if (State.CONFIRMED.equals(state)) {
-			// TODO: complete
 			// Terminate request after 200 OK response. ACK might still not
 			// being received
 			log.debug("Request to terminate established call (ACK might still be pending):"
@@ -261,6 +261,7 @@ public class SipCall implements Call {
 	}
 
 	private void localCallCancel() {
+		log.debug("localCallCancel");
 		Request cancelReq;
 		// Create cancel request
 		try {
@@ -271,25 +272,22 @@ public class SipCall implements Call {
 			return;
 		}
 
-		// TODO: complete
-		// // Send cancel request
-		// try {
-		// // new CCancel(cancelReq); // TODO: complete
-		// // Do not notify. Wait for reception of response 487
-		// } catch (KurentoSipException e) {
-		// log.info("To late to cancel call: " + getCallInfo());
-		// // Try BYE
-		// try {
-		// new CBye(sipUA, this);
-		// terminatedCall(TerminateReason.LOCAL_HANGUP);
-		// } catch (KurentoSipException e1) {
-		//
-		// callFailed(new KurentoException(
-		// "Unable to terminate call locally canceled:"
-		// + getCallInfo(), e1));
-		// return;
-		// }
-		// }
+		// Send cancel request
+		try {
+			new CCancel(cancelReq, sipUA);
+			// Do not notify. Wait for reception of response 487
+		} catch (KurentoSipException e) {
+			log.info("Too late to cancel call: " + getCallInfo());
+			// Try BYE
+			try {
+				new CBye(sipUA, this);
+				terminatedCall(TerminateReason.LOCAL_HANGUP);
+			} catch (KurentoSipException e1) {
+				callFailed(new KurentoException(
+						"Unable to terminate call locally canceled:"
+								+ getCallInfo(), e1));
+			}
+		}
 	}
 
 	private void rejectCall() {
@@ -471,7 +469,7 @@ public class SipCall implements Call {
 	}
 
 	public void remoteRingingCall() {
-		// TODO NOTIFY SIPUA
+		sipUA.getCallDialingHandler().onRemoteRinging(this);
 	}
 
 	public void userNotFound() {
@@ -495,7 +493,7 @@ public class SipCall implements Call {
 
 	// Use by SInvite to notify an incoming INVITE request. SDP offer is already
 	// process and the SDP answer is ready to be sent
-	public void incominCall(STransaction incomingTransaction) {
+	public void incomingCall(STransaction incomingTransaction) {
 		if (incomingTransaction == null)
 			return;
 
@@ -507,6 +505,7 @@ public class SipCall implements Call {
 			// received before the remote SDP offer of incoming INVITE is still
 			// being processed
 			// Force call cancel and do not signal incoming to the controller
+			log.info("Incoming call terminated");
 			stateTransition(State.TERMINATED);
 			try {
 				// Change before transition to avoid concurrent conflict with

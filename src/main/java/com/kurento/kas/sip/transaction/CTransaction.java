@@ -97,17 +97,12 @@ public abstract class CTransaction extends Transaction {
 		createRequest();
 	}
 
-	// // Used for Dialog transactions
-	// CTransaction(String method, SipUA sipUA, SipCall call)
-	// throws KurentoSipException {
-	// this.call = call;
-	// this.dialog = call.getDialog();
-	// this.sipUA = sipUA;
-	// this.method = method;
-	// this.localUri = this.dialog.getLocalParty().getURI().toString();
-	// this.remoteUri = this.dialog.getRemoteParty().getURI().toString();
-	// createRequest();
-	// }
+	// Used by Cancel transaction
+	CTransaction(Request request, SipUA sipUA) throws KurentoSipException {
+		this.sipUA = sipUA;
+		this.request = request;
+		createClientTransaction();
+	}
 
 	// //////////////
 	//
@@ -167,7 +162,11 @@ public abstract class CTransaction extends Transaction {
 						e);
 			}
 		}
-		// Set client transaction
+
+		createClientTransaction();
+	}
+
+	private void createClientTransaction() throws KurentoSipException {
 		try {
 			clientTransaction = sipUA.getSipProvider().getNewClientTransaction(
 					request);
@@ -175,7 +174,6 @@ public abstract class CTransaction extends Transaction {
 
 			// get dialog again
 			dialog = clientTransaction.getDialog();
-
 		} catch (TransactionUnavailableException e) {
 			throw new KurentoSipException(
 					"Transaction error while creating new client transaction",
@@ -308,10 +306,12 @@ public abstract class CTransaction extends Transaction {
 								+ sdp, e);
 			}
 		}
+
 		log.info("SIP send request\n"
 				+ ">>>>>>>>>> SIP send request >>>>>>>>>>\n"
 				+ clientTransaction.getRequest().toString()
 				+ ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
+
 		try {
 			if (dialog != null
 					&& DialogState.CONFIRMED.equals(dialog.getState()))

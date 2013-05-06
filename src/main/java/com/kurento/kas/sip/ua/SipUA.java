@@ -61,6 +61,7 @@ import com.kurento.kas.sip.transaction.CRegister;
 import com.kurento.kas.sip.transaction.CTransaction;
 import com.kurento.kas.sip.transaction.SAck;
 import com.kurento.kas.sip.transaction.SBye;
+import com.kurento.kas.sip.transaction.SCancel;
 import com.kurento.kas.sip.transaction.SInvite;
 import com.kurento.kas.sip.transaction.STransaction;
 import com.kurento.kas.sip.util.AlarmUaTimer;
@@ -532,9 +533,9 @@ public class SipUA extends UA {
 					} else if (reqMethod.equals(Request.BYE)) {
 						log.info("Detected BYE request");
 						sTrns = new SBye(SipUA.this, serverTransaction);
-						// } else if (reqMethod.equals(Request.CANCEL)) {
-						// log.info("Detected CANCEL request");
-						// sTrns = new SCancel(SipUA.this, serverTransaction);
+					} else if (reqMethod.equals(Request.CANCEL)) {
+						log.info("Detected CANCEL request");
+						sTrns = new SCancel(SipUA.this, serverTransaction);
 					} else {
 						log.error("Unsupported method on request: " + reqMethod);
 						Response response = messageFactory.createResponse(
