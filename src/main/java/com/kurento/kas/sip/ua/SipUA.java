@@ -55,6 +55,7 @@ import org.webrtc.PeerConnectionFactory;
 
 import android.content.Context;
 
+import com.kurento.kas.conference.Conference;
 import com.kurento.kas.sip.transaction.CInvite;
 import com.kurento.kas.sip.transaction.CRegister;
 import com.kurento.kas.sip.transaction.CTransaction;
@@ -128,6 +129,7 @@ public class SipUA extends UA {
 					});
 
 			this.timer = new AlarmUaTimer(context);
+			createDefaultHandlers();
 			configureSipStack();
 
 			PeerConnectionFactory.initializeAndroidGlobals(context);
@@ -594,6 +596,77 @@ public class SipUA extends UA {
 						+ trnsTerminatedEv.getClientTransaction().getBranchId());
 			}
 		}
+	}
+
+	private void createDefaultHandlers() {
+		errorHandler = new ErrorHandler() {
+
+			@Override
+			public void onUAError(UA ua, KurentoException exception) {
+				log.info("Default onUAError");
+			}
+
+			@Override
+			public void onConfError(Conference conference,
+					KurentoException exception) {
+				log.info("Default onConfError");
+			}
+
+			@Override
+			public void onCallError(Call call, KurentoException exception) {
+				log.info("Default onCallError");
+			}
+		};
+
+		registerHandler = new RegisterHandler() {
+
+			@Override
+			public void onRegistrationSuccess(Register register) {
+				log.info("Default onRegistrationSuccess");
+			}
+
+			@Override
+			public void onConnectionFailure(Register register) {
+				log.info("Default onConnectionFailure");
+			}
+
+			@Override
+			public void onAuthenticationFailure(Register register) {
+				log.info("Default onAuthenticationFailure");
+			}
+		};
+
+		callDialingHandler = new CallDialingHandler() {
+
+			@Override
+			public void onRemoteRinging(Call dialingCall) {
+				log.info("Default onRemoteRinging");
+			}
+		};
+
+		callEstablishedHandler = new CallEstablishedHandler() {
+
+			@Override
+			public void onEstablished(Call call) {
+				log.info("Default onEstablished");
+			}
+		};
+
+		callRingingHandler = new CallRingingHandler() {
+
+			@Override
+			public void onRinging(Call ringinCall) {
+				log.info("Default onRinging");
+			}
+		};
+
+		callTerminatedHandler = new CallTerminatedHandler() {
+
+			@Override
+			public void onTerminate(Call terminatedCall) {
+				log.info("Default onTerminate");
+			}
+		};
 	}
 
 }
