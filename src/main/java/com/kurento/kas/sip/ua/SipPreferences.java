@@ -4,19 +4,18 @@ import javax.sip.ListeningPoint;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.preference.PreferenceManager;
 
 public class SipPreferences {
 
-	public static final String PREFERENCES_NAME = "SipPreferences";
+	public static final String ONLY_IPV4 = "ONLY_IPV4";
+	public static final String SIP_TRANSPORT = "TRANSPORT";
 
-	public static final String ONLY_IPV4 = "onlyIpv4";
-	public static final String TRANSPORT = "transport";
+	public static final String SIP_PROXY_SERVER_ADDRESS = "PROXY_SERVER_ADDRESS"; // Mandatory
+	public static final String SIP_PROXY_SERVER_PORT = "PROXY_SERVER_PORT"; // Mandatory
+	public static final String SIP_LOCAL_PORT = "LOCAL_PORT";
 
-	public static final String PROXY_SERVER_ADDRESS = "proxyServerAddress"; // Mandatory
-	public static final String PROXY_SERVER_PORT = "proxyServerPort"; // Mandatory
-	public static final String LOCAL_PORT = "localPort";
-
-	public static final String REG_EXPIRES = "regExpires";
+	public static final String SIP_REG_EXPIRES = "REG_EXPIRES";
 
 	private boolean onlyIpv4 = true;
 	private String transport = ListeningPoint.UDP;
@@ -28,21 +27,20 @@ public class SipPreferences {
 	private int regExpires = 3600;
 
 	SipPreferences(Context context) throws KurentoSipException {
+		SharedPreferences pref = PreferenceManager
+				.getDefaultSharedPreferences(context);
 
-		SharedPreferences pref = context.getSharedPreferences(PREFERENCES_NAME,
-				Context.MODE_PRIVATE);
-
-		proxyServerAddress = pref.getString(PROXY_SERVER_ADDRESS, null);
+		proxyServerAddress = pref.getString(SIP_PROXY_SERVER_ADDRESS, null);
 		if (proxyServerAddress == null)
 			throw new KurentoSipException(
 					"PROXY_SERVER_ADDRESS not assigned. It is mandatory.");
 
-		proxyServerPort = pref.getInt(PROXY_SERVER_PORT, -1);
+		proxyServerPort = pref.getInt(SIP_PROXY_SERVER_PORT, -1);
 		if (proxyServerPort < 1024)
 			throw new KurentoSipException(
 					"PROXY_SERVER_PORT must be >= 1024. It is mandatory.");
 
-		regExpires = pref.getInt(REG_EXPIRES, regExpires);
+		regExpires = pref.getInt(SIP_REG_EXPIRES, regExpires);
 		if (regExpires < 0)
 			throw new KurentoSipException("REG_EXPIRES must be > 0");
 
