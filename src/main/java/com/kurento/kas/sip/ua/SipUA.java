@@ -582,7 +582,23 @@ public class SipUA extends UA {
 		@Override
 		public void processTimeout(TimeoutEvent timeoutEvent) {
 			log.warn("Transaction timeout:" + timeoutEvent.toString());
-			// TODO: complete
+			try {
+				if (timeoutEvent.getClientTransaction() != null) {
+					CTransaction cTrns = (CTransaction) timeoutEvent
+							.getClientTransaction().getApplicationData();
+					if (cTrns != null)
+						cTrns.processTimeout();
+					timeoutEvent.getClientTransaction().terminate();
+				} else if (timeoutEvent.getServerTransaction() != null) {
+					STransaction sTrns = (STransaction) timeoutEvent
+							.getClientTransaction().getApplicationData();
+					if (sTrns != null)
+						sTrns.processTimeout();
+					timeoutEvent.getServerTransaction().terminate();
+				}
+			} catch (ObjectInUseException e) {
+				log.error("Unable to handle timeouts");
+			}
 		}
 
 		@Override

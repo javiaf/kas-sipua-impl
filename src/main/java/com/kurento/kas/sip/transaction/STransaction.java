@@ -158,4 +158,11 @@ public abstract class STransaction extends Transaction {
 		}
 	}
 
+	public void processTimeout() {
+		log.info("Server transaction timeout");
+		if (call != null) {
+			call.callTimeout();
+		}
+	}
+
 }

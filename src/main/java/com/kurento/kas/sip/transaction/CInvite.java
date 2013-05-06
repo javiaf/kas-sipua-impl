@@ -258,9 +258,4 @@ public class CInvite extends CTransaction {
 		}, sdp);
 	}
 
-	@Override
-	public void processTimeout() {
-		// TODO Auto-generated method stub
-
-	}
 }

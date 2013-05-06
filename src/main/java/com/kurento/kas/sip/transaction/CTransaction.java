@@ -325,7 +325,7 @@ public abstract class CTransaction extends Transaction {
 
 	public abstract void processResponse(ResponseEvent event);
 
-	public void processTimeout() { // TODO: review children classes
+	public void processTimeout() {
 		log.info("Client transaction timeout");
 		if (call != null) {
 			call.callTimeout();
