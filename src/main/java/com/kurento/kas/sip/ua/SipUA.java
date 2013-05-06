@@ -58,6 +58,8 @@ import android.content.Context;
 import com.kurento.kas.sip.transaction.CInvite;
 import com.kurento.kas.sip.transaction.CRegister;
 import com.kurento.kas.sip.transaction.CTransaction;
+import com.kurento.kas.sip.transaction.SAck;
+import com.kurento.kas.sip.transaction.SBye;
 import com.kurento.kas.sip.transaction.SInvite;
 import com.kurento.kas.sip.transaction.STransaction;
 import com.kurento.kas.sip.util.AlarmUaTimer;
@@ -519,16 +521,15 @@ public class SipUA extends UA {
 				log.debug("sTrns: " + sTrns);
 				if (sTrns == null) {
 					String reqMethod = requestEvent.getRequest().getMethod();
-					// if (reqMethod.equals(Request.ACK)) {
-					// log.info("Detected ACK request");
-					// sTrns = new SAck(SipUA.this, serverTransaction);
-					// } else if (reqMethod.equals(Request.INVITE)) {
-					if (reqMethod.equals(Request.INVITE)) {
+					if (reqMethod.equals(Request.ACK)) {
+						log.info("Detected ACK request");
+						sTrns = new SAck(SipUA.this, serverTransaction);
+					} else if (reqMethod.equals(Request.INVITE)) {
 						log.info("Detected INVITE request");
 						sTrns = new SInvite(SipUA.this, serverTransaction);
-						// } else if (reqMethod.equals(Request.BYE)) {
-						// log.info("Detected BYE request");
-						// sTrns = new SBye(SipUA.this, serverTransaction);
+					} else if (reqMethod.equals(Request.BYE)) {
+						log.info("Detected BYE request");
+						sTrns = new SBye(SipUA.this, serverTransaction);
 						// } else if (reqMethod.equals(Request.CANCEL)) {
 						// log.info("Detected CANCEL request");
 						// sTrns = new SCancel(SipUA.this, serverTransaction);

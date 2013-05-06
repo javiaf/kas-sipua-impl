@@ -91,6 +91,7 @@ public abstract class CTransaction extends Transaction {
 		this.method = method;
 		this.sipUA = sipUA;
 		this.call = call;
+		this.dialog = call.getDialog();
 		this.localUri = call.getLocalUri();
 		this.remoteUri = call.getRemoteUri();
 		createRequest();
@@ -324,6 +325,11 @@ public abstract class CTransaction extends Transaction {
 
 	public abstract void processResponse(ResponseEvent event);
 
-	public abstract void processTimeout(); // TODO: complete with base impl
+	public void processTimeout() { // TODO: review children classes
+		log.info("Client transaction timeout");
+		if (call != null) {
+			call.callTimeout();
+		}
+	}
 
 }

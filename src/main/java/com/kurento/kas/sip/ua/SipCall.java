@@ -40,6 +40,7 @@ import org.webrtc.PeerConnectionFactory;
 import org.webrtc.SdpObserver;
 import org.webrtc.SessionDescription;
 
+import com.kurento.kas.sip.transaction.CBye;
 import com.kurento.kas.sip.transaction.CTransaction;
 import com.kurento.kas.sip.transaction.STransaction;
 import com.kurento.kas.ua.Call;
@@ -92,6 +93,10 @@ public class SipCall implements Call {
 		this.dialog = dialog;
 	}
 
+	public Dialog getDialog() {
+		return this.dialog;
+	}
+
 	// ////////////////////
 	//
 	// CALL API
@@ -124,6 +129,11 @@ public class SipCall implements Call {
 	}
 
 	@Override
+	public void hangup() {
+		hangup(RejectCode.DECLINE);
+	}
+
+	@Override
 	public void hangup(RejectCode code) {
 		// Label this call to be terminated as soon as possible
 		request2Terminate = true;
@@ -134,7 +144,6 @@ public class SipCall implements Call {
 			// DO NOTHING. Cancel must be sent after invite is sent
 			log.debug("Request to terminate outgoing call with no INVITE transaction created yet: "
 					+ getCallInfo());
-
 		} else if (State.OUTGOING_RINGING.equals(state)) {
 			// Hang out an outgoing call after INVITE request is sent and
 			// before response is received
@@ -142,7 +151,6 @@ public class SipCall implements Call {
 					+ getCallInfo());
 			// Send cancel request
 			localCallCancel();
-
 		} else if (State.INCOMING_RINGING.equals(state)) {
 			// TU requested CALL reject
 			log.debug("Request to reject incoming call: " + getCallInfo());
@@ -170,19 +178,16 @@ public class SipCall implements Call {
 			// TODO: complete
 			// Terminate request after 200 OK response. ACK might still not
 			// being received
-			// log.debug("Request to terminate established call (ACK might still be pending):"
-			// + getCallInfo());
-			// // Change state before request to avoid concurrent BYE requests
-			// from
-			// // local party
-			// stateTransition(State.TERMINATED);
-			// try {
-			// new CBye(sipUA, this); // TODO: complete;
-			// } catch (KurentoSipException e) {
-			// callFailed(new KurentoException("Unable to send BYE request",
-			// e));
-			// }
-
+			log.debug("Request to terminate established call (ACK might still be pending):"
+					+ getCallInfo());
+			// Change state before request to avoid concurrent BYE requests
+			// from local party
+			stateTransition(State.TERMINATED);
+			try {
+				new CBye(sipUA, this);
+			} catch (KurentoSipException e) {
+				callFailed(new KurentoException("Unable to send BYE request", e));
+			}
 		} else if (State.TERMINATED.equals(state)) {
 			log.info("Call already terminated when hangup request,"
 					+ dialog.getDialogId() + ": " + getCallInfo());
@@ -193,7 +198,6 @@ public class SipCall implements Call {
 			log.warn("Bad hangup. Unable to hangup a call (" + getCallInfo()
 					+ ") with current state: " + state);
 		}
-
 	}
 
 	// ////////////////////
@@ -225,10 +229,6 @@ public class SipCall implements Call {
 	@Override
 	public TerminateReason getReason() {
 		return reason;
-	}
-
-	public Dialog getDialog() {
-		return this.dialog;
 	}
 
 	// ////////////////////
@@ -548,29 +548,27 @@ public class SipCall implements Call {
 
 	// Used by CInvite and SAck to inform when the call set up is completed
 	public void completedCall() {
-
 		if (request2Terminate) {
 			// Call terminate request arrived between 200 OK response and ACK
 			// 1.- CANCEL request, either remote or local, arrived after 200 OK
 			// 2.- Error found. Normally associated to media
 			// 3.- Terminate request due to lack of ACK (symmetric NAT problem)
 
-			// TODO: complete
-			// if (!State.TERMINATED.equals(state)) {
-			// // Terminate call not already terminated
-			// // Use terminated variable as dialog state does not change quick
-			// // enough
-			// stateTransition(State.TERMINATED);
-			// try {
-			// log.debug("Inmediatelly terminate an already stablished call");
-			// new CBye(sipUA, this);
-			// terminatedCall(TerminateReason.LOCAL_HANGUP);
-			// } catch (KurentoSipException e) {
-			// callFailed(new KurentoException(
-			// "Unable to terminate CALL for dialog: "
-			// + dialog.getDialogId(), e));
-			// }
-			// }
+			if (!State.TERMINATED.equals(state)) {
+				// Terminate call not already terminated
+				// Use terminated variable as dialog state does not change quick
+				// enough
+				stateTransition(State.TERMINATED);
+				try {
+					log.debug("Inmediatelly terminate an already stablished call");
+					new CBye(sipUA, this);
+					terminatedCall(TerminateReason.LOCAL_HANGUP);
+				} catch (KurentoSipException e) {
+					callFailed(new KurentoException(
+							"Unable to terminate CALL for dialog: "
+									+ dialog.getDialogId(), e));
+				}
+			}
 			return;
 		}
 

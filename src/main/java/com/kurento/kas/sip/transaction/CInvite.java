@@ -240,7 +240,14 @@ public class CInvite extends CTransaction {
 
 			@Override
 			public void onSuccess() {
-				sipUA.getCallEstablishedHandler().onEstablished(call);
+				try {
+					sendAck(null);
+					call.completedCall();
+				} catch (KurentoSipException e) {
+					String msg = "Unable to send ACK message after SDP processing";
+					log.error(msg, e);
+					call.callError(msg);
+				}
 			}
 
 			@Override
