@@ -110,7 +110,7 @@ public class SipEndPointImpl implements EndPoint {
 
 	@Override
 	public String getUri() {
-		return sipUriAddress.toString();
+		return sipUriAddress.getURI().toString();
 	}
 
 	public Address getContact() {

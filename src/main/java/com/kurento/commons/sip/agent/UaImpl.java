@@ -484,7 +484,7 @@ public class UaImpl implements SipListener, UaStun, NetworkListener {
 		SipEndPointImpl endpoint = new SipEndPointImpl(user, domain, password,
 				expires, this, listener, receiveCall);
 
-		endPoints.put(endpoint.getAddress().toString(), endpoint);
+		endPoints.put(endpoint.getAddress().getURI().toString(), endpoint);
 
 		if (sipStack != null && !publicAddress.isEmpty()) {
 			// SIP stack and STUN test must be completed to allow register
@@ -500,7 +500,7 @@ public class UaImpl implements SipListener, UaStun, NetworkListener {
 		if (!(endpoint instanceof SipEndPointImpl))
 			return;
 		SipEndPointImpl ep = endPoints.remove(((SipEndPointImpl) endpoint)
-				.getAddress().toString());
+				.getAddress().getURI().toString());
 		if (ep != null && sipStack != null)
 			ep.register(0);
 	}
@@ -864,6 +864,35 @@ public class UaImpl implements SipListener, UaStun, NetworkListener {
 		log.debug("Stun test passed: Public Ip : "
 				+ info.getPublicIP().getHostAddress() + " Public port : "
 				+ info.getPublicPort());
+	}
+
+	@Override
+	public EndPoint registerEndpoint(String uriUser, String domain,
+			EndPointListener listener, String user, String passwd,
+			Map<String, Object> extra) throws ServerInternalErrorException {
+		// TODO Auto-generated method stub
+		
+		Integer expires = 3600;
+		if (extra.get(SIP_EXPIRES) instanceof Integer) {
+			expires = (Integer) extra.get(SIP_EXPIRES);
+		}
+
+		Boolean receiveCall = true;
+		if (extra.get(SIP_RECEIVE_CALL) instanceof Boolean) {
+			receiveCall = (Boolean) extra.get(SIP_RECEIVE_CALL);
+		}
+
+		SipEndPointImpl endpoint = new SipEndPointImpl(user, domain, passwd,
+				expires, this, listener, receiveCall);
+
+		endPoints.put(endpoint.getAddress().toString(), endpoint);
+
+		if (sipStack != null && !publicAddress.isEmpty()) {
+			// SIP stack and STUN test must be completed to allow register
+			endpoint.register(expires);
+		}
+
+		return endpoint;
 	}
 
 }
