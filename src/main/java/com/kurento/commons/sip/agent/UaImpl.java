@@ -885,7 +885,7 @@ public class UaImpl implements SipListener, UaStun, NetworkListener {
 		SipEndPointImpl endpoint = new SipEndPointImpl(user, domain, passwd,
 				expires, this, listener, receiveCall);
 
-		endPoints.put(endpoint.getAddress().toString(), endpoint);
+		endPoints.put(endpoint.getAddress().getURI().toString(), endpoint);
 
 		if (sipStack != null && !publicAddress.isEmpty()) {
 			// SIP stack and STUN test must be completed to allow register

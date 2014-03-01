@@ -269,7 +269,7 @@ public class SipContext implements Call {
 	public String getRemoteDisplayName() {
 		if (remoteParty == null)
 			return null;
-		return remoteParty.toString();
+		return remoteParty.getURI().toString();
 	}
 
 	@Override
@@ -567,7 +567,7 @@ public class SipContext implements Call {
 
 	private String getCallInfo() {
 		String local = localEndPoint!=null?localEndPoint.getUri():"???";
-		String remote = remoteParty!=null?remoteParty.toString():"???";
+		String remote = remoteParty!=null?remoteParty.getURI().toString():"???";
 		String arrow;
 		if (incomingInitiatingRequest != null)
 			arrow = " <<< ";
